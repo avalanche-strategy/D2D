@@ -10,6 +10,8 @@ execute:
   warning: false
 ---
 
+\newpage
+
 # Executive Summary
 {{< include _executive_summary.qmd >}}
 
