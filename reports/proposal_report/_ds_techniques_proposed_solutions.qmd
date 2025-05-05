@@ -1,12 +1,14 @@
-### Traditional Retrieval-Augmented Generation (RAG)
 
+### Traditional Retrieval-Augmented Generation (RAG)  
 
-Our baseline solution is built on the Retrieval-Augmented Generation (RAG) framework, which is well-suited for question-answering tasks involving long and unstructured text, such as interview transcripts.
+Our baseline solution is built on the Retrieval-Augmented Generation (RAG) framework, which is well-suited for question-answering tasks involving long and unstructured text, such as interview transcripts.  
 
 In a traditional RAG setup, the system is split into two parts: a retriever and a generator.  
-- **Retriever:**  
-We first segment the interview transcript into smaller, manageable question-and-answer (QA) pairs. Then, we use a pretrained transformer model such as MiniLM or DPR to convert both the QA pairs and the guideline questions into vector embeddings. These embeddings are compared using cosine similarity to find the top-k (or top-p) QA pairs most relevant to each guideline question. This enables us to narrow down the transcript to only the most relevant content.  
-- **Generator:**
+
+- **Retriever**:  
+We first segment the interview transcript into smaller, manageable question-and-answer (QA) pairs. Then, we use a pretrained transformer model such as MiniLM or DPR to convert both the QA pairs and the guideline questions into vector embeddings. These embeddings are compared using cosine similarity to find the top-k (or top-p) QA pairs most relevant to each guideline question. This enables us to narrow down the transcript to only the most relevant content.
+
+- **Generator**:  
 The top matches are passed to a large language model (LLM) like ChatGPT, which is then prompted to extract the main ideas or answers from the selected content. This LLM serves as the generator in our pipeline.  
 
 This approach allows us to maintain control over what the LLM sees, thereby reducing the likelihood of hallucinated answers. It is also modular: the retriever and generator can be swapped or fine-tuned independently.

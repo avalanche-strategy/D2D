@@ -1,3 +1,4 @@
+
 ### Deliverables and Deadlines  
 - Proposal Presentation: Friday, May 2, 2025, 14:00–16:00  
 - Proposal Report Draft: Tuesday, May 6, 2025, 12:00  
@@ -9,29 +10,37 @@
 
 ### Weekly Milestones  
 **Week 1: April 28 – May 4, 2025 (Project Setup and Proposal Presentation)**  
+
 - Repository set up with initial files and documentations.  
 - Proposal presentation delivered.  
 - Synthetic data preparation started (5 transcripts).  
 - Proposal report draft 50% complete.  
 
+
 **Week 2: May 5 – May 11, 2025 (Proposal Report and RAG Implementation)**  
+
 - Proposal report draft and final submitted.  
 - RAG approach script completed and tested.  
 - Unit tests passing (80% coverage).  
 - Documentation completed with baseline details.  
 
+\newpage
+
 **Week 3: May 12 – May 18, 2025 (Self-RAG Exploration and Implementation)**  
+
 - Self-RAG approach script completed and tested.  
 - Documentation completed with Self-RAG details.  
 - Evaluation preparation with baseline approach.  
 
 **Week 4: May 19 – May 25, 2025 (Evaluation Development)**  
+
 - Evaluation completed on both approaches  
 - Optimization (Hyperparameters/Models Tuning on both approaches  
 - Decided which approach to develop  
 - Documentation updated with metrics (Authentic and Synthetic Data)  
 
 **Week 5: May 26 – June 1, 2025 (Structured Output and End-to-End Testing)**  
+
 - Finalized structure output  
 - Documentation finalized for output and testing  
 - Develop and test Command-Line Interface (CLI)  
@@ -39,22 +48,26 @@
 - Final presentation slides (>= 50%) completed  
 
 **Week 6: June 2 – June 8, 2025 (Runnable Draft, Final Report and Presentation)**  
+
 - Bug reduced  
 - Runnable draft and CLI completed  
 - Final report (>= 50%) completed  
 - Final presentation slides completed  
 
 **Week 7: June 9 – June 15, 2025 (Runnable Draft and Final Presentation)**  
+
 - Runnable draft submitted (June 9, 16:00)  
 - Final Presentation delivered (June 12/13)  
 - Draft report (>= 50%) complete  
 - Bugs reduced to < 5 critical issues  
 
 **Week 8: June 16 – June 20, 2025 (Draft Report and Finalization)**  
+
 - Final report draft submitted (June 18, 16:00)  
 - Package finalized with tests passing  
 - Documentation completed.  
 
 **Post-Week: June 23 – June 25, 2025 (Final Submission)**  
+
 - Final report (final version) submitted (June 25, 12:00)  
 - Package submitted (June 25, 12:00)  
