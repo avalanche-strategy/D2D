@@ -1,0 +1,21 @@
+Surveys are a vital tool for organizations to capture direct user feedback, understand user needs and priorities, 
+measure satisfaction, and gauge public opinion. Analyzing survey results helps guide meaningful product and service improvements. 
+Surveys are an invaluable set of tools that help organizations know how well they are performing and help shape where they need to go.
+
+Our capstone partner, Fathom, provides client organizations with commercial survey analytics solutions to fulfil this business need.
+The traditional surveys that their clients have used in the past can however be rigid and impersonal, often resulting in low engagement 
+and limited insights. To address this, Fathom is enhancing its analytics platform to support open, conversational surveys that use 
+natural language, adaptive flows, and personalized questions. This flexible approach improves response quality, completion rates, 
+and the depth of insights gathered. Nonetheless, extracting structured insights from open-ended responses presents a significant 
+challenge. Unstructured data must be processed and standardized to enable aggregation and analysis at scale. Our capstone project 
+tackles that challenge by leveraging advanced natural language processing (NLP) techniques. Specifically, we propose building a model - 
+potentially based on a transformer architecture or Large Language Model (LLM) - to analyze user interview transcripts against a set of 
+guideline queries representing organizational subject interests.
+
+The goal of our system is to capture nuanced semantic relationships, making it well-suited to match free-text responses with key 
+organizational themes. Our system will transform diverse, unstructured survey responses into structured summaries that can integrate 
+seamlessly into Fathomâ€™s existing analytics pipeline while acurately capturing the information collected during the interviews.
+
+By enabling automated, scalable analysis of open surveys, this solution will expand the volume and variety of surveys that Fathom 
+can process. Ultimately, it will help their clients uncover richer, faster insights, enhancing strategic decision-making and 
+improving the overall user experience.
