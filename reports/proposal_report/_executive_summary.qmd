@@ -14,7 +14,7 @@ guideline queries representing organizational subject interests.
 
 The goal of our system is to capture nuanced semantic relationships, making it well-suited to match free-text responses with key 
 organizational themes. Our system will transform diverse, unstructured survey responses into structured summaries that can integrate 
-seamlessly into Fathomâ€™s existing analytics pipeline while acurately capturing the information collected during the interviews.
+seamlessly into Fathom's existing analytics pipeline while acurately capturing the information collected during the interviews.
 
 By enabling automated, scalable analysis of open surveys, this solution will expand the volume and variety of surveys that Fathom 
 can process. Ultimately, it will help their clients uncover richer, faster insights, enhancing strategic decision-making and 
