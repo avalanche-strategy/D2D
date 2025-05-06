@@ -37,3 +37,8 @@ execute:
 
 # Timeline
 {{< include _timeline.qmd >}}
+
+\newpage
+
+# References
+{{< include _references.qmd >}}
