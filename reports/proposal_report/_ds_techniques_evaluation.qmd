@@ -1,0 +1,56 @@
+
+In order to evaluate the performance of Dialogue2Data comprehensively, we plan to adopt RAGAS (Retrieval-Augmented Generation Assessment Scores)[1] framework as the core idea of the evaluation, with enhancement experience from Daedalus v4[2].
+
+### Core Evaluation Framework - RAGAS
+
+RAGAS is an automated evaluation framework tailored specifically for the RAG architecture. It incorporates LLM-assisted judgments and provides scoring from multiple perspectives within the RAG pipeline, and we can obtain five key metrics from RAGAS[1]:
+
+- **Faithfulness**: The degree of consistency between the generated answers and the corresponding retrieved information.
+
+- **Answer Relevance**: The usefulness of the generated answers for their questions.
+
+- **Context Precision**: The proportion of retrieved information that is actually necessary for generating the answer.
+
+- **Context Recall**: The proportion of information needed to generate the answer that was successfully retrieved.
+
+- **Answer Correctness**: The correctness of the generated answer, compared to the golden sample.
+
+
+### Limitations of Applying RAGAS to Dialogue2Data
+
+- **Limitation in assessing answer style**: Our partner expects the responses to follow a consistent style to facilitate downstream analytics tools in structuring data and generating statistics. However, the current metrics do not assess aspects such as sentence completeness, length control, or clarity of expression.
+
+- **Bias introduced by model preferences**: RAGAS evaluates the performance with the support of LLMs, such as ChatGPT, and Claude. These LLMs may prefer templated answer styles, and the bias from the model preference may affect the objective of the scoring.
+
+- **Lack of feedback mechanism**: RAGAS evaluates by numerical-score output, without corresponding support information. This affects the interpretability of the evaluation process and makes obstacles for quick manual validation.
+
+- **Dependency of golden reference for correctness scoring**: The answer correct in RAGAS relies on the comparison to the golden samples. Due to the limited golden samples, answer correctness may not be applied at scale.
+
+
+### Enhancement by Daedalus v4
+
+According to the above limitations, Daedalus v4 provides some feasible strategies[2].
+
+- **Consistency metric**: We plan to introduce another metric, consistency, to measure if the answer follows a consistent style, thereby indicating the ease with which downstream tools can perform data structuring for statistical purpose. 
+
+- **Prompt engineering**: To reduce the bias from LLMs’ favor in templated answers, we will use prompt engineering to set the evaluation criteria. 
+
+- **Feedback mechanism**: To make the scoring process more transparent, we will add a feedback module (also known as an iteration loop) that provides supporting information for each score. This feedback can also be used to improve the answers, eventually forming an iterative loop to enhance answer quality.
+
+- **Stratified sampling**: We will apply a stratified sampling method to design golden samples that are small in number, high in quality, and broad in speaking style. 
+
+
+### Summary of Evaluation
+
+The following table is the summary of our evaluation framework based on RAGAS with enhancement of Daedalus v4.
+
+: Table 1. Summary of our evaluation framework based on RAGAS and Daedalus v4.
+
+| Module                     | Description                                 |
+|---------------------------|---------------------------------------------|
+| **Metrics in RAGAS**      | Faithfulness, Relevance, Precision, Recall, Correctness (when golden answer available) |
+| **Metric extended from Daedalus v4** | Consistency                              |
+| **Prompt engineering**    | To reduce LLM bias                          |
+| **Feedback mechanism**    | To generate explanation                     |
+| **Stratified sampling strategy** | To ensure comprehensive testing      |
+
