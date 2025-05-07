@@ -12,7 +12,7 @@ cd D2D
 2. Create and activate the Conda environment:
 ```bash
 conda env create -f environment.yml
-conda activate D2D
+conda activate d2d
 ```
 3. Install the package:
 ```bash
