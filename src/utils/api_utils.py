@@ -1,6 +1,6 @@
 import openai
 
-def query_chatgpt(context: str, query: str, gpt_model: str, api_key: str) -> str:
+def extract_and_summarize_response_chatgpt(context: str, query: str, gpt_model: str, api_key: str) -> str:
     """
     Query ChatGPT API with the provided context and query.
     

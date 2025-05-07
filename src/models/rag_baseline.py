@@ -3,7 +3,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from src.utils.data_utils import load_guidelines, load_transcript, segment_transcript
 from src.utils.embedding_utils import embed_groups, match_top_k_questions
-from src.utils.api_utils import query_chatgpt
 from src.utils.output_utils import generate_output
 from sentence_transformers import SentenceTransformer
 import torch

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 from datetime import datetime
-from src.utils.api_utils import query_chatgpt
+from src.utils.api_utils import extract_and_summarize_response_chatgpt
 
 def generate_output(interview_files: list[str], matches_list: list[list[dict]], guide_questions: list[str], gpt_model: str, api_key: str, output_path: str):
     """
@@ -24,7 +24,7 @@ def generate_output(interview_files: list[str], matches_list: list[list[dict]], 
         for match in matches:
             guide_question = match["guide_question"]
             context = "\n".join([f"Interviewer: {m['question']}\nInterviewee: {m['response']}" for m in match["matches"]])
-            chatgpt_response = query_chatgpt(context, guide_question, gpt_model, api_key).strip('\"\'')
+            chatgpt_response = extract_and_summarize_response_chatgpt(context, guide_question, gpt_model, api_key).strip('\"\'')
             row[guide_question] = chatgpt_response
         output_data.append(row)
     
