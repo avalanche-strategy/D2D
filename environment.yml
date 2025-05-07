@@ -1,39 +1,14 @@
- name: 'D2D'
+name: d2d
 channels:
-  - conda-forge
   - pytorch
-  - anaconda
-  - plotly
+  - conda-forge
   - defaults
 dependencies:
-  - python==3.12
-  - ipykernel
-  - matplotlib
+  - python=3.12
   - pandas
-  - nb_conda_kernels
-  - requests
-  - ipywidgets
-  - plotly
-  - jupyter-dash
-  - scikit-learn
-  - protobuf==4.25.3
-  - scikit-learn
-  - torchvision
-  - torchaudio
+  - numpy
+  - python-dotenv
+  - jupyter
   - pytorch
-  - autograd
-  - wordcloud
-  - seaborn
   - sentence-transformers
-  - nltk
-  - hmmlearn
-  - wikipedia
-  - spacy
-  - panel
-  - pip
-  - pip:
-    - torch-summary
-    - otter-grader
-    - kaleido
-    - pyppeteer
-    - mglearn
+  - openai
