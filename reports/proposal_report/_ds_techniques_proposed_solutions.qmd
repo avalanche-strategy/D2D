@@ -1,34 +1,20 @@
 
-### Traditional Retrieval-Augmented Generation (RAG)  
+### RAG: Retrieval-Augmented Generation (Baseline)
 
-Our baseline solution is built on the Retrieval-Augmented Generation (RAG) framework, which is well-suited for question-answering tasks involving long and unstructured text, such as interview transcripts.  
+Our baseline method features a **Retrieval-Augmented Generation (RAG)** pipeline, adapted to our project, to obtain answers from interview transcripts
 
-In a traditional RAG setup, the system is split into two parts: a retriever and a generator.  
+- **Retriever**:
+  The transcript is broken down into question-answer (QA) pairs. QA pairs as well as guideline questions are translated into embeddings using a pre-trained transformer model. These embeddings are compared using **cosine similarity**  to find the **top-k** (or **top-p**) most relevant matches.
 
-- **Retriever**:  
-We first segment the interview transcript into smaller, manageable question-and-answer (QA) pairs. Then, we use a pretrained transformer model such as MiniLM or DPR to convert both the QA pairs and the guideline questions into vector embeddings. These embeddings are compared using cosine similarity to find the top-k (or top-p) QA pairs most relevant to each guideline question. This enables us to narrow down the transcript to only the most relevant content.
+- **Generator**:
+  The relevant matches are sent to an LLM like **ChatGPT** as context, to extract the core meaning from the answers that are relevant to the guideline question. This setup **reduces hallucinated responses** by providing context to the LLM.
 
-- **Generator**:  
-The top matches are passed to a large language model (LLM) like ChatGPT, which is then prompted to extract the main ideas or answers from the selected content. This LLM serves as the generator in our pipeline.  
-
-This approach allows us to maintain control over what the LLM sees, thereby reducing the likelihood of hallucinated answers. It is also modular: the retriever and generator can be swapped or fine-tuned independently.
-
-We have already implemented this baseline RAG system, and initial results have been well-received by our capstone partner. Even without the generator component, the retriever alone provides helpful insights by surfacing the most relevant parts of the transcript for each question.
-
-However, one limitation of Traditional RAG is that it always returns a fixed number of top results. This means that if the true answer is not ranked within the top-k, it may be missed entirely. Additionally, the generator assumes that the retrieved content is relevant, which can sometimes reduce accuracy.
-
+But Traditional RAG has drawbacks: it always gives a fixed number of results, with the risk of excluding the true answer if it's outside the **top-k**(or **top-p**). The generator also assumes the relevance of retrieved content, at the risk of compromising accuracy.
 
 ### Self-RAG: Self-Reflective Retrieval-Augmented Generation
-To address the limitations of the traditional RAG approach, we propose an extension called Self-RAG, which incorporates an additional step of self-evaluation using an LLM.
 
-The core idea of Self-RAG is to validate the quality of the retrieval before final generation. After the retriever identifies the top-k QA pairs for a given guideline question, we use an LLM to ask:
+As a response to the vulnerability of Traditional RAG, **Self-RAG** has an additional self-evaluation layer with an LLM.
 
-_“Are these QA pairs actually relevant to the question?”_
+After it retrieves the **top-k QA pairs**, the LLM evaluates their relevance to the guideline question. If found relevant, it retrieves the key points. If not, it adjusts the hyperparameters (e.g., changes **k** or **p**) of the retriever, and attempts again. If it fails to retrieve any relevant content after multiple trials, it returns `[No relevant response found]`.
 
-If the answer is yes, we proceed as usual and ask the model to extract the main points. If not — for instance, if the retrieved content is only loosely related or off-topic — the system automatically adjusts its retrieval parameters (e.g., increasing or decreasing k or p) and re-runs the retrieval step.
-
-This dynamic loop gives the system a way to adaptively improve its own performance without human intervention. It can lead to more accurate and focused outputs, especially in cases where the first set of matches is suboptimal.
-
-However, Self-RAG introduces some added complexity. It requires additional LLM calls for self-assessment, and the logic to iterate on retrieval adds to the overall system design. Despite this, we believe that the trade-off is worthwhile, particularly if it helps minimize the need for human oversight — one of our partner’s primary goals.
-
-Self-RAG remains transparent, just like Traditional RAG, but adds flexibility and quality control at a key step in the pipeline.
+This auto-assessment cycle enhances accuracy and focus, particularly in situations where first-time retrievals are sub-optimal, and enables the system to refine itself independently.

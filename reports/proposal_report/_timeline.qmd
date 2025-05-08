@@ -1,73 +1,61 @@
 
-### Deliverables and Deadlines  
-- Proposal Presentation: Friday, May 2, 2025, 14:00–16:00  
-- Proposal Report Draft: Tuesday, May 6, 2025, 12:00  
-- Proposal Report Final: Friday, May 9, 2025, 17:00  
-- Runnable Draft to Mentor: Monday, June 9, 2025, 16:00  
-- Final Presentation: Thursday, June 12, 2025  
-- Draft Report to Mentor: Wednesday, June 18, 2025, 16:00  
-- Final Report and Project to Partner/Mentor: Wednesday, June 25, 2025, 12:00  
+## Weekly Milestones
 
-### Weekly Milestones  
-**Week 1: April 28 – May 4, 2025 (Project Setup and Proposal Presentation)**  
+### Week 1: April 28 – May 4, 2025 (Project Setup and Proposal Presentation)
+- Set up repository with initial files and documentation.
+- Deliver proposal presentation.
+- Complete 50% of proposal report draft.
 
-- Repository set up with initial files and documentations.  
-- Proposal presentation delivered.  
-- Synthetic data preparation started (5 transcripts).  
-- Proposal report draft 50% complete.  
+### Week 2: May 5 – May 11, 2025 (Proposal Report and Parallel Development)
+- Submit proposal report draft and final.
+- Split team into two groups: **RAG Development** and **Evaluation Development**.
+- **Group 1: RAG Development**
+  - Complete and test RAG approach script.
+  - Pass unit tests with 80% coverage.
+- **Group 2: Evaluation Development**
+  - Develop basic evaluation module using RAGAS.
+  - Create 2 golden samples for evaluation.
 
+### Week 3: May 12 – May 18, 2025 (Continued Parallel Development)
+- **Group 1: RAG Development**
+  - Complete and test Self-RAG approach script.
+  - Complete documentation with Self-RAG details.
+  - Prepare evaluation with baseline approach.
+- **Group 2: Evaluation Development**
+  - Extend evaluation module using Daedalus system.
+  - Create 10 more golden samples for evaluation.
 
-**Week 2: May 5 – May 11, 2025 (Proposal Report and RAG Implementation)**  
+### Week 4: May 19 – May 25, 2025 (Evaluation and Approach Selection)
+- Reunite team to integrate RAG and evaluation efforts.
+- Complete evaluation on both approaches.
+- Optimize hyperparameters and models for both approaches.
+- Decide which approach to develop further.
+- Update documentation with metrics for authentic and synthetic data.
 
-- Proposal report draft and final submitted.  
-- RAG approach script completed and tested.  
-- Unit tests passing (80% coverage).  
-- Documentation completed with baseline details.  
+### Week 5: May 26 – June 1, 2025 (Structured Output and End-to-End Testing)
+- Finalize structured output.
+- Finalize documentation for output and testing.
+- Develop and test Command-Line Interface (CLI).
+- Pass end-to-end tests, including CLI interactions.
+- Complete 50% of final presentation slides.
 
-\newpage
+### Week 6: June 2 – June 8, 2025 (Runnable Draft, Final Report, and Presentation)
+- Reduce bugs.
+- Complete runnable draft and CLI.
+- Complete 50% of final report.
+- Complete final presentation slides.
 
-**Week 3: May 12 – May 18, 2025 (Self-RAG Exploration and Implementation)**  
+### Week 7: June 9 – June 15, 2025 (Runnable Draft and Final Presentation)
+- Submit runnable draft on June 9, 16:00.
+- Deliver final presentation on June 12 or 13 (TBC).
+- Complete 50% of draft report.
+- Reduce bugs to fewer than 5 critical issues.
 
-- Self-RAG approach script completed and tested.  
-- Documentation completed with Self-RAG details.  
-- Evaluation preparation with baseline approach.  
+### Week 8: June 16 – June 20, 2025 (Draft Report and Finalization)
+- Submit final report draft on June 18, 16:00.
+- Finalize package with passing tests.
+- Complete documentation.
 
-**Week 4: May 19 – May 25, 2025 (Evaluation Development)**  
-
-- Evaluation completed on both approaches  
-- Optimization (Hyperparameters/Models Tuning on both approaches  
-- Decided which approach to develop  
-- Documentation updated with metrics (Authentic and Synthetic Data)  
-
-**Week 5: May 26 – June 1, 2025 (Structured Output and End-to-End Testing)**  
-
-- Finalized structure output  
-- Documentation finalized for output and testing  
-- Develop and test Command-Line Interface (CLI)  
-- Pass end-to-end tests (including CLI interactions)  
-- Final presentation slides (>= 50%) completed  
-
-**Week 6: June 2 – June 8, 2025 (Runnable Draft, Final Report and Presentation)**  
-
-- Bug reduced  
-- Runnable draft and CLI completed  
-- Final report (>= 50%) completed  
-- Final presentation slides completed  
-
-**Week 7: June 9 – June 15, 2025 (Runnable Draft and Final Presentation)**  
-
-- Runnable draft submitted (June 9, 16:00)  
-- Final Presentation delivered (June 12/13)  
-- Draft report (>= 50%) complete  
-- Bugs reduced to < 5 critical issues  
-
-**Week 8: June 16 – June 20, 2025 (Draft Report and Finalization)**  
-
-- Final report draft submitted (June 18, 16:00)  
-- Package finalized with tests passing  
-- Documentation completed.  
-
-**Post-Week: June 23 – June 25, 2025 (Final Submission)**  
-
-- Final report (final version) submitted (June 25, 12:00)  
-- Package submitted (June 25, 12:00)  
+### Post-Week: June 23 – June 25, 2025 (Final Submission)
+- Submit final report on June 25, 12:00.
+- Submit package on June 25, 12:00.

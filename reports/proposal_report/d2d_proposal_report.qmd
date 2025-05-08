@@ -1,3 +1,9 @@
+:::
+To render the PDF, please run
+$ quarto render reports/proposal_report/d2d_proposal_report.qmd
+The generated PDF will appear in the reports/ directory.
+:::
+
 ---
 title: "Dialogue2Data (D2D): Transforming Interviews into Structured Data for Analysis - Proposal Report"
 author: "Sienko Ikhabi, Dominic Lam, Wangkai Zhu, Yun Zhou"
