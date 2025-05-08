@@ -1,0 +1,13 @@
+---
+fig-cap-location: top
+---
+
+::: {layout="[[45,-10, 45], [45,-10, 45]]"}
+![Step 1](img/D2D_Process-Step1.png)
+
+![Step 2](img/D2D_Process-Step2.png)
+
+![Step 3](img/D2D_Process-Step3.png)
+
+![Step 4](img/D2D_Process-Step4.png)
+:::
