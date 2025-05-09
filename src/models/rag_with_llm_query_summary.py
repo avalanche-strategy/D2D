@@ -39,7 +39,7 @@ def main(transcript_dir: str, guidelines_path: str, gpt_model: str, api_key: str
         transcript_matches = []
         for guide_question in guide_questions:
             top_k_matches = summarize_match_top_k_questions(guide_question, group_embeddings, model, device, gpt_model,
-                                                             api_key, k=3)
+                                                             api_key, k=5)
             transcript_matches.append({
                 "guide_question": guide_question,
                 "matches": top_k_matches
