@@ -1,10 +1,9 @@
 - **Input:**
     - `.txt` files containing unstructured, conversational interview transcripts.
-    - `.csv` files containing a fixed set of guideline questions (23 in total) to which responses must be mapped.
+    - `.csv` files containing a fixed set of guideline questions to which responses must be mapped.
 - **Output:**
     - A structured `.csv` file where:
         - Columns represent the guideline questions.
         - Rows correspond to the extracted responses for each interviewee.
-        - Cells contain either direct or inferred answers from the transcript, matched and formatted for clarity.
 
 This structured output is designed to enable further analysis, such as dashboard visualization, response comparison, and statistical summary.
