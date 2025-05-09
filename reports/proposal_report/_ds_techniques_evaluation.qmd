@@ -1,5 +1,5 @@
 
-Our evaluation is inspired by the RAGAS framework, which provides five main metrics - faithfulness, relevance, precision, recall, and correctness (when golden answers are available) to evaluate the model performance compenhensively[1]. However, RAGAS has some limitations when applied to Dialogue2Data, which we aim to address using strategies proposed in Daedalus v4[2].
+Our evaluation is inspired by the RAGAS framework, which provides five main metrics—faithfulness, relevance, precision, recall, and correctness (when golden answers are available) to evaluate the model performance comprehensively[1]. However, RAGAS has some limitations when applied to Dialogue2Data, which we aim to address using strategies proposed in Daedalus v4[2].
 
 - **Limitation in assessing answer style**: Our partner expects consistent response styles for downstream analytics, but current metrics lack assessment of sentence completeness, length, and clarity. We will add a consistency metric to measure stylistic alignment.
 

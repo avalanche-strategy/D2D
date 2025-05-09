@@ -1,6 +1,6 @@
 ### Outline workflow
 
-@fig-workflow shows the proposed pipeline. 
+@fig-workflow shows the proposed pipeline.
 
 ![Workflow Outline](img/D2D_Workflow.jpg){#fig-workflow}
 
@@ -19,5 +19,5 @@ In @fig-workflow we presented the core `D2D.py` as a single block. At a high-lev
 
 1. Generate an $N \times M$ grid, with $N$ rows corresponding to the number of interviews we have and $M$ columns corresponding to the number of guideline questions.
 2. Iterate through each guideline question and each interview (each cell in the $N \times M$ grid). In this step, we retrieve answers from the interview transcript that are relevant to the current guideline question. It is possible to have 0 or more relevant responses.
-3. Use the set of top retrieved responses to generate an appropriate answer to be populated for the current cell. 
+3. Use the set of top retrieved responses to generate an appropriate answer to be populated for the current cell.
 4. Repeat this process for all the cells.

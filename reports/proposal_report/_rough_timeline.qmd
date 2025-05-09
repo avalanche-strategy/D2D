@@ -1,0 +1,25 @@
+
+The detailed timeline is included in [Appendix A](#appendix-a).
+
+### Week 1: Apr 28 – May 4, 2025
+
+- Set up repository, deliver proposal presentation, draft 50% of proposal report.
+
+### Week 2: May 5 – 11
+- Finalize proposal report. Split into RAG and Evaluation groups.
+
+### Week 3: May 12 – 18
+- RAG: Test Self-RAG script, document.
+- Evaluation: Extend module, add 10 golden samples.
+
+### Week 4: May 19 – 25
+- Integrate efforts, evaluate approaches, optimize, select approach.
+
+### Week 5: May 26 – Jun 1
+- Finalize output, CLI, documentation, pass end-to-end tests.
+
+### Week 6: Jun 2 – 8
+- Complete runnable draft, CLI.
+
+### Final: Jun 9 – 12
+- Submit draft (Jun 9), present (Jun 12), submit final report, package (Jun 12).

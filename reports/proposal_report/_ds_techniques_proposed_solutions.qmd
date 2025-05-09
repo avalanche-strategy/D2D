@@ -1,5 +1,5 @@
 
-### RAG: Retrieval-Augmented Generation (Baseline)
+### RAG (Baseline):
 
 Our baseline method features a **Retrieval-Augmented Generation (RAG)** pipeline, adapted to our project, to obtain answers from interview transcripts
 
@@ -9,12 +9,13 @@ Our baseline method features a **Retrieval-Augmented Generation (RAG)** pipeline
 - **Generator**:
   The relevant matches are sent to an LLM like **ChatGPT** as context, to extract the core meaning from the answers that are relevant to the guideline question. This setup **reduces hallucinated responses** by providing context to the LLM.
 
-But Traditional RAG has drawbacks: it always gives a fixed number of results, with the risk of excluding the true answer if it's outside the **top-k**(or **top-p**). The generator also assumes the relevance of retrieved content, at the risk of compromising accuracy.
+But RAG has drawbacks: if the information lies outside the top matches. The generator assumes
+the relevance of retrieved content, at the risk of compromising accuracy.
 
-### Self-RAG: Self-Reflective Retrieval-Augmented Generation
+### Self-RAG:
 
 As a response to the vulnerability of Traditional RAG, **Self-RAG** has an additional self-evaluation layer with an LLM.
 
-After it retrieves the **top-k QA pairs**, the LLM evaluates their relevance to the guideline question. If found relevant, it retrieves the key points. If not, it adjusts the hyperparameters (e.g., changes **k** or **p**) of the retriever, and attempts again. If it fails to retrieve any relevant content after multiple trials, it returns `[No relevant response found]`.
+After it retrieves the **top-k QA pairs**, the LLM evaluates their relevance to the guideline question. If found relevant, pass along. If not, it adjusts **k** or **p** of the retriever, and attempts again. If it fails to retrieve any relevant content after multiple trials, it returns `[No relevant response found]`.
 
-This auto-assessment cycle enhances accuracy and focus, particularly in situations where first-time retrievals are sub-optimal, and enables the system to refine itself independently.
+This auto-assessment cycle enhances accuracy and focus, particularly in situations where first-time retrievals are sub-optimal.

@@ -1,8 +1,8 @@
-Large volumes of open-ended interview transcripts contain rich, nuanced information that can provide key takeaways to the survey moderators. However, extracting structured insights from these unstructured transcripts remains a labor-intensive and error-prone process. 
-Our partner’s current workflow relies on manually prompting LLMs such as ChatGPT to answer a set of pre-defined guideline questions, with extensive human oversight required to validate the outputs.
+Large volumes of open-ended interview transcripts contain rich, nuanced information that can provide key takeaways to the survey moderators. However, extracting structured insights from these unstructured transcripts—especially when aligning them to specific research or survey questions—remains a labor-intensive and error-prone process. 
+Our partner’s current workflow relies on manually prompting large language models (LLMs) such as ChatGPT to answer a set of pre-defined guideline questions, with extensive human oversight required to validate the outputs.
 
 While this approach can be effective, it is neither scalable nor efficient. As datasets grow in size and complexity, the need for a more automated, robust, and precise solution becomes evident. Our goal is to reduce the human workload while preserving—or even improving—answer quality and reliability.
 
 ### Objective
 
-Our project aims to develop a NLP pipeline that automatically matches and extracts relevant information from interview transcripts in response to a predefined set of guideline questions. This system seeks to reduce reliance on human-in-the-loop processes and make the output more consistent and structured for downstream analytics.
+Our project aims to develop a natural language processing (NLP) pipeline that automatically matches and extracts relevant information from interview transcripts in response to a predefined set of guideline questions. This system seeks to reduce reliance on human-in-the-loop processes and make the output more consistent and structured for downstream analytics.
