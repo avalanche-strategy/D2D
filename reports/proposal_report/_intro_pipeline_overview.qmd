@@ -1,34 +1,23 @@
 ### Outline workflow
 
-In @fig-workflow we show the outline of the proposed process. 
+@fig-workflow shows the proposed pipeline. 
 
 ![Workflow Outline](img/D2D_Workflow.jpg){#fig-workflow}
 
-1. In the first stage, we perform text pre-processing on the guidelines and the interview transcripts using `pre_process.py`.
-2. The cleaned files are then input into the core D2D process, `D2D.py`, to perform the main processing part of our solution. The aim is to generate an appropriate answer to each guideline question from each interview.
-3. We then build the main output of our process, the `results.csv` grid. _As as stretch goal, we might also create the file `additional_insights.csv`. This file will include any responses that were in the interview but were not relevant to any specific guideline question but could be useful information. This is still vaguely defined and will only be revisited once the main solution is developed._
-4. During development of the solution, we will use custom-made transcripts for which we have the expected `standard_responses.csv` also custom-made. In the final step, we will evaluate the performance of our current model by comparing the output generated against these expected responses and produce metrics to be reported in the file `metrics.csv`. We cover this process in the evaluation section.
+1. Perform text pre-processing on the guidelines and the interview transcripts using `pre_process.py`.
+2. Feed the cleaned files into the core `D2D.py` script to generate an appropriate answer to each guideline question from each interview.
+3. Build final `results.csv` output. _Stretch goal: Create `additional_insights.csv` containing responses in the interview that are useful information but do not answer any specific guideline question._
 
-We propose to deliver the final solution as a Python-based CLI tool that our capstone partner can incorporate in their current process.
+We propose to deliver the solution as a Python-based CLI tool that our capstone partner can incorporate in their current process.
 
 
 ### Pseudocode of the core process
 
-In @fig-workflow we presented the core D2D.py as a single block. At a high-level, we can envisage this process to be broken down as per the pseudocode below:
+In @fig-workflow we presented the core `D2D.py` as a single block. At a high-level, we can envisage this script to be broken down as per the pseudocode below:
 
-::: {layout="[[40,-20, 40], [40,-20, 40]]"}
-![Step 1](img/D2D_Process-Step1.png){#fig-step1}
-
-![Step 2](img/D2D_Process-Step2.png){#fig-step2}
-
-![Step 3](img/D2D_Process-Step3.png){#fig-step3}
-
-![Step 4](img/D2D_Process-Step4.png){#fig-step4}
-:::
+![D2D Pseudocode](img/D2D_Process_all.png){#fig-d2d}
 
 1. Generate an $N \times M$ grid, with $N$ rows corresponding to the number of interviews we have and $M$ columns corresponding to the number of guideline questions.
-2. Next we iterate through each guideline question and each interview (each cell in the $N \times M$ grid). In this step, we aim to retrieve answers from the transcript that are relevant to the current guideline question. Note that it is possible (based on the settings) to have 0 or more relevant responses.
-3. In the third step, we use the set of top retrieved answers to generate an appropriate response to be populate for the current cell. 
-4. We repeat this process until we have processed all the cells in the grid
-
-The above is a simple pseudocode version. In the next sections, we will cover the exact data science techniques we plan to use in detail. In addition, the looping process will be optimised for efficiency. For instance, we will use vectorization to process multiple interviews and guideline questions concurrently rather than looping through each one at a time.
+2. Iterate through each guideline question and each interview (each cell in the $N \times M$ grid). In this step, we retrieve answers from the interview transcript that are relevant to the current guideline question. It is possible to have 0 or more relevant responses.
+3. Use the set of top retrieved responses to generate an appropriate answer to be populated for the current cell. 
+4. Repeat this process for all the cells.
