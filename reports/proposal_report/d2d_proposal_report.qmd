@@ -7,6 +7,7 @@ The generated PDF will appear in the reports/ directory.
 ---
 title: "Dialogue2Data (D2D): Transforming Interviews into Structured Data for Analysis - Proposal Report"
 author: "Sienko Ikhabi, Dominic Lam, Wangkai Zhu, Yun Zhou"
+subtitle: "[GitHub Repository](https://github.com/avalanche-strategy/D2D/tree/main)"
 format:
     pdf:
         toc: true
