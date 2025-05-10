@@ -1,8 +1,8 @@
-:::
+<!--
 To render the PDF, please run
 $ quarto render reports/proposal_report/d2d_proposal_report.qmd
 The generated PDF will appear in the reports/ directory.
-:::
+-->
 
 ---
 title: "Dialogue2Data (D2D): Transforming Interviews into Structured Data for Analysis - Proposal Report"
@@ -21,8 +21,6 @@ execute:
 # Executive Summary
 {{< include _executive_summary.qmd >}}
 
-\newpage
-
 # Project Introduction
 ## 1. Motivation
 {{< include _intro_motivation.qmd >}}
@@ -34,17 +32,23 @@ execute:
 \newpage
 
 # Data Science Techniques
-## 1. Proposed Solutions
+## 1. Data Description and Technique Appropriateness
+{{< include _ds_techniques_data_description.qmd >}}
+## 2. Proposed Solutions
 {{< include _ds_techniques_proposed_solutions.qmd >}}
-## 2. Evaluation
+## 3. Evaluation
 {{< include _ds_techniques_evaluation.qmd >}}
 
 \newpage
 
 # Timeline
-{{< include _timeline.qmd >}}
+{{< include _rough_timeline.qmd >}}
 
 \newpage
 
 # References
 {{< include _references.qmd >}}
+
+\newpage
+# Appendix A: Detailed Timeline {#appendix-a}
+{{< include _timeline.qmd >}}

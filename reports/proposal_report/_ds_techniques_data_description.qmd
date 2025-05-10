@@ -1,0 +1,24 @@
+
+### Use of Data Science Techniques
+Retrieval-Augmented Generation (RAG) and Self-Reflective Retrieval-Augmented Generation (Self-RAG) will transform interview transcripts into structured data by extracting entities and sentiments, will then be evaluated using RAGAS and Daedalus for accuracy.
+
+### Data Description
+**Interview transcripts** (observational units) are text data guided by questions.
+
+**Example**:
+
+| Speaker     | Text                                                     |
+|-------------|----------------------------------------------------------|
+| Interviewer | "Thanks for joining me today.  What’s your name and where are you located?"|
+| Participant | "My name’s Camila, outside Jackson, Mississippi."        |
+| Interviewer | "Great to meet you, Camila! Who lives with you at home?" |
+| Participant | "I live with my husband, dogs, and mom."                 |
+
+### Appropriateness of Data
+Transcripts are ideal for RAG/Self-RAG, as LLMs handle natural language for entity extraction.
+
+### Difficulties
+- **Filler Words**: Greetings and fillers (e.g., "sure thing") may obscure key content, requiring filtering.  
+- **Volume**: Lengthy transcripts demand efficient RAG indexing.  
+
+
