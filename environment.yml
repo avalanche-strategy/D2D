@@ -12,3 +12,4 @@ dependencies:
   - pytorch
   - sentence-transformers
   - openai
+  - anthropic
