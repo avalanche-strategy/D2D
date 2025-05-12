@@ -15,13 +15,15 @@ def embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.d
         list[dict]: List of dictionaries with embeddings and original texts.
     """
     group_embeddings = []
-    for group in groups:
+    # adding index so we know the order of speaking
+    for index, group in enumerate(groups):
         interviewer_question = " ".join(group["interviewer"]).replace("Interviewer: ", "")
         embedding = model.encode(interviewer_question, convert_to_tensor=True, device=device)
         group_embeddings.append({
             "interviewer_question": interviewer_question,
             "interviewee_response": " ".join(group["interviewee"]).replace("Interviewee: ", ""),
-            "embedding": embedding
+            "embedding": embedding,
+            "speaking_round": index
         })
     return group_embeddings
 
@@ -112,3 +114,36 @@ def summarize_match_top_k_questions(guide_question: str, group_embeddings: list[
         })
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
     return similarities[:k]
+
+
+def match_top_p_questions(guide_question: str, group_embeddings: list[dict], model: SentenceTransformer, 
+                          device: torch.device, p: float = 0.5, max_matches: int = 5) -> list[dict]:
+    """
+    Match a guideline question to the top k groups based on similarity.
+    
+    Args:
+        guide_question (str): The guide question to match.
+        group_embeddings (list[dict]): List of embedded groups.
+        model (SentenceTransformer): The embedding model.
+        device (torch.device): The device to use for computation.
+        p (float): Threshold for similarity.
+        max_matches (int): Maximum number of matches to return
+    
+    Returns:
+        list[dict]: Top k matches with similarity scores.
+    """
+    question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
+    similarities = []
+    for group in group_embeddings:
+        similarity = util.cos_sim(question_embedding, group["embedding"]).cpu().numpy()[0][0]
+        similarities.append({
+            "response": group["interviewee_response"],
+            "question": group["interviewer_question"],
+            "speaking_round": group["speaking_round"],
+            "similarity": float(similarity)
+        })
+    
+    # TODO: Add logic for max_matches
+    ret_similarity = [s for s in similarities if s["similarity"]>=p]
+    ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
+    return ret_similarity
