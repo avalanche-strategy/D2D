@@ -3,16 +3,17 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from src.utils.data_utils import load_guidelines, load_transcript, segment_transcript
 from src.utils.embedding_utils import embed_groups, match_top_k_questions
-from src.utils.output_utils import generate_output
+from src.utils.output_utils import generate_output, setup_logging
 from sentence_transformers import SentenceTransformer
 import torch
 import pandas as pd
 from glob import glob
 from dotenv import load_dotenv
+import logging
 
 
 
-def main(transcript_dir: str, guidelines_path: str, gpt_model: str, api_key: str, output_path: str):
+def main(transcript_dir: str, guidelines_path: str, gpt_model: str, api_key: str, output_path: str, pipeline_name:str = "rag_baseline"):
     """
     Main execution function to process transcripts and generate output.
     
@@ -22,8 +23,12 @@ def main(transcript_dir: str, guidelines_path: str, gpt_model: str, api_key: str
         gpt_model (str): The GPT model to use.
         api_key (str): The OpenAI API key.
     """
-    print("Program started ...")
-    print(f"Start finding matches for guidelines:{guidelines_path}")
+
+    # Set up logging
+    logger = setup_logging(pipeline_name, output_path)
+
+    logger.info("Program started ...")
+    logger.info(f"Start finding matches for guidelines:{guidelines_path}")
     model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     guide_questions = load_guidelines(guidelines_path)
@@ -43,7 +48,7 @@ def main(transcript_dir: str, guidelines_path: str, gpt_model: str, api_key: str
                 "matches": top_k_matches
             })
         matches_list.append(transcript_matches)
-    generate_output(transcript_files, matches_list, guide_questions, gpt_model, api_key, output_path)
+    generate_output(transcript_files, matches_list, guide_questions, gpt_model, api_key, output_path, logger)
 
 if __name__ == "__main__":
     load_dotenv()
