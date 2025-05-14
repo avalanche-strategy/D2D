@@ -1,3 +1,5 @@
+import logging
+
 from sentence_transformers import SentenceTransformer, util
 from src.utils.api_utils import summarize_question
 import torch
@@ -55,7 +57,7 @@ def match_top_k_questions(guide_question: str, group_embeddings: list[dict], mod
 
 
 def summarize_embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.device, gpt_model: str,
-                            api_key: str) -> list[dict]:
+                            api_key: str, logger: logging.Logger = None) -> list[dict]:
     """
     Embed summarized interviewer questions from the groups.
 
@@ -72,7 +74,7 @@ def summarize_embed_groups(groups: list[dict], model: SentenceTransformer, devic
     group_embeddings = []
     for group in groups:
         original_question = " ".join(group["interviewer"]).replace("Interviewer: ", "")
-        summarized_question = summarize_question(original_question, gpt_model, api_key)
+        summarized_question = summarize_question(original_question, gpt_model, api_key, logger)
         embedding = model.encode(summarized_question, convert_to_tensor=True, device=device)
         group_embeddings.append({
             "original_question": original_question,
@@ -80,11 +82,14 @@ def summarize_embed_groups(groups: list[dict], model: SentenceTransformer, devic
             "original_response": " ".join(group["interviewee"]).replace("Interviewee: ", ""),
             "embedding": embedding
         })
+
+    logger.info("Questions summarized and embedded.")
+    logger.info("================================================================================================\n")
     return group_embeddings
 
 
-def summarize_match_top_k_questions(guide_question: str, group_embeddings: list[dict], model: SentenceTransformer,
-                                     device: torch.device, gpt_model: str, api_key: str, k: int = 3) -> list[dict]:
+def summarize_match_top_k_questions(guide_embedding: torch.Tensor, group_embeddings: list[dict], model: SentenceTransformer,
+                                     device: torch.device, gpt_model: str, api_key: str, k: int = 3, logger: logging.Logger = None) -> list[dict]:
     """
     Match a summarized guideline question to the top k groups based on similarity.
 
@@ -100,13 +105,10 @@ def summarize_match_top_k_questions(guide_question: str, group_embeddings: list[
     Returns:
         list[dict]: Top k matches with similarity scores, using original texts.
     """
-    summarized_guide_question = summarize_question(guide_question, gpt_model, api_key)
-    print(f"Original Question: {guide_question}")
-    print(f"Summarized Question: {summarized_guide_question}")
-    question_embedding = model.encode(summarized_guide_question, convert_to_tensor=True, device=device)
+
     similarities = []
     for group in group_embeddings:
-        similarity = util.cos_sim(question_embedding, group["embedding"]).cpu().numpy()[0][0]
+        similarity = util.cos_sim(guide_embedding, group["embedding"]).cpu().numpy()[0][0]
         similarities.append({
             "response": group["original_response"],
             "question": group["original_question"],
