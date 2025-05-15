@@ -1,5 +1,5 @@
 import logging
-from litellm import completion
+from litellm import completion, acompletion
 from dotenv import load_dotenv, find_dotenv
 
 
@@ -52,34 +52,29 @@ def build_summarize_prompt(extracted_phrase: str, query: str, conciseness: int =
                         response found]," return the same. Do not add introductory phrases or extra 
                         details."""
 
-
-def extract_and_summarize_response_chatgpt(context: str, query: str, llm_model: str, api_key: str, conciseness: int = 1,
-                                           logger: logging.Logger = None) -> str:
+async def extract_and_summarize_response_llm_async(context: str, query: str, llm_model: str, conciseness: int = 1,
+                                                logger: logging.Logger = None) -> str:
     """
     The core function of the Generator in the pipeline.
-    Query LLM with the provided context and query.
+    Query LLM with the provided context and query asynchronously.
 
     Args:
         context (str): The dialogue context.
         query (str): The query to answer.
-        llm_model (str): The GPT model to use.
+        llm_model (str): The LLM model to use.
         api_key (str): The OpenAI API key.
         conciseness (int): Conciseness level (0 for less concise, 1 for more concise).
         logger (logging.Logger, optional): Logger instance for logging execution information.
-            Defaults to None.
 
     Returns:
         str: The summarized response from ChatGPT.
     """
-
-    # openai.api_key = api_key
     _ = load_dotenv(find_dotenv())
-    # logger.info("Extracting and Summarizing Response ...")
 
     # First call: Extract the core phrase from the interviewee's response
     try:
         extract_prompt = build_extract_prompt(context, query, conciseness)
-        response = completion(
+        response = await acompletion(
             model=llm_model,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -88,16 +83,11 @@ def extract_and_summarize_response_chatgpt(context: str, query: str, llm_model: 
             temperature=0
         )
         extracted_phrase = response.choices[0].message.content
-
-        # Debugging purpose only
-        logger.info("\nExtract Prompt: %s", extract_prompt)
-        logger.info("\nExtracted Response: %s", f"{extracted_phrase}\n")
-
         summarize_prompt = build_summarize_prompt(extracted_phrase, query, conciseness)
 
         # Second call: Summarize the extracted phrase
         try:
-            response = completion(
+            response = await acompletion(
                 model=llm_model,
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
@@ -106,26 +96,23 @@ def extract_and_summarize_response_chatgpt(context: str, query: str, llm_model: 
                 temperature=0
             )
             response_content = response.choices[0].message.content.strip('\"\'')
-
-            # Debugging purpose only
-            logger.info("Summarize Prompt: %s", summarize_prompt)
-            logger.info("\nSummarized Response: %s", f"{response_content}\n")
-
             return response_content
         except Exception as e:
+            logger.error(f"Error summarizing response: {str(e)}")
             return f"Error querying ChatGPT: {str(e)}"
     except Exception as e:
+        logger.error(f"Error extracting response: {str(e)}")
         return f"Error querying ChatGPT: {str(e)}"
 
-
-def summarize_question(question: str, llm_model: str, api_key: str, logger: logging.Logger = None) -> str:
+async def summarize_question_async(question: str, llm_model: str, logger: logging.Logger = None) -> str:
     """
-    Summarize a question using the OpenAI API.
+    Summarize a question using the OpenAI API asynchronously.
 
     Args:
         question (str): The question to summarize.
         llm_model (str): The GPT model to use.
         api_key (str): The OpenAI API key.
+        logger (logging.Logger, optional): Logger instance for logging execution information.
 
     Returns:
         str: The summarized question.
@@ -134,7 +121,7 @@ def summarize_question(question: str, llm_model: str, api_key: str, logger: logg
     prompt = f"""Summarize the following question into a concise, single sentence that captures its core intent, 
                 avoiding greetings, filler words and maintaining clarity: "{question}" """
     try:
-        response = completion(
+        response = await acompletion(
             model=llm_model,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -146,80 +133,58 @@ def summarize_question(question: str, llm_model: str, api_key: str, logger: logg
         logger.info("Summarized Question: %s", f"{summarized_question}\n")
         return summarized_question
     except Exception as e:
-        print(f"Error summarizing question: {str(e)}")
+        logger.error(f"Error summarizing question: {str(e)}")
         return question  # Fallback to the original question on error
 
 
-def extract_and_summarize_response_claude(context: str, query: str, llm_model: str, api_key: str) -> str:
-    """
-    Query Anthropic API with the provided context and query.
-
-    Args:
-        context (str): The dialogue context.
-        query (str): The query to answer.
-        llm_model (str): The Claude model to use.
-        api_key (str): The Anthropic API key.
-
-    Returns:
-        str: The response from Anthropic.
-    """
-    _ = load_dotenv(find_dotenv())
-
-    extract_prompt = f"""Given the following dialogue as context: {context}
-                        Identify the exact phrase from the interviewee's response 
-                        that directly answers the query "{query}" Return only the 
-                        core concise phrases, excluding filler words (e.g., "um," "well") 
-                        and irrelevant commentary. If it's possible, please use as 
-                        much original wordings as possible. If no relevant response 
-                        is found, return "[No relevant response found]." """
-    try:
-        response = completion(
-            model=llm_model,
-            max_tokens=100,
-            system="You are a market researcher who analyzes interviews to extract correct responses.",
-            messages=[
-                {
-                    "role": "user",
-                    "content": extract_prompt
-                },
-                {
-                    "role": "assistant",
-                    "content": "Here is the response extracted from the dialogue: <summary>"
-                }
-            ],
-            stop_sequences=["</summary>"]
-        )
-
-        print(f"Response: {response.usage}")
-        # return response.content[0].text
-        extracted_phrase = response.content[0].text
-        # print("Extract Prompt:", extract_prompt)
-        print("\nExtracted Response:", extracted_phrase, "\n")
-        return extracted_phrase
-
-        # summarize_prompt = f"""Given the following extracted response: {extracted_phrase},
-        #                     for the query "{query}" Summarize the response into a single,
-        #                     concise phrase, or just one sentence that captures its core meaning.
-        #                     If it's possible, please use as much original wordings as possible,
-        #                     and it doesn't have to be complete sentence. The number of words of
-        #                     the summary should be less than or equal to the extracted responses
-        #                     provided. If the response is "[No relevant response found]," return
-        #                     the same. Do not add introductory phrases or extra details."""
-        # try:
-        #     response = openai.chat.completions.create(
-        #         model=gpt_model,
-        #         messages=[
-        #             {"role": "system", "content": "You are a helpful assistant."},
-        #             {"role": "user", "content": summarize_prompt}
-        #         ]
-        #     )
-        #     response_content = response.choices[0].message.content.strip('\"\'')
-        #     print("Summarize Prompt:", summarize_prompt)
-        #     print("\nSummarized Response:", response_content, "\n")
-        #     return response_content
-        # except Exception as e:
-        #     return f"Error querying ChatGPT: {str(e)}"
-    except Exception as e:
-        return f"Error querying Anthropic: {str(e)}"
-        logger.info(f"Error summarizing question: {str(e)}")
-        return question  # Fallback to the original question on error
+# def extract_and_summarize_response_claude(context: str, query: str, llm_model: str, api_key: str) -> str:
+#     """
+#     Query Anthropic API with the provided context and query.
+#
+#     Args:
+#         context (str): The dialogue context.
+#         query (str): The query to answer.
+#         llm_model (str): The Claude model to use.
+#         api_key (str): The Anthropic API key.
+#
+#     Returns:
+#         str: The response from Anthropic.
+#     """
+#     _ = load_dotenv(find_dotenv())
+#
+#     extract_prompt = f"""Given the following dialogue as context: {context}
+#                         Identify the exact phrase from the interviewee's response
+#                         that directly answers the query "{query}" Return only the
+#                         core concise phrases, excluding filler words (e.g., "um," "well")
+#                         and irrelevant commentary. If it's possible, please use as
+#                         much original wordings as possible. If no relevant response
+#                         is found, return "[No relevant response found]." """
+#     try:
+#         response = completion(
+#             model=llm_model,
+#             max_tokens=100,
+#             system="You are a market researcher who analyzes interviews to extract correct responses.",
+#             messages=[
+#                 {
+#                     "role": "user",
+#                     "content": extract_prompt
+#                 },
+#                 {
+#                     "role": "assistant",
+#                     "content": "Here is the response extracted from the dialogue: <summary>"
+#                 }
+#             ],
+#             stop_sequences=["</summary>"]
+#         )
+#
+#         print(f"Response: {response.usage}")
+#         # return response.content[0].text
+#         extracted_phrase = response.content[0].text
+#         # print("Extract Prompt:", extract_prompt)
+#         print("\nExtracted Response:", extracted_phrase, "\n")
+#         return extracted_phrase
+#
+#     except Exception as e:
+#         return f"Error querying Anthropic: {str(e)}"
+#         logger.info(f"Error summarizing question: {str(e)}")
+#         return question  # Fallback to the original question on error
