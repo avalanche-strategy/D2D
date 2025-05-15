@@ -180,12 +180,10 @@ def run_ragas_evaluation(
     merged_df = pd.merge(rag_long, ref_long, on=["respondent_id", "question"], how="left")
     merged_df = pd.merge(merged_df, context_df, on=["respondent_id", "question"], how="left")
 
-    test_df = merged_df.head(10)
-
     # Evaluate
     tqdm.pandas()
-    scores_df = test_df.progress_apply(score_ragas, axis=1)
-    result_df = pd.concat([test_df, scores_df], axis=1)
+    scores_df = merged_df.progress_apply(score_ragas, axis=1)
+    result_df = pd.concat([merged_df, scores_df], axis=1)
     result_df.to_csv(os.path.expanduser(output_path), index=False)
     print(f"\n Evaluation completed. Saved to: {output_path}")
 
