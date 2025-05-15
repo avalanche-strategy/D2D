@@ -1,7 +1,8 @@
 import logging
-
+import asyncio
 from sentence_transformers import SentenceTransformer, util
-from src.utils.api_utils import summarize_question
+from src.utils.api_utils import summarize_question_async
+from src.utils.output_utils import output_divider
 import torch
 
 def embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.device) -> list[dict]:
@@ -55,26 +56,41 @@ def match_top_k_questions(guide_question: str, group_embeddings: list[dict], mod
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
     return similarities[:k]
 
-
-def summarize_embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.device, gpt_model: str,
-                            api_key: str, logger: logging.Logger = None) -> list[dict]:
+async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransformer, device: torch.device, gpt_model: str,
+                                logger: logging.Logger = None) -> list[dict]:
     """
-    Embed summarized interviewer questions from the groups.
+    Embed summarized interviewer questions from the groups asynchronously.
 
     Args:
         groups (list[dict]): List of groups containing interviewer and interviewee turns.
         model (SentenceTransformer): The embedding model.
         device (torch.device): The device to use for computation.
         gpt_model (str): The GPT model for summarization.
-        api_key (str): The OpenAI API key for summarization.
+        logger (logging.Logger, optional): Logger instance for logging execution information.
 
     Returns:
         list[dict]: List of dictionaries with embeddings, summarized questions, and original texts.
     """
+
     group_embeddings = []
-    for group in groups:
-        original_question = " ".join(group["interviewer"]).replace("Interviewer: ", "")
-        summarized_question = summarize_question(original_question, gpt_model, api_key, logger)
+    semaphore = asyncio.Semaphore(10)  # Limit to 5 concurrent API calls
+
+    async def summarize_with_limit(question):
+        async with semaphore:
+            return await summarize_question_async(question, gpt_model, logger)
+
+    # Extract original questions
+    original_questions = [" ".join(group["interviewer"]).replace("Interviewer: ", "") for group in groups]
+    # Parallelize summarization of transcript questions
+    tasks = [summarize_with_limit(q) for q in original_questions]
+    summarized_questions = await asyncio.gather(*tasks, return_exceptions=True)
+
+    for group, original_question, summarized_question in zip(groups, original_questions, summarized_questions):
+        # Handle exceptions from asyncio.gather
+        if isinstance(summarized_question, Exception):
+            logger.error(f"Error summarizing question '{original_question}': {str(summarized_question)}")
+            summarized_question = original_question  # Fallback to original question
+
         embedding = model.encode(summarized_question, convert_to_tensor=True, device=device)
         group_embeddings.append({
             "original_question": original_question,
@@ -84,28 +100,26 @@ def summarize_embed_groups(groups: list[dict], model: SentenceTransformer, devic
         })
 
     logger.info("Questions summarized and embedded.")
-    logger.info("================================================================================================\n")
+    output_divider(logger, True)
     return group_embeddings
 
-
-def summarize_match_top_k_questions(guide_embedding: torch.Tensor, group_embeddings: list[dict], model: SentenceTransformer,
-                                     device: torch.device, gpt_model: str, api_key: str, k: int = 3, logger: logging.Logger = None) -> list[dict]:
+async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict], k: int = 3, logger: logging.Logger = None) -> list[dict]:
     """
-    Match a summarized guideline question to the top k groups based on similarity.
+    Match a summarized guideline question to the top k groups based on similarity asynchronously.
 
     Args:
-        guide_question (str): The guide question to match.
+        guide_embedding (torch.Tensor): The embedding of the guide question.
         group_embeddings (list[dict]): List of embedded groups.
         model (SentenceTransformer): The embedding model.
         device (torch.device): The device to use for computation.
         gpt_model (str): The GPT model for summarization.
         api_key (str): The OpenAI API key for summarization.
         k (int): Number of top matches to return.
+        logger (logging.Logger, optional): Logger instance for logging execution information.
 
     Returns:
         list[dict]: Top k matches with similarity scores, using original texts.
     """
-
     similarities = []
     for group in group_embeddings:
         similarity = util.cos_sim(guide_embedding, group["embedding"]).cpu().numpy()[0][0]
