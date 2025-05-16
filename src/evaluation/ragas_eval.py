@@ -9,22 +9,29 @@ from tqdm import tqdm
 # Load OpenAI client and metric config
 from src.utils.eval_config_utils import client, ACTIVE_METRICS
 
-# GPT scoring helpers 
 
-def ask_score_and_feedback(prompt: str, temperature: float = 0.0, model: str = "gpt-4.1-mini") -> tuple[float, str]:
+# GPT scoring helpers
+
+def ask_score_and_feedback(prompt: str, temperature: float = 0.0, model: str = "gpt-4.1-mini", is_proportion: bool = False) -> tuple[float, str]:
     """
-    Send a prompt to the GPT model to obtain a numerical score and feedback.
+    Send a prompt to a GPT model and extract the score and feedback.
 
     Parameters:
-    - prompt (str): The prompt string to evaluate.
-    - temperature (float): Sampling temperature (default 0.0 for deterministic output).
-    - model (str): Model name to use (default: "gpt-4o-mini").
+    - prompt (str): The prompt string to be evaluated by GPT.
+    - temperature (float): Decoding temperature. Default is 0.0 for deterministic output.
+    - model (str): Model name to use for the request.
+    - is_proportion (bool): Whether the score is expected to be a float in [0, 1], 
+                            which will be mapped to a 1–5 scale.
 
     Returns:
-    - tuple[float, str]: A tuple containing the numerical score and explanation string.
-    """    
+    - tuple[float, str]: Scaled score (1–5 if is_proportion=True) and feedback string.
+
+    Raises:
+    - ValueError: If no score can be parsed from GPT response.
+    """
+
     messages = [
-        {"role": "system", "content": "You are a helpful evaluation assistant. Respond in this format:\nScore: <number>\nFeedback: <short explanation>"},
+        {"role": "system", "content": "You are a helpful evaluation assistant. Respond in this format:\nScore: <number between 0 and 1>\nFeedback: <explanation>"},
         {"role": "user", "content": prompt}
     ]
     response = client.chat.completions.create(
@@ -40,22 +47,48 @@ def ask_score_and_feedback(prompt: str, temperature: float = 0.0, model: str = "
 
     if not score_match:
         raise ValueError(f"Could not find Score in response:\n{content}")
-    score = float(score_match.group(1).strip())
+    
+    raw_score = float(score_match.group(1).strip())
+    score = round(1 + 4 * raw_score, 1) if is_proportion else raw_score
     feedback = feedback_match.group(1).strip() if feedback_match else ""
     return score, feedback
 
 
-def build_prompt(metric: str, row: dict) -> str:
+def split_chunks(context: str) -> list[str]:
     """
-    Construct a natural language prompt for GPT evaluation based on the scoring metric.
+    Split a context string into individual chunks, where each chunk corresponds 
+    to a dialogue unit starting with 'Interviewer:' and optionally includes 'Interviewee:'.
 
     Parameters:
-    - metric (str): The metric name (e.g., 'relevance', 'faithfulness', etc.).
-    - row (dict): A single row of input data containing question, answer, context, etc.
+    - context (str): The full context text as a string.
 
     Returns:
-    - str: A formatted prompt string.
+    - list[str]: List of extracted dialogue chunks.
     """
+
+    if not isinstance(context, str) or not context.strip():
+        return []
+    pattern = r"(Interviewer:.*?)(?=Interviewer:|$)"
+    matches = re.findall(pattern, context.strip(), flags=re.DOTALL)
+    return [chunk.strip() for chunk in matches if chunk.strip()]
+
+
+def build_prompt(metric: str, row: dict, chunk_list: list[str] = None) -> str:
+    """
+    Build a GPT prompt string for evaluating a specific metric.
+
+    Parameters:
+    - metric (str): Metric type ('relevance', 'faithfulness', 'precision', 'recall', 'correctness').
+    - row (dict): Dictionary or Series with at least 'question', 'answer_rag', and optionally 'retrieved_context' or 'answer_ref'.
+    - chunk_list (list[str], optional): List of dialogue chunks (for precision and recall).
+
+    Returns:
+    - str: A formatted prompt string to be passed to GPT.
+
+    Raises:
+    - ValueError: If an unknown metric is passed.
+    """
+
     question = row["question"]
     answer = row["answer_rag"]
     context = row.get("retrieved_context", "")
@@ -78,22 +111,51 @@ Score: X
 Feedback: ..."""
 
     elif metric == "precision":
-        return f"""Evaluate whether the context includes only necessary info to generate the answer.
-Context: {context}
-Answer: {answer}
-Rate from 1 (verbose) to 5 (precise). Explain.
-Score: X
-Feedback: ..."""
+        chunks = "\n\n".join(chunk_list or [])
+        return f"""You are evaluating the **precision** of retrieved chunks in relation to the answer.
+
+Each chunk is a dialogue pair from the original interview.
+
+Chunks:
+{chunks}
+
+Answer:
+{answer}
+
+Instructions:
+- Identify which chunks are actually used to generate this answer.
+- Calculate precision = (number of used chunks) / (total retrieved chunks).
+- Provide:
+  - Score (between 0 and 1),
+  - Feedback listing: 'Used chunks: ...' and 'Unused chunks: ...'
+
+Score: 
+Feedback: """
 
     elif metric == "recall":
-        return f"""Evaluate whether the context includes all necessary info to answer the question.
-Question: {question}
-Context: {context}
-Answer: {answer}
-Rate from 1 (missing info) to 5 (complete). Explain.
-Score: X
-Feedback: ..."""
+        chunks = "\n\n".join(chunk_list or [])
+        return f"""You are evaluating the **recall** of retrieved chunks with respect to the answer.
 
+Question:
+{question}
+
+Answer:
+{answer}
+
+Chunks:
+{chunks}
+
+Instructions:
+- Identify the key facts needed to answer this question.
+- Determine which of these facts appear in the retrieved chunks.
+- Calculate recall = (covered facts) / (total facts required).
+- Provide:
+  - Score (between 0 and 1),
+  - Feedback listing: 'Covered facts: ...' and 'Uncovered facts: ...'
+
+Score: 
+Feedback: """
+    
     elif metric == "correctness":
         return f"""Compare the generated answer with the reference.
 Question: {question}
@@ -109,58 +171,45 @@ Feedback: ..."""
 
 def score_ragas(row: pd.Series) -> pd.Series:
     """
-    Evaluate a single row using the enabled metrics in ACTIVE_METRICS and GPT scoring.
+    Apply GPT scoring for each enabled metric on a single row of input data.
+
+    Metrics include relevance, faithfulness, correctness, and optionally precision/recall using chunk-level evaluation.
 
     Parameters:
-    - row (pd.Series): A row from the merged DataFrame containing question, context, etc.
+    - row (pd.Series): A merged input row containing question, answer, context, and reference.
 
     Returns:
-    - pd.Series: A series of new columns with score and feedback for each metric.
+    - pd.Series: Contains new columns like '<metric>_score' and '<metric>_feedback'.
     """
-    metrics = []
 
+    metrics = []
     if pd.notna(row.get("retrieved_context")):
         for m in ["faithfulness", "precision", "recall"]:
             if ACTIVE_METRICS.get(m, False):
                 metrics.append(m)
-
     if ACTIVE_METRICS.get("relevance", False):
         metrics.append("relevance")
-
     if ACTIVE_METRICS.get("correctness", False) and pd.notna(row.get("answer_ref")):
         metrics.append("correctness")
 
     results = {}
+    chunk_list = split_chunks(row["retrieved_context"])
+
     for metric in metrics:
-        prompt = build_prompt(metric, row)
-        score, feedback = ask_score_and_feedback(prompt)
+        if metric in ["precision", "recall"]:
+            prompt = build_prompt(metric, row, chunk_list=chunk_list)
+            score, feedback = ask_score_and_feedback(prompt, is_proportion=True)
+        else:
+            prompt = build_prompt(metric, row)
+            score, feedback = ask_score_and_feedback(prompt)
+        
         results[f"{metric}_score"] = score
         results[f"{metric}_feedback"] = feedback
 
     return pd.Series(results)
 
 
-# Main evaluation function 
-
-def run_ragas_evaluation(
-    rag_path: str,
-    ref_path: str,
-    context_path: str,
-    output_path: str
-):
-    """
-    Execute the full RAGAS evaluation pipeline:
-    1. Load RAG answers, reference answers, and retrieved contexts.
-    2. Merge them into a single DataFrame.
-    3. Score each row using GPT across selected metrics.
-    4. Save the result with scores and feedback to CSV.
-
-    Parameters:
-    - rag_path (str): Path to the RAG-generated answers CSV.
-    - ref_path (str): Path to the human reference answers CSV.
-    - context_path (str): Path to the cleaned retrieved contexts CSV.
-    - output_path (str): Path to save the final output CSV with scores.
-    """
+def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output_path: str):
     rag_df = pd.read_csv(os.path.expanduser(rag_path))
     ref_df = pd.read_csv(os.path.expanduser(ref_path))
     context_df = pd.read_csv(os.path.expanduser(context_path))
@@ -187,8 +236,6 @@ def run_ragas_evaluation(
     result_df.to_csv(os.path.expanduser(output_path), index=False)
     print(f"\n Evaluation completed. Saved to: {output_path}")
 
-
-# CLI entry point
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run RAGAS evaluation pipeline.")
