@@ -102,7 +102,7 @@ async def extract_and_summarize_response_llm_async(context: str, query: str, llm
                 temperature=0
             )
             response_content = response.choices[0].message.content.strip('\"\'')
-            return response_content
+            return (response_content, extracted_phrase)
         except Exception as e:
             logger.error(f"Error summarizing response: {str(e)}")
             return f"Error querying ChatGPT: {str(e)}"
