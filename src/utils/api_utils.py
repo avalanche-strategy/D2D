@@ -121,14 +121,19 @@ async def summarize_question_async(question: str, llm_model: str, logger: loggin
     prompt = f"""Summarize the following question into a concise, single sentence that captures its core intent, 
                 avoiding greetings, filler words and maintaining clarity: "{question}" """
     try:
-        response = await acompletion(
-            model=llm_model,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        summarized_question = response.choices[0].message.content.strip('\"\'')
+        if llm_model:
+            response = await acompletion(
+                model=llm_model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            summarized_question = response.choices[0].message.content.strip('\"\'')
+        else:
+            # you can pass None for llm_model for an "Identity" summary i.e. copied directly
+            summarized_question = question
+        
         logger.info("Original Question: %s", question)
         logger.info("Summarized Question: %s", f"{summarized_question}\n")
         return summarized_question
