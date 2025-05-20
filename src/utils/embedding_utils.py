@@ -53,7 +53,10 @@ def match_top_k_questions(guide_question: str, group_embeddings: list[dict], mod
         similarities.append({
             "response": group["interviewee_response"],
             "question": group["interviewer_question"],
-            "similarity": float(similarity)
+            "similarity": float(similarity),
+            "interviewer_line_ref": group["interviewer_line_ref"],
+            "interviewee_line_ref": group["interviewee_line_ref"],
+            "speaking_round": group["speaking_round"]
         })
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
     return similarities[:k]
@@ -98,7 +101,10 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
             "original_question": original_question,
             "summarized_question": summarized_question,
             "original_response": " ".join(group["interviewee"]).replace("Interviewee: ", ""),
-            "embedding": embedding
+            "embedding": embedding,
+            "interviewer_line_ref": group["interviewer_line_ref"],
+            "interviewee_line_ref": group["interviewee_line_ref"],
+            "speaking_round": group["speaking_round"]
         })
 
     logger.info("Questions summarized and embedded.")
@@ -128,7 +134,10 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
         similarities.append({
             "response": group["original_response"],
             "question": group["original_question"],
-            "similarity": float(similarity)
+            "similarity": float(similarity),
+            "interviewer_line_ref": group["interviewer_line_ref"],
+            "interviewee_line_ref": group["interviewee_line_ref"],
+            "speaking_round": group["speaking_round"]
         })
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
     return similarities[:k]
