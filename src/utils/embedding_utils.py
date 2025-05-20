@@ -26,7 +26,9 @@ def embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.d
             "interviewer_question": interviewer_question,
             "interviewee_response": " ".join(group["interviewee"]).replace("Interviewee: ", ""),
             "embedding": embedding,
-            "speaking_round": index
+            "interviewer_line_ref": group["interviewer_line_ref"],
+            "interviewee_line_ref": group["interviewee_line_ref"],
+            "speaking_round": group["speaking_round"]
         })
     return group_embeddings
 
@@ -132,8 +134,8 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
     return similarities[:k]
 
 
-def match_top_p_questions(guide_question: str, group_embeddings: list[dict], model: SentenceTransformer, 
-                          device: torch.device, p: float = 0.5, max_matches: int = 5) -> list[dict]:
+def match_top_p_questions(guide_embedding: torch.Tensor, group_embeddings: list[dict], 
+                          p: float = 0.5, max_matches: int = 5) -> list[dict]:
     """
     Match a guideline question to the top k groups based on similarity.
     
@@ -148,18 +150,20 @@ def match_top_p_questions(guide_question: str, group_embeddings: list[dict], mod
     Returns:
         list[dict]: Top k matches with similarity scores.
     """
-    question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
+    #question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
     similarities = []
     for group in group_embeddings:
-        similarity = util.cos_sim(question_embedding, group["embedding"]).cpu().numpy()[0][0]
+        similarity = util.cos_sim(guide_embedding, group["embedding"]).cpu().numpy()[0][0]
         similarities.append({
             "response": group["interviewee_response"],
             "question": group["interviewer_question"],
             "speaking_round": group["speaking_round"],
-            "similarity": float(similarity)
+            "similarity": float(similarity),
+            "interviewer_line_ref": group["interviewer_line_ref"],
+            "interviewee_line_ref": group["interviewee_line_ref"]
         })
     
-    # TODO: Add logic for max_matches
     ret_similarity = [s for s in similarities if s["similarity"]>=p]
-    ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
-    return ret_similarity
+    # do not sort and change order of speaking!
+    #ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
+    return ret_similarity[:max_matches]
