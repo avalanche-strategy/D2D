@@ -3,6 +3,8 @@ import os, sys
 import logging
 import asyncio
 from datetime import datetime
+import re
+import json
 from src.utils.api_utils import extract_and_summarize_response_llm_async
 
 def output_divider(logger: logging.Logger, line_brk: bool = False):
@@ -78,12 +80,20 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
     logger.info("Generator processing...")
 
     output_data = []
+    reference_data = []
     semaphore = asyncio.Semaphore(10)  # Limit to 5 concurrent API calls
 
     async def summarize_with_limit(file_name, context, guide_question, match):
         async with semaphore:
             try:
-                response = await extract_and_summarize_response_llm_async(context, guide_question, gpt_model, conciseness, logger)
+                return_val = await extract_and_summarize_response_llm_async(context, guide_question, gpt_model, conciseness, logger)
+                if isinstance(return_val, str):
+                    response = return_val
+                    raw_response = None
+                else:
+                    response = return_val[0]
+                    # remove any punctuations or quotes at the start or end of the literal response
+                    raw_response = re.sub(r'^\W+|\W+$', '', return_val[1])
 
                 output_divider(logger)
                 logger.info(f"Processing file: {file_name}")
@@ -93,18 +103,41 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 # Todo: Can be simply replace this line, but just leave it as it's right now
                 # logger.info(context)
 
+                response_position = -1
+                line_reference = -1
                 for m in match["matches"]:
                     logger.info(f"Interviewer: {m['question']}\nInterviewee: {m['response']}")
+                    # check if the raw response reported was extracted from this line
+                    if raw_response and response_position < 0:
+                        response_position = m['response'].lower().find(raw_response.lower())
+                        # if found, we record the line and position
+                        if response_position >= 0:
+                            line_reference = m['interviewee_line_ref']
+                            response_position +=1 # make character index 1-based
+                            print(f"Response found at {response_position} in on line {line_reference}")
 
                 logger.info(f"Summarized Response for '{guide_question}': {response}")
+                if raw_response:
+                    logger.info(f"Original Response was '{raw_response}': Reference (Line={line_reference}, Char={response_position})")
+                else:
+                    logger.info(f"Original Response was '{raw_response}': [No Reference]")
+
                 output_divider(logger, True)
-                return response.strip('\"\''), None
+                return {
+                    'response': response.strip('\"\''),
+                    'raw_response': raw_response,
+                    'line_reference': line_reference if line_reference>=0 else None,
+                    'char_index': response_position if response_position>=0 else None
+                    }, None
             except Exception as e:
                 logger.error(f"Error summarizing response for guide question '{guide_question}': {str(e)}")
-                return "[Error summarizing response]", str(e)
+                return {
+                    'response':"[Error summarizing response]"
+                    }, str(e)
 
     for file_path, matches in zip(transcript_files, matches_list):
         file_name = os.path.splitext(os.path.basename(file_path))[0]
+        interview_refs = []
         row = {"Interview File": file_name}
         output_divider(logger)
         logger.info(f"Processing file: {file_name}")
@@ -129,13 +162,17 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         # Process results
         for guide_question, (response, error) in zip(task_metadata, results):
             if error:
-                row[guide_question] = response  # Error message from summarize_with_limit
+                row[guide_question] = response['response']  # Error message from summarize_with_limit
             else:
-                row[guide_question] = response
+                row[guide_question] = response['response']
+            response_details = response
+            response_details["guide_question"] = guide_question
+            interview_refs.append(response_details)
 
         logger.info(f"File {file_name} processing complete.")
         output_divider(logger, True)
         output_data.append(row)
+        reference_data.append({"interview": file_name, "responses": interview_refs})
 
     output_df = pd.DataFrame(output_data)
 
@@ -157,6 +194,14 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
     logger.info(f"Output saved to {new_output_path}")
     logger.info(output_df[["Interview File"] + guide_questions[:2]])
+
+    # save detailed response JSON
+    json_file_name = re.sub(r'\.csv$', '.json', new_output_path)
+    logger.info(f"JSON output file name is {json_file_name}")
+    with open(json_file_name, 'w', encoding ='utf8') as file:
+        json.dump(reference_data, file, indent=4)
+        logger.info(f"JSON output saved to {json_file_name}")
+
     return None
 
 # def generate_claude_output(interview_files: list[str], matches_list: list[list[dict]], guide_questions: list[str],
