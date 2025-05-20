@@ -73,6 +73,12 @@ async def extract_and_summarize_response_llm_async(context: str, query: str, llm
 
     # First call: Extract the core phrase from the interviewee's response
     try:
+        if len(context.strip())==0:
+            # no matches using p
+            logger.info("Line Referencing: No matching dialog, appending [No relevant response found]")
+            # this could be a different string, if we need to debug/differentiate
+            return "[No relevant response found]"
+        
         extract_prompt = build_extract_prompt(context, query, conciseness)
         response = await acompletion(
             model=llm_model,
