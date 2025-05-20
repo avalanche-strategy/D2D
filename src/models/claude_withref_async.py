@@ -122,7 +122,7 @@ if __name__ == "__main__":
     interview_name = "interview_1090"
     interviews_directory = os.path.join(data_directory, interview_name)
     guidelines_path = os.path.join(data_directory, f"{interview_name}_guidelines.csv")
-    pipeline_name = "rag_sumrag_async"
+    pipeline_name = "claude_withref_async"
     conciseness = 1
 
     output_path = os.path.join(project_root, "results", f"{pipeline_name}_{interview_name}.csv")
