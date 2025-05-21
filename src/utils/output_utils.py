@@ -94,11 +94,15 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 return_val = await extract_and_summarize_response_llm_async(context, guide_question, gpt_model, conciseness, logger)
                 if isinstance(return_val, str):
                     response = return_val
-                    raw_response = None
+                    extracted_phrase = None
                 else:
                     response = return_val[0]
-                    # remove any punctuations or quotes at the start or end of the literal response
-                    raw_response = re.sub(r'^\W+|\W+$', '', return_val[1])
+                    # remove any punctuations or quotes at the start or end of the literal response if valid response
+                    extracted_phrase = (
+                        re.sub(r'^\W+|\W+$', '', return_val[1]) 
+                        if return_val[1] != "[No relevant response found]"
+                        else return_val[1]
+                    )
 
                 output_divider(logger)
                 logger.info(f"Processing file: {file_name}")
@@ -108,33 +112,72 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 # Todo: Can be simply replace this line, but just leave it as it's right now
                 # logger.info(context)
 
-                response_position = -1
-                line_reference = -1
+                response_position = []
+                line_reference = []
+                interviewee_match = []
+                match_type = None
                 for m in match["matches"]:
                     logger.info(f"Interviewer: {m['question']}\nInterviewee: {m['response']}")
                     # check if the raw response reported was extracted from this line
-                    if raw_response and response_position < 0:
-                        response_position = m['response'].lower().find(raw_response.lower())
+                    if extracted_phrase:
+                        current_line_match = m['response'].lower().find(extracted_phrase.lower())
+                        #response_position = 
                         # if found, we record the line and position
-                        if response_position >= 0:
-                            line_reference = m['interviewee_line_ref']
-                            response_position +=1 # make character index 1-based
-                            print(f"Response found at {response_position} in on line {line_reference}")
+                        if current_line_match >= 0:
+                            # make both line and character indexes 1-based
+                            line_reference.append(m['interviewee_line_ref'] + 1)
+                            response_position.append(current_line_match+1) 
+                            match_type = "EXACT"
+                            interviewee_match.append(m['response'])
+
+                # only use the references if not default
+                if response == "[No relevant response found]":
+                    #print(f"Default LLM response, '[No relevant response found]'")
+                    response_position =[]
+                    line_reference = []
+                elif len(line_reference)>0:
+                    logger.info(f"Line Reference: Exact Match at {line_reference}")
+                else:
+                    # alternative approach. match using embedding of responses vs extracted response
+                    if embedding_model:
+                        logger.info(f"Finding semantic matches using embedding...")
+                        top_response_matches = match_top_responses(embedding_model, device, logger, extracted_phrase,
+                                                                     match["matches"])                        
+                        for top_match in top_response_matches:
+                            line_reference.append(top_match['interviewee_line_ref'] + 1)
+                            response_position.append(0)
+                            interviewee_match.append(top_match['response'])
+
+                    # if still not found ...
+                    if len(line_reference)==0:
+                        # assume all matching lines were used
+                        logger.info(f"Line Reference: No matches found, assuming all references used.")
+                        line_reference = [m['interviewee_line_ref'] for m in match["matches"]]                        
+                        response_position = [0]*len(line_reference) # no character index, whole line assumed
+                        interviewee_match = [m['response'] for m in match["matches"]]
+                        match_type = "ALL_RELEVANT"
+                    else:
+                        logger.info(f"Line Reference: Semantic Match at {line_reference}")
+                        match_type = "SEMANTIC"
 
                 logger.info(f"Summarized Response for '{guide_question}': {response}")
-                if raw_response:
-                    logger.info(f"Original Response was '{raw_response}': Reference (Line={line_reference}, Char={response_position})")
+                if extracted_phrase:
+                    logger.info(f"Extracted Phrase was '{extracted_phrase}': Reference (Line={list(zip(line_reference, response_position))})")
+                    logger.info(f"Referenced Interviewee Responses: {interviewee_match}")
                 else:
-                    logger.info(f"Original Response was '{raw_response}': [No Reference]")
+                    logger.info(f"Extracted Phrase was '{extracted_phrase}': [No Reference]")
 
                 output_divider(logger, True)
                 return {
-                    'response': response.strip('\"\''),
-                    'raw_response': raw_response,
-                    'line_reference': line_reference if line_reference>=0 else None,
-                    'char_index': response_position if response_position>=0 else None
+                    'relevant_lines': [m['interviewee_line_ref']+1 for m in match["matches"]],
+                    'extracted_phrase': extracted_phrase,
+                    'response': response.strip('\"\''),   
+                    'match_type': match_type,                 
+                    'extracted_line_references': line_reference if len(line_reference)>0 else None,
+                    'extracted_character_index': response_position if len(response_position)>0 else None
                     }, None
             except Exception as e:
+                #traceback.print_exc()
                 logger.error(f"Error summarizing response for guide question '{guide_question}': {str(e)}")
                 return {
                     'response':"[Error summarizing response]"
@@ -170,8 +213,10 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 row[guide_question] = response['response']  # Error message from summarize_with_limit
             else:
                 row[guide_question] = response['response']
-            response_details = response
-            response_details["guide_question"] = guide_question
+            # record the response details
+            response_details = {"guide_question": guide_question}
+            response_details.update(response)
+
             interview_refs.append(response_details)
 
         logger.info(f"File {file_name} processing complete.")
