@@ -22,10 +22,14 @@ def embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.d
     for index, group in enumerate(groups):
         interviewer_question = " ".join(group["interviewer"]).replace("Interviewer: ", "")
         embedding = model.encode(interviewer_question, convert_to_tensor=True, device=device)
+        # embed the response to enable semantic match in reference line search
+        interviewee_response = " ".join(group["interviewee"]).replace("Interviewee: ", "")
+        response_embedding = model.encode(interviewee_response, convert_to_tensor=True, device=device)
         group_embeddings.append({
             "interviewer_question": interviewer_question,
-            "interviewee_response": " ".join(group["interviewee"]).replace("Interviewee: ", ""),
+            "interviewee_response": interviewee_response,
             "embedding": embedding,
+            "response_embedding": response_embedding,
             "interviewer_line_ref": group["interviewer_line_ref"],
             "interviewee_line_ref": group["interviewee_line_ref"],
             "speaking_round": group["speaking_round"]
@@ -97,11 +101,15 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
             summarized_question = original_question  # Fallback to original question
 
         embedding = model.encode(summarized_question, convert_to_tensor=True, device=device)
+        # embed the response to enable semantic match in reference line search
+        interviewee_response = " ".join(group["interviewee"]).replace("Interviewee: ", "")
+        response_embedding = model.encode(interviewee_response, convert_to_tensor=True, device=device)
         group_embeddings.append({
             "original_question": original_question,
             "summarized_question": summarized_question,
             "original_response": " ".join(group["interviewee"]).replace("Interviewee: ", ""),
             "embedding": embedding,
+            "response_embedding": response_embedding,
             "interviewer_line_ref": group["interviewer_line_ref"],
             "interviewee_line_ref": group["interviewee_line_ref"],
             "speaking_round": group["speaking_round"]
@@ -137,8 +145,11 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
             "similarity": float(similarity),
             "interviewer_line_ref": group["interviewer_line_ref"],
             "interviewee_line_ref": group["interviewee_line_ref"],
-            "speaking_round": group["speaking_round"]
+            "speaking_round": group["speaking_round"],
+            "response_embedding": group["response_embedding"],
+
         })
+        
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
     return similarities[:k]
 
@@ -169,7 +180,8 @@ def match_top_p_questions(guide_embedding: torch.Tensor, group_embeddings: list[
             "speaking_round": group["speaking_round"],
             "similarity": float(similarity),
             "interviewer_line_ref": group["interviewer_line_ref"],
-            "interviewee_line_ref": group["interviewee_line_ref"]
+            "interviewee_line_ref": group["interviewee_line_ref"],
+            "response_embedding": group["response_embedding"],
         })
     
     ret_similarity = [s for s in similarities if s["similarity"]>=p]
