@@ -108,7 +108,8 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
         #     print("*"*30)  
         #     print() 
     await generate_output_from_summarized_matches_async(
-        transcript_files, matches_list, guide_questions, llm_model, output_path, conciseness=conciseness, logger=logger
+        transcript_files, matches_list, guide_questions, llm_model, output_path, conciseness=conciseness, logger=logger,
+        embedding_model=model, device=device
     )
 
 
@@ -126,7 +127,6 @@ if __name__ == "__main__":
     conciseness = 1
 
     output_path = os.path.join(project_root, "results", f"{pipeline_name}_{interview_name}.csv")
-    #llm_model = "claude-3-5-haiku-20241022"
     llm_model = "claude-3-5-haiku-20241022"
 
     start_time = time.time()

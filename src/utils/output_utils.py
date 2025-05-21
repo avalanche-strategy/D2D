@@ -5,6 +5,9 @@ import asyncio
 from datetime import datetime
 import re
 import json
+from sentence_transformers import SentenceTransformer, util
+import torch
+#import traceback
 from src.utils.api_utils import extract_and_summarize_response_llm_async
 
 def output_divider(logger: logging.Logger, line_brk: bool = False):
@@ -62,7 +65,9 @@ def setup_logging(pipeline_name: str, output_path: str, disable_logging: bool = 
 
 async def generate_output_from_summarized_matches_async(transcript_files: list, matches_list: list, guide_questions: list,
                                                        gpt_model: str, output_path: str, conciseness: int = 0,
-                                                       logger: logging.Logger = None) -> None:
+                                                       logger: logging.Logger = None,
+                                                       embedding_model: SentenceTransformer = None, 
+                                                       device: torch.device = "cpu") -> None:
     """
     The Generator of the pipeline
     Generate a structured CSV with one row per interview and columns for guide questions, using summarized question matches.
@@ -203,6 +208,40 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         logger.info(f"JSON output saved to {json_file_name}")
 
     return None
+
+def match_top_responses(model: SentenceTransformer, device: torch.device,
+                        logger: logging.Logger,
+                        extracted_phrase: str, group_embeddings: list[dict], 
+                        p_threshold: float = 0.8, max_matches: int = 3) -> list[dict]:
+    """
+    Match a guideline question to the top k groups based on similarity.
+    
+    Args:
+        guide_question (str): The guide question to match.
+        group_embeddings (list[dict]): List of embedded groups.
+        model (SentenceTransformer): The embedding model.
+        device (torch.device): The device to use for computation.
+        p (float): Threshold for similarity.
+        max_matches (int): Maximum number of matches to return
+    
+    Returns:
+        list[dict]: Top k matches with similarity scores.
+    """
+    query_embedding = model.encode(extracted_phrase, convert_to_tensor=True, device=device)
+    similarities = []
+    for group in group_embeddings:
+        similarity = util.cos_sim(query_embedding, group["response_embedding"]).cpu().numpy()[0][0]
+        similarities.append({
+            "similarity": float(similarity),
+            "interviewee_line_ref": group["interviewee_line_ref"],
+            "response": group["response"]
+        })
+    logger.info(f"Similarities for '{extracted_phrase}'")
+    logger.info([round(s["similarity"], 3) for s in similarities] )
+    ret_similarity = [s for s in similarities if s["similarity"]>=p_threshold]
+    # do not sort and change order of speaking!
+    #ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
+    return ret_similarity[:max_matches]
 
 # def generate_claude_output(interview_files: list[str], matches_list: list[list[dict]], guide_questions: list[str],
 #                            llm_model: str, api_key: str, output_path: str):
