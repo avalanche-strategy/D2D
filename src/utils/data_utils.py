@@ -35,27 +35,36 @@ def segment_transcript(transcript: str) -> list[dict]:
         transcript (str): The transcript text.
     
     Returns:
-        list[dict]: List of dictionaries containing interviewer and interviewee turns.
+        list[dict]: List of dictionaries containing interviewer and interviewee turns and their line reference number (0-indexed).
     """
-    parts = re.split(r'(Interviewer:|Interviewee:)', transcript)
-    turns = []
-    current_speaker = None
-    current_text = ""
-    for part in parts:
-        if part in ["Interviewer:", "Interviewee:"]:
-            if current_speaker:
-                turns.append((current_speaker, current_text.strip()))
-            current_speaker = part
-            current_text = ""
-        else:
-            current_text += part
-    if current_speaker:
-        turns.append((current_speaker, current_text.strip()))
+    list_interviewer = []
+    list_interviewee = []
+    lines = transcript.split(sep='\n', )
+    for line_number, line in enumerate(lines):
+        # strip and remove any whitespace at start or finish
+        line = line.strip()
+        if line.startswith("Interviewer:"):
+            # for backward compatibility, I append both the text and line_number, which will be separated in the dict
+            # also, we use Python-refs (0-index), so remember to +1 for human based indexes
+            list_interviewer.append( 
+                (line[len('Interviewer:'):].strip(), line_number)
+                )  
+        elif line.startswith("Interviewee:"):
+            list_interviewee.append(
+                (line[len('Interviewee:'):].strip(), line_number)
+                ) 
+        # for now we skip blank lines or those not marked with either speaker, no else
+    
     groups = []
-    for i in range(0, len(turns) - 1, 2):
-        if turns[i][0] == "Interviewer:" and turns[i+1][0] == "Interviewee:":
-            groups.append({
-                "interviewer": [turns[i][1]],
-                "interviewee": [turns[i+1][1]]
-            })
+    speaking_round = 0
+    for qa_pair in zip(list_interviewer, list_interviewee):
+        groups.append({
+            "interviewer": [qa_pair[0][0]],
+            "interviewee": [qa_pair[1][0]],
+            "interviewer_line_ref": qa_pair[0][1],
+            "interviewee_line_ref": qa_pair[1][1],
+            "speaking_round": speaking_round
+        })
+        speaking_round +=1
     return groups
+    

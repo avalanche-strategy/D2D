@@ -73,6 +73,12 @@ async def extract_and_summarize_response_llm_async(context: str, query: str, llm
 
     # First call: Extract the core phrase from the interviewee's response
     try:
+        if len(context.strip())==0:
+            # no matches using p
+            logger.info("Line Referencing: No matching dialog, appending [No relevant response found]")
+            # this could be a different string, if we need to debug/differentiate
+            return "[No relevant response found]"
+        
         extract_prompt = build_extract_prompt(context, query, conciseness)
         response = await acompletion(
             model=llm_model,
@@ -96,7 +102,7 @@ async def extract_and_summarize_response_llm_async(context: str, query: str, llm
                 temperature=0
             )
             response_content = response.choices[0].message.content.strip('\"\'')
-            return response_content
+            return (response_content, extracted_phrase)
         except Exception as e:
             logger.error(f"Error summarizing response: {str(e)}")
             return f"Error querying ChatGPT: {str(e)}"
@@ -121,14 +127,19 @@ async def summarize_question_async(question: str, llm_model: str, logger: loggin
     prompt = f"""Summarize the following question into a concise, single sentence that captures its core intent, 
                 avoiding greetings, filler words and maintaining clarity: "{question}" """
     try:
-        response = await acompletion(
-            model=llm_model,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        summarized_question = response.choices[0].message.content.strip('\"\'')
+        if llm_model:
+            response = await acompletion(
+                model=llm_model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            summarized_question = response.choices[0].message.content.strip('\"\'')
+        else:
+            # you can pass None for llm_model for an "Identity" summary i.e. copied directly
+            summarized_question = question
+        
         logger.info("Original Question: %s", question)
         logger.info("Summarized Question: %s", f"{summarized_question}\n")
         return summarized_question
