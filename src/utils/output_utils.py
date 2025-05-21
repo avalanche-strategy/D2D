@@ -10,9 +10,11 @@ import torch
 #import traceback
 from src.utils.api_utils import extract_and_summarize_response_llm_async
 
+def get_divider(line_brk: bool = False):
+    return f"================================================================================================{'\n' if line_brk else ''}"
+
 def output_divider(logger: logging.Logger, line_brk: bool = False):
-    logger.info(
-        f"================================================================================================{'\n' if line_brk else ''}")
+    logger.info(get_divider(line_brk))
 
 # Configure logging
 def setup_logging(pipeline_name: str, output_path: str, disable_logging: bool = False):
@@ -86,6 +88,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
     output_data = []
     reference_data = []
+    generator_log = [] # Will be output for evaluation module
     semaphore = asyncio.Semaphore(10)  # Limit to 5 concurrent API calls
 
     async def summarize_with_limit(file_name, context, guide_question, match):
@@ -104,20 +107,23 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                         else return_val[1]
                     )
 
-                output_divider(logger)
-                logger.info(f"Processing file: {file_name}")
-                logger.info(f"Processing guide question (top-k matches): {guide_question}")
-                logger.info("Relevant Interviewee Responses:")
+                # Create the generator summary log
+                log = []
+                log.append("===Start===")
+                log.append(f"Processing file: {file_name}")
+                log.append(f"Processing guide question (top-k matches): {guide_question}")
+                log.append("Relevant Interviewee Responses:")
 
-                # Todo: Can be simply replace this line, but just leave it as it's right now
-                # logger.info(context)
 
+
+                # Start looking for reference point of answers in the transcript
                 response_position = []
                 line_reference = []
                 interviewee_match = []
+
                 match_type = None
                 for m in match["matches"]:
-                    logger.info(f"Interviewer: {m['question']}\nInterviewee: {m['response']}")
+                    log.append(f"Interviewer: {m['question']}\nInterviewee: {m['response']}")
                     # check if the raw response reported was extracted from this line
                     if extracted_phrase:
                         current_line_match = m['response'].lower().find(extracted_phrase.lower())
@@ -129,10 +135,15 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                             response_position.append(current_line_match+1) 
                             match_type = "EXACT"
                             interviewee_match.append(m['response'])
+                log.append("===End===")
+
+                generator_log.extend(log)
+
+                for l in log:
+                    logger.info(l)
 
                 # only use the references if not default
                 if response == "[No relevant response found]":
-                    #print(f"Default LLM response, '[No relevant response found]'")
                     response_position =[]
                     line_reference = []
                 elif len(line_reference)>0:
@@ -183,6 +194,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                     'response':"[Error summarizing response]"
                     }, str(e)
 
+
     for file_path, matches in zip(transcript_files, matches_list):
         file_name = os.path.splitext(os.path.basename(file_path))[0]
         interview_refs = []
@@ -232,8 +244,10 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
     if file_name:
         base_name, ext = os.path.splitext(file_name)
         new_file_name = f"{base_name}_{timestamp}{ext}"
+        generator_log_file_name = f"{base_name}_generator_log_{timestamp}.txt"
     else:
         new_file_name = f"matched_interviews_summarized_{timestamp}.csv"
+
     if dir_name:
         os.makedirs(dir_name, exist_ok=True)
         new_output_path = os.path.join(dir_name, new_file_name)
@@ -244,6 +258,12 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
     logger.info(f"Output saved to {new_output_path}")
     logger.info(output_df[["Interview File"] + guide_questions[:2]])
+
+    # Write generator log to file
+    generator_log_file = open(os.path.join(dir_name, generator_log_file_name), 'w')
+    for l in generator_log:
+        generator_log_file.write(f"{l}\n")
+    generator_log_file.close()
 
     # save detailed response JSON
     json_file_name = re.sub(r'\.csv$', '.json', new_output_path)
@@ -287,58 +307,5 @@ def match_top_responses(model: SentenceTransformer, device: torch.device,
     # do not sort and change order of speaking!
     #ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
     return ret_similarity[:max_matches]
-
-# def generate_claude_output(interview_files: list[str], matches_list: list[list[dict]], guide_questions: list[str],
-#                            llm_model: str, api_key: str, output_path: str):
-#     """
-#     Generate a structured CSV with one row per interview and columns for guide questions.
-#
-#     Args:
-#         interview_files (list[str]): List of interview file paths.
-#         matches_list (list[list[dict]]): List of matches for each interview.
-#         guide_questions (list[str]): List of guide questions.
-#         llm_model (str): The Claude LLM model name to use.
-#         api_key (str): The Anthropic API key.
-#         output_path (str): The base path for the output CSV file. The timestamp will be appended to the filename.
-#     """
-#     output_data = []
-#     for file_path, matches in zip(interview_files, matches_list):
-#         file_name = os.path.splitext(os.path.basename(file_path))[0]
-#         row = {"Interview File": file_name}
-#         for question in guide_questions:
-#             row[question] = ""
-#         for match in matches:
-#             guide_question = match["guide_question"]
-#             # handle case of no match
-#             if (len(match["matches"]) > 0):
-#                 # retain order of speaking in dialogue
-#                 ordered_dialogue = sorted(match["matches"], key=lambda item: item['speaking_round'])
-#                 context = "\n".join(
-#                     [f"Interviewer: {m['question']}\nInterviewee: {m['response']}" for m in ordered_dialogue])
-#                 llm_response = extract_and_summarize_response_claude(context, guide_question, llm_model, api_key).strip(
-#                     '\"\'')
-#                 row[guide_question] = llm_response
-#             else:
-#                 row[guide_question] = "###Not found"
-#         output_data.append(row)
-#
-#     output_df = pd.DataFrame(output_data)
-#
-#     # Generate timestamped filename
-#     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-#     dir_name, file_name = os.path.split(output_path)
-#     if file_name:
-#         base_name, ext = os.path.splitext(file_name)
-#         new_file_name = f"{base_name}_{timestamp}{ext}"
-#     else:
-#         new_file_name = f"matched_interviews_{timestamp}.csv"
-#     if dir_name:
-#         os.makedirs(dir_name, exist_ok=True)
-#         new_output_path = os.path.join(dir_name, new_file_name)
-#     else:
-#         new_output_path = new_file_name
-#
-#     output_df.to_csv(new_output_path, index=False)
-#     print(f"Output saved to {new_output_path}")
 
 
