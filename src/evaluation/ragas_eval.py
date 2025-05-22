@@ -56,21 +56,71 @@ def ask_score_and_feedback(prompt: str, temperature: float = 0.0, model: str = "
 
 def split_chunks(context: str) -> list[str]:
     """
-    Split a context string into individual chunks, where each chunk corresponds 
-    to a dialogue unit starting with 'Interviewer:' and optionally includes 'Interviewee:'.
+    Split a context string into individual chunks using 'chunk N:' as delimiter.
 
     Parameters:
-    - context (str): The full context text as a string.
+    - context (str): The full context text as a string with 'chunk N:' labels.
 
     Returns:
-    - list[str]: List of extracted dialogue chunks.
+    - list[str]: List of chunk strings, each including its own 'chunk N:' header and content.
     """
-
     if not isinstance(context, str) or not context.strip():
         return []
-    pattern = r"(Interviewer:.*?)(?=Interviewer:|$)"
-    matches = re.findall(pattern, context.strip(), flags=re.DOTALL)
+
+    # Match from 'chunk N:' to before the next 'chunk M:' or end of text
+    pattern = r"(chunk \d+:.*?)(?=chunk \d+:|$)"
+    matches = re.findall(pattern, context.strip(), flags=re.DOTALL | re.IGNORECASE)
     return [chunk.strip() for chunk in matches if chunk.strip()]
+
+
+def is_answer_empty_or_confused(text: str) -> bool:
+    """
+    Determine if the answer is empty, ambiguous, or doctoring (non-informative).
+
+    Parameters:
+    - text (str): The answer text.
+
+    Returns:
+    - bool: True if the text is effectively non-informative or evasive.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return True
+
+    text_lower = text.lower()
+
+    # Keywords indicating confusion or lack of knowledge
+    confusion_keywords = [
+        "i don't know", "i do not know", "not sure", "no idea", "unclear", 
+        "can't say", "cannot say", "i'm confused", "i am confused",
+        "none", "nothing", "n/a", "ambiguous", "unsure", "uncertain"
+    ]
+
+    # Phrases indicating doctoring - vague or generic statements without content
+    doctoring_patterns = [
+        r"that's a great question", 
+        r"it's hard to say", 
+        r"it depends on many factors", 
+        r"there are many perspectives", 
+        r"this is a complex issue", 
+        r"it varies from case to case", 
+        r"many people believe", 
+        r"some might argue", 
+        r"we must consider all sides", 
+        r"it's subjective", 
+        r"one could interpret this in different ways"
+    ]
+
+    # Direct keyword match
+    if any(kw in text_lower for kw in confusion_keywords):
+        return True
+
+    # Regex pattern match for doctoring
+    for pattern in doctoring_patterns:
+        if re.search(pattern, text_lower):
+            return True
+
+    return False
+
 
 
 def build_prompt(metric: str, row: dict, chunk_list: list[str] = None) -> str:
@@ -91,6 +141,7 @@ def build_prompt(metric: str, row: dict, chunk_list: list[str] = None) -> str:
 
     question = row["question"]
     answer = row["answer_rag"]
+    answer_ref = row["answer_ref"]
     context = row.get("retrieved_context", "")
     reference = row.get("answer_ref", "")
 
@@ -112,9 +163,40 @@ Feedback: ..."""
 
     elif metric == "precision":
         chunks = "\n\n".join(chunk_list or [])
-        return f"""You are evaluating the **precision** of retrieved chunks in relation to the answer.
 
-Each chunk is a dialogue pair from the original interview.
+        # Check if both RAG and reference answers are empty/confused
+        rag_confused = is_answer_empty_or_confused(answer)
+        ref_confused = is_answer_empty_or_confused(answer_ref)
+
+        if rag_confused and ref_confused:
+            return f"""You are evaluating the **precision** of retrieved chunks with respect to the reference answer.
+
+Each chunk is a dialogue pair from the original interview, labeled as "chunk 1", "chunk 2", etc.
+
+Chunks:
+{chunks}
+
+Reference Answer:
+{answer_ref}
+
+Instructions:
+- Identify which chunks are actually relevant to the reference answer.
+- Report only the chunk numbers that are relevant or irrelevant.
+- Calculate precision = (number of relevant chunks) / (total retrieved chunks).
+- Then clearly report the score and feedback in this format:
+
+Score: <value between 0 and 1>
+Feedback:
+Used chunks: chunk N, chunk M, ...
+Unused chunks: chunk X, chunk Y, ...
+Explanation: <brief justification>
+
+Score: 
+Feedback: """
+        else:
+            return f"""You are evaluating the **precision** of retrieved chunks in relation to the generated answer.
+
+Each chunk is a dialogue pair from the original interview, labeled as "chunk 1", "chunk 2", etc.
 
 Chunks:
 {chunks}
@@ -123,18 +205,50 @@ Answer:
 {answer}
 
 Instructions:
-- Identify which chunks are actually used to generate this answer.
+- Identify which chunks were actually used to generate this answer.
+- Report only the chunk numbers that are used or unused.
 - Calculate precision = (number of used chunks) / (total retrieved chunks).
-- Provide:
-  - Score (between 0 and 1),
-  - Feedback listing: 'Used chunks: ...' and 'Unused chunks: ...'
+- Then clearly report the score and feedback in this format:
+
+Score: <value between 0 and 1>
+Feedback:
+Used chunks: chunk N, chunk M, ...
+Unused chunks: chunk X, chunk Y, ...
+Explanation: <brief justification>
 
 Score: 
 Feedback: """
 
+
     elif metric == "recall":
         chunks = "\n\n".join(chunk_list or [])
-        return f"""You are evaluating the **recall** of retrieved chunks with respect to the answer.
+        rag_confused = is_answer_empty_or_confused(answer)
+        ref_confused = is_answer_empty_or_confused(answer_ref)
+
+        if rag_confused and ref_confused:
+            return f"""You are evaluating the **recall** of retrieved chunks with respect to the reference answer.
+
+Question:
+{question}
+
+Reference Answer:
+{answer_ref}
+
+Chunks:
+{chunks}
+
+Instructions:
+- Identify the key facts needed to answer this question based on the reference answer.
+- Determine which of these facts appear in the retrieved chunks.
+- Calculate recall = (covered facts) / (total facts required).
+- Provide:
+  - Score (between 0 and 1),
+  - Feedback listing: 'Covered facts: ...' and 'Uncovered facts: ...'
+
+Score: 
+Feedback: """
+        else:
+            return f"""You are evaluating the **recall** of retrieved chunks with respect to the generated answer.
 
 Question:
 {question}
@@ -155,6 +269,7 @@ Instructions:
 
 Score: 
 Feedback: """
+
     
     elif metric == "correctness":
         return f"""Compare the generated answer with the reference.
