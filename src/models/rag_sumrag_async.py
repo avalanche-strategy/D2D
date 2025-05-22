@@ -12,8 +12,8 @@ from glob import glob
 from dotenv import load_dotenv
 import time
 
-async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeline_name: str, output_path: str,
-               disable_logging: bool = False, conciseness: int = 0):
+async def main(transcript_dir: str, guidelines_path: str, llm_model: str, embedding_model:str, pipeline_name: str, output_path: str,
+               disable_logging: bool = False, max_concurrent_calls: int = 10):
     """
     Main execution function to process transcripts using summarized question embeddings.
 
@@ -23,7 +23,6 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
         llm_model (str): The GPT model to use.
         output_path (str): Path for the output CSV file.
         disable_logging (bool): Whether to disable logging.
-        conciseness (int): Conciseness level (0 for less concise, 1 for more concise).
     """
     # Set up logging
     logger = setup_logging(pipeline_name, output_path, disable_logging=disable_logging)
@@ -32,7 +31,7 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
     logger.info(f"Start finding matches for guidelines: {guidelines_path.split('/')[-1]}")
     output_divider(logger, True)
 
-    model = SentenceTransformer('multi-qa-mpnet-base-dot-v1')
+    embedding_model = SentenceTransformer(embedding_model)
 
     device = torch.device(
         "mps" if torch.backends.mps.is_available()
@@ -49,7 +48,7 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
     # Precompute embeddings for guide questions
     logger.info("Summarizing and embedding guide questions...")
     guide_question_data = []
-    semaphore = asyncio.Semaphore(10)  # Limit to 10 concurrent API calls
+    semaphore = asyncio.Semaphore(max_concurrent_calls)  # Limit to 10 concurrent API calls
 
     async def summarize_with_limit(question):
         async with semaphore:
@@ -59,7 +58,7 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
     summarized_questions = await asyncio.gather(*tasks)
 
     for guide_question, summarized_guide_question in zip(guide_questions, summarized_questions):
-        question_embedding = model.encode(summarized_guide_question, convert_to_tensor=True, device=device)
+        question_embedding = embedding_model.encode(summarized_guide_question, convert_to_tensor=True, device=device)
         guide_question_data.append({
             "guide_question": guide_question,
             "summarized_guide_question": summarized_guide_question,
@@ -76,14 +75,12 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
         transcript = load_transcript(transcript_path)
 
         groups = segment_transcript(transcript)
-        group_embeddings = await summarize_embed_groups_async(groups, model, device, llm_model, logger)
+        group_embeddings = await summarize_embed_groups_async(groups, embedding_model, device, llm_model, logger)
 
         transcript_matches = []
 
         for guide_data in guide_question_data:
-            top_k_matches = await summarize_match_top_k_questions_async(
-                guide_data["embedding"], group_embeddings, k=5, logger=logger
-            )
+            top_k_matches = await summarize_match_top_k_questions_async(guide_data["embedding"], group_embeddings, k=5)
             transcript_matches.append({
                 "guide_question": guide_data["guide_question"],
                 "matches": top_k_matches
@@ -91,8 +88,8 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
         matches_list.append(transcript_matches)
 
     await generate_output_from_summarized_matches_async(
-        transcript_files, matches_list, guide_questions, llm_model, output_path, conciseness=conciseness, logger=logger,
-        embedding_model=model, device=device
+        transcript_files, matches_list, guide_questions, llm_model, output_path, logger=logger,
+        embedding_model=embedding_model, device=device, max_concurrent_calls=max_concurrent_calls
     )
 
 
@@ -103,21 +100,21 @@ if __name__ == "__main__":
     project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
     data_directory = os.path.join(project_root, "data", "private_data")
     interview_name = "interview_1090"
+    embedding_model = "multi-qa-mpnet-base-dot-v1"
     # interview_name = "interview_abcr"
     interviews_directory = os.path.join(data_directory, interview_name)
     guidelines_path = os.path.join(data_directory, f"{interview_name}_guidelines.csv")
     pipeline_name = "rag_sumrag_async"
-    conciseness = 1
 
     output_path = os.path.join(project_root, "results", f"{pipeline_name}_{interview_name}.csv")
-    llm_model = "gpt-4o-mini"
+    llm_model = "gpt-4.1-mini"
 
     start_time = time.time()
 
     # Run the async main function
     asyncio.run(main(
-        interviews_directory, guidelines_path, llm_model, pipeline_name, output_path,
-        disable_logging=False, conciseness=conciseness
+        interviews_directory, guidelines_path, llm_model, embedding_model, pipeline_name, output_path,
+        disable_logging=False
     ))
 
     end_time = time.time()
