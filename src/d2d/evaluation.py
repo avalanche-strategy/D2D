@@ -1,2 +1,2 @@
-class D2DProcessor:
+class D2DEvaluator:
     pass
