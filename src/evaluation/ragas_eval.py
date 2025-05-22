@@ -92,7 +92,8 @@ def is_answer_empty_or_confused(text: str) -> bool:
     confusion_keywords = [
         "i don't know", "i do not know", "not sure", "no idea", "unclear", 
         "can't say", "cannot say", "i'm confused", "i am confused",
-        "none", "nothing", "n/a", "ambiguous", "unsure", "uncertain"
+        "none", "nothing", "n/a", "ambiguous", "unsure", "uncertain",
+        "no relevant response found"
     ]
 
     # Phrases indicating doctoring - vague or generic statements without content
