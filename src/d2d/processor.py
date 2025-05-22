@@ -23,7 +23,7 @@ class D2DProcessor:
     """A class to process interview transcripts using RAG-based summarization and matching."""
     def __init__(self, llm_model: str = "gpt-4o-mini", embedding_model: str = "multi-qa-mpnet-base-dot-v1",
             sampling_method: SamplingMethod = SamplingMethod.TOP_K, max_concurrent_calls: int = 10, top_k:int = 5,
-                 top_p:float = 0.5):
+                 top_p:float = 0.5, custom_extract_prompt: str = None, custom_summarize_prompt: str = None):
 
         """
         Initialize the D2DProcessor with model and processing configurations.
@@ -39,7 +39,8 @@ class D2DProcessor:
         self.sampling_method = sampling_method
         self.top_k = top_k
         self.top_p = top_p
-
+        self.custom_extract_prompt = custom_extract_prompt
+        self.custom_summarize_prompt = custom_summarize_prompt
 
         # Initialize SentenceTransformer model
         self.embedding_model_name = embedding_model
@@ -60,6 +61,8 @@ class D2DProcessor:
         logger.info(f"Top K: {self.top_k}")
         logger.info(f"Top P: {self.top_p}")
         logger.info(f"Device: {self.device}")
+        logger.info(f"Custom Extract Prompt: {'Set' if self.custom_extract_prompt else 'Not set'}")
+        logger.info(f"Custom Summarize Prompt: {'Set' if self.custom_summarize_prompt else 'Not set'}")
         output_divider(logger)
 
     def process_transcripts(self, data_dir: str, interview_name: str, output_dir: str,
@@ -151,7 +154,11 @@ class D2DProcessor:
 
         # Generate output
         await generate_output_from_summarized_matches_async(
-            transcript_files, matches_list, guide_questions, self.llm_model, output_path, max_concurrent_calls=self.max_concurrent_calls, logger=logger
+            transcript_files, matches_list, guide_questions, self.llm_model, output_path,
+            max_concurrent_calls=self.max_concurrent_calls, logger=logger,
+            embedding_model=self.embedding_model, device=self.device,
+            custom_extract_prompt=self.custom_extract_prompt,
+            custom_summarize_prompt=self.custom_summarize_prompt
         )
         logger.info("Processing completed.")
 
