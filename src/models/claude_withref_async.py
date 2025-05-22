@@ -95,7 +95,7 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
 
     # ===============================================================================================================
     await generate_output_from_summarized_matches_async(
-        transcript_files, matches_list, guide_questions, llm_model, output_path, conciseness=conciseness, logger=logger,
+        transcript_files, matches_list, guide_questions, llm_model, output_path, logger=logger,
         embedding_model=model, device=device
     )
     # ===============================================================================================================
