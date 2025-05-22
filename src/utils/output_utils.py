@@ -7,8 +7,9 @@ import re
 import json
 from sentence_transformers import SentenceTransformer, util
 import torch
-#import traceback
+from src.utils.embedding_utils import match_top_responses
 from src.utils.api_utils import extract_and_summarize_response_llm_async
+
 
 def get_divider(line_brk: bool = False):
     return f"================================================================================================{'\n' if line_brk else ''}"
@@ -65,11 +66,66 @@ def setup_logging(pipeline_name: str, output_path: str, disable_logging: bool = 
 
     return logger
 
+
+def find_reference_for_answers(match: dict, response: str, extracted_phrase: str = None, embedding_model: SentenceTransformer = None, device: torch.device = "cpu", logger: logging.Logger = None):
+    # Looking for reference points for answers in transcript
+    response_position = []
+    line_reference = []
+    interviewee_match = []
+    match_type = None
+
+    # Approach 1: check if the extracted phrase (if there is) from LLM can be found exactly from context
+    for m in match["matches"]:
+        if extracted_phrase:
+            current_line_match = m['response'].lower().find(extracted_phrase.lower())
+            # if found, we record the line and position
+            if current_line_match >= 0:
+                # make both line and character indexes 1-based
+                line_reference.append(m['interviewee_line_ref'] + 1)
+                response_position.append(current_line_match + 1)
+                match_type = "EXACT"
+                interviewee_match.append(m['response'])
+
+    if len(line_reference) > 0:
+        logger.info(f"Line Reference: Exact Match at {line_reference}")
+
+    # LLM could not find relevant answers
+    elif response == "[No relevant response found]":
+        response_position = []
+        line_reference = []
+
+    else:
+        # Could not find exact matches of extracted phrase from context
+        # Approach 2: find references using embedding of interviewee responses vs extracted response
+        if embedding_model:
+            logger.info(f"Finding semantic matches using embedding...")
+            top_response_matches = match_top_responses(embedding_model, device, logger, extracted_phrase,
+                                                       match["matches"])
+            for top_match in top_response_matches:
+                line_reference.append(top_match['interviewee_line_ref'] + 1)
+                response_position.append(0)
+                interviewee_match.append(top_match['response'])
+
+        # if still not found ...
+        if len(line_reference) == 0:
+            # assume all matching lines were used
+            logger.info(f"Line Reference: No matches found, assuming all references used.")
+            line_reference = [m['interviewee_line_ref'] for m in match["matches"]]
+            response_position = [0] * len(line_reference)  # no character index, whole line assumed
+            interviewee_match = [m['response'] for m in match["matches"]]
+            match_type = "ALL_RELEVANT"
+        else:
+            logger.info(f"Line Reference: Semantic Match at {line_reference}")
+            match_type = "SEMANTIC"
+    return (line_reference, response_position, interviewee_match, match_type)
+
 async def generate_output_from_summarized_matches_async(transcript_files: list, matches_list: list, guide_questions: list,
-                                                       gpt_model: str, output_path: str, conciseness: int = 0,
-                                                       logger: logging.Logger = None,
-                                                       embedding_model: SentenceTransformer = None, 
-                                                       device: torch.device = "cpu") -> None:
+                                                        llm_model: str, output_path: str,
+                                                        sampling_method: str = "top_k", top_k: int = 3,
+                                                        max_concurrent_calls: int = 10,
+                                                        logger: logging.Logger = None,
+                                                        embedding_model: SentenceTransformer = None,
+                                                        device: torch.device = "cpu") -> None:
     """
     The Generator of the pipeline
     Generate a structured CSV with one row per interview and columns for guide questions, using summarized question matches.
@@ -78,10 +134,9 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         transcript_files (list[str]): List of transcript file paths.
         matches_list (list[list[dict]]): List of matches for each transcript based on summarized questions.
         guide_questions (list[str]): List of guide questions.
-        gpt_model (str): The GPT model to use.
+        llm_model (str): The GPT model to use.
         api_key (str): The OpenAI API key.
         output_path (str): The base path for the output CSV file. The timestamp will be appended to the filename.
-        conciseness (int): Conciseness level (0 for less concise, 1 for more concise).
         logger (logging.Logger, optional): Logger instance for logging execution information.
     """
     logger.info("Generator processing...")
@@ -89,12 +144,14 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
     output_data = []
     reference_data = []
     generator_log = [] # Will be output for evaluation module
-    semaphore = asyncio.Semaphore(10)  # Limit to 5 concurrent API calls
 
-    async def summarize_with_limit(file_name, context, guide_question, match):
+    semaphore = asyncio.Semaphore(max_concurrent_calls)  # Limit to 5 concurrent API calls
+
+    # ===============================================================================================================
+    async def extract_and_summarize_response(file_name, context, guide_question, match):
         async with semaphore:
             try:
-                return_val = await extract_and_summarize_response_llm_async(context, guide_question, gpt_model, conciseness, logger)
+                return_val = await extract_and_summarize_response_llm_async(context, guide_question, llm_model, logger)
                 if isinstance(return_val, str):
                     response = return_val
                     extracted_phrase = None
@@ -107,69 +164,26 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                         else return_val[1]
                     )
 
-                # Create the generator summary log
+
+                # ===============================================================================================================
+                # Create the generator summary log for evaluation module
                 log = []
                 log.append("===Start===")
                 log.append(f"Processing file: {file_name}")
-                log.append(f"Processing guide question (top-k matches): {guide_question}")
+                log.append(f"Processing guide question: {guide_question}")
                 log.append("Relevant Interviewee Responses:")
 
-
-
-                # Start looking for reference point of answers in the transcript
-                response_position = []
-                line_reference = []
-                interviewee_match = []
-
-                match_type = None
                 for m in match["matches"]:
                     log.append(f"Interviewer: {m['question']}\nInterviewee: {m['response']}")
-                    # check if the raw response reported was extracted from this line
-                    if extracted_phrase:
-                        current_line_match = m['response'].lower().find(extracted_phrase.lower())
-                        #response_position = 
-                        # if found, we record the line and position
-                        if current_line_match >= 0:
-                            # make both line and character indexes 1-based
-                            line_reference.append(m['interviewee_line_ref'] + 1)
-                            response_position.append(current_line_match+1) 
-                            match_type = "EXACT"
-                            interviewee_match.append(m['response'])
+
                 log.append("===End===")
-
                 generator_log.extend(log)
-
                 for l in log:
                     logger.info(l)
+                # ===============================================================================================================
 
-                # only use the references if not default
-                if response == "[No relevant response found]":
-                    response_position =[]
-                    line_reference = []
-                elif len(line_reference)>0:
-                    logger.info(f"Line Reference: Exact Match at {line_reference}")
-                else:
-                    # alternative approach. match using embedding of responses vs extracted response
-                    if embedding_model:
-                        logger.info(f"Finding semantic matches using embedding...")
-                        top_response_matches = match_top_responses(embedding_model, device, logger, extracted_phrase,
-                                                                     match["matches"])                        
-                        for top_match in top_response_matches:
-                            line_reference.append(top_match['interviewee_line_ref'] + 1)
-                            response_position.append(0)
-                            interviewee_match.append(top_match['response'])
 
-                    # if still not found ...
-                    if len(line_reference)==0:
-                        # assume all matching lines were used
-                        logger.info(f"Line Reference: No matches found, assuming all references used.")
-                        line_reference = [m['interviewee_line_ref'] for m in match["matches"]]                        
-                        response_position = [0]*len(line_reference) # no character index, whole line assumed
-                        interviewee_match = [m['response'] for m in match["matches"]]
-                        match_type = "ALL_RELEVANT"
-                    else:
-                        logger.info(f"Line Reference: Semantic Match at {line_reference}")
-                        match_type = "SEMANTIC"
+                (line_reference, response_position, interviewee_match, match_type) = find_reference_for_answers(match, response, extracted_phrase, embedding_model, device, logger)
 
                 logger.info(f"Summarized Response for '{guide_question}': {response}")
                 if extracted_phrase:
@@ -193,8 +207,9 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 return {
                     'response':"[Error summarizing response]"
                     }, str(e)
+    # ===============================================================================================================
 
-
+    # ===============================================================================================================
     for file_path, matches in zip(transcript_files, matches_list):
         file_name = os.path.splitext(os.path.basename(file_path))[0]
         interview_refs = []
@@ -213,7 +228,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         for match in matches:
             guide_question = match["guide_question"]
             context = "\n".join([f"Interviewer: {m['question']}\nInterviewee: {m['response']}" for m in match["matches"]])
-            tasks.append(summarize_with_limit(file_name, context, guide_question, match))
+            tasks.append(extract_and_summarize_response(file_name, context, guide_question, match))
             task_metadata.append(guide_question)
 
         # Execute summarization tasks concurrently
@@ -237,9 +252,12 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         reference_data.append({"interview": file_name, "responses": interview_refs})
 
     output_df = pd.DataFrame(output_data)
+    # ===============================================================================================================
 
     # Generate timestamped filename
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+
+    # ===============================================================================================================
     dir_name, file_name = os.path.split(output_path)
     if file_name:
         base_name, ext = os.path.splitext(file_name)
@@ -253,59 +271,33 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         new_output_path = os.path.join(dir_name, new_file_name)
     else:
         new_output_path = new_file_name
+    # ===============================================================================================================
 
+    # ===============================================================================================================
+    # Write matched responses to file
     output_df.to_csv(new_output_path, index=False)
-
     logger.info(f"Output saved to {new_output_path}")
     logger.info(output_df[["Interview File"] + guide_questions[:2]])
+    # ===============================================================================================================
 
+    # ===============================================================================================================
     # Write generator log to file
     generator_log_file = open(os.path.join(dir_name, generator_log_file_name), 'w')
     for l in generator_log:
         generator_log_file.write(f"{l}\n")
     generator_log_file.close()
+    logger.info(f"Generator log saved to {generator_log_file}")
+    # ===============================================================================================================
 
+    # ===============================================================================================================
     # save detailed response JSON
     json_file_name = re.sub(r'\.csv$', '.json', new_output_path)
-    logger.info(f"JSON output file name is {json_file_name}")
     with open(json_file_name, 'w', encoding ='utf8') as file:
         json.dump(reference_data, file, indent=4)
         logger.info(f"JSON output saved to {json_file_name}")
+    # ===============================================================================================================
 
     return None
 
-def match_top_responses(model: SentenceTransformer, device: torch.device,
-                        logger: logging.Logger,
-                        extracted_phrase: str, group_embeddings: list[dict], 
-                        p_threshold: float = 0.8, max_matches: int = 3) -> list[dict]:
-    """
-    Match a guideline question to the top k groups based on similarity.
-    
-    Args:
-        guide_question (str): The guide question to match.
-        group_embeddings (list[dict]): List of embedded groups.
-        model (SentenceTransformer): The embedding model.
-        device (torch.device): The device to use for computation.
-        p (float): Threshold for similarity.
-        max_matches (int): Maximum number of matches to return
-    
-    Returns:
-        list[dict]: Top k matches with similarity scores.
-    """
-    query_embedding = model.encode(extracted_phrase, convert_to_tensor=True, device=device)
-    similarities = []
-    for group in group_embeddings:
-        similarity = util.cos_sim(query_embedding, group["response_embedding"]).cpu().numpy()[0][0]
-        similarities.append({
-            "similarity": float(similarity),
-            "interviewee_line_ref": group["interviewee_line_ref"],
-            "response": group["response"]
-        })
-    logger.info(f"Similarities for '{extracted_phrase}'")
-    logger.info([round(s["similarity"], 3) for s in similarities] )
-    ret_similarity = [s for s in similarities if s["similarity"]>=p_threshold]
-    # do not sort and change order of speaking!
-    #ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
-    return ret_similarity[:max_matches]
 
 

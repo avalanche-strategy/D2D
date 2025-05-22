@@ -41,12 +41,14 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
     model = SentenceTransformer("sentence-transformers/nli-roberta-base-v2", device=device)
 
+    print(guidelines_path)
     guide_questions = load_guidelines(guidelines_path)
 
     transcript_files = glob(os.path.join(transcript_dir, "*.txt"))
     if not transcript_files:
         raise FileNotFoundError("No transcript files found in directory")
 
+    # ===============================================================================================================
     # Precompute embeddings for guide questions
     logger.info("Summarizing and embedding guide questions...")
     guide_question_data = []
@@ -69,25 +71,17 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
 
     logger.info("Guide question embeddings precomputed.")
     output_divider(logger, True)
+    # ===============================================================================================================
 
+    # ===============================================================================================================
+    # Looking for matches to questions
     matches_list = []
-
     for transcript_path in transcript_files:
         logger.info(f"Processing transcript: {transcript_path.split('/')[-1]}")
         transcript = load_transcript(transcript_path)
 
         groups = segment_transcript(transcript)
         group_embeddings = embed_groups(groups, model, device)
-
-        # print(f"File: {transcript_path}")
-        # print()
-        # for g in group_embeddings:
-        #     print(g['embedding'][:5])
-        #     for k in g.keys():
-        #         if k !='embedding':
-        #             print(f'{k}: ', g[k])
-        #     print(end=f"\n{'-'*20}\n\n") # end of group
-        # print("*"*30)     
 
         transcript_matches = []
         for guide_data in guide_question_data:
@@ -97,20 +91,14 @@ async def main(transcript_dir: str, guidelines_path: str, llm_model: str, pipeli
                 "matches": top_matches
             })
         matches_list.append(transcript_matches)
+    # ===============================================================================================================
 
-        # for tm in transcript_matches:
-        #     print(f"Guide Question: ", tm["guide_question"], end='\n\n')
-        #     for top_p in tm["matches"]:
-        #         print(f"{top_p['similarity']:.4f}")
-        #         print(f"{top_p['speaking_round']}")
-        #         print(f'{top_p['interviewer_line_ref']:>3} - Interviewer: ', top_p['question'])
-        #         print(f'{top_p['interviewee_line_ref']:>3} - Interviewee: ', top_p['response'], end=f"\n{'-'*20}\n\n")
-        #     print("*"*30)  
-        #     print() 
+    # ===============================================================================================================
     await generate_output_from_summarized_matches_async(
         transcript_files, matches_list, guide_questions, llm_model, output_path, conciseness=conciseness, logger=logger,
         embedding_model=model, device=device
     )
+    # ===============================================================================================================
 
 
 if __name__ == "__main__":
