@@ -3,17 +3,24 @@ from litellm import completion, acompletion
 from dotenv import load_dotenv, find_dotenv
 
 
-def build_extract_prompt(context: str, query: str) -> str:
+
+
+def build_extract_prompt(context: str, query: str, custom_extract_prompt: str = None) -> str:
     """
     Build the extract prompt for LLM.
 
     Args:
         context (str): The dialogue context.
         query (str): The query to answer.
+        custom_extract_prompt (str, optional): Custom prompt template with {context} and {query} placeholders.
 
     Returns:
         str: The formatted extract prompt.
     """
+    if custom_extract_prompt:
+        # Use the custom prompt template, replacing placeholders
+        return custom_extract_prompt.format(context=context, query=query)
+
     # Balanced: Concise but understandable
     return f"""Given the following dialogue as context: {context}
                          When referring to a person, use their name explicitly and avoid pronouns 
@@ -25,20 +32,25 @@ def build_extract_prompt(context: str, query: str) -> str:
                                    "[No relevant response found]."  """
 
 
-def build_summarize_prompt(extracted_phrase: str, query: str) -> str:
+def build_summarize_prompt(extracted_phrase: str, query: str, custom_summarize_prompt: str = None) -> str:
     """
     Build the summarized prompt for LLM.
 
     Args:
         extracted_phrase (str): The phrase extracted from the interviewee's response.
         query (str): The query to answer.
+        custom_summarize_prompt (str, optional): Custom prompt template with {extracted_phrase} and {query} placeholders.
 
     Returns:
         str: The formatted summarized prompt.
     """
+    if custom_summarize_prompt:
+        # Use the custom prompt template, replacing placeholders
+        return custom_summarize_prompt.format(extracted_phrase=extracted_phrase, query=query)
+
     # Balanced: Concise but understandable
     return f"""Given the following extracted response: {extracted_phrase}, 
-                        for the query "{query}" When referring to a person, use their name 
+                        for the query "{query}" When referring to a third party, use their name 
                         explicitly and avoid pronouns like "he/she", "him/her" or "it/they". Summarize the response 
                         into a single, concise phrase that directly answers the query, focusing 
                         exclusively on the primary reason or sentiment expressed. Use only the words 
@@ -46,12 +58,15 @@ def build_summarize_prompt(extracted_phrase: str, query: str) -> str:
                         Remove unnecessary words, excluding secondary details entirely, to ensure the 
                         phrase retains the key verb and subject and maintains semantic clarity. The 
                         result must be a coherent phrase, not broken into disconnected fragments. It 
-                        doesn't have to be a complete sentence. If the response is "[No relevant 
-                        response found]," return the same. Do not add introductory phrases or extra 
+                        doesn't have to be a complete sentence. Do not add introductory phrases or extra 
                         details."""
 
-async def extract_and_summarize_response_llm_async(context: str, query: str, llm_model: str,
-                                                logger: logging.Logger = None) -> str:
+async def extract_and_summarize_response_llm_async(file_name: str, context: str, query: str, llm_model: str,
+                                                logger: logging.Logger = None,
+                                                   custom_extract_prompt: str = None,
+                                                   custom_summarize_prompt: str = None
+                                                   ) -> str:
+
     """
     The core function of the Generator in the pipeline.
     Query LLM with the provided context and query asynchronously.
@@ -62,11 +77,24 @@ async def extract_and_summarize_response_llm_async(context: str, query: str, llm
         llm_model (str): The LLM model to use.
         api_key (str): The OpenAI API key.
         logger (logging.Logger, optional): Logger instance for logging execution information.
+        custom_extract_prompt (str, optional): Custom prompt template for extracting responses.
+        custom_summarize_prompt (str, optional): Custom prompt template for summarizing responses.
 
     Returns:
-        str: The summarized response from ChatGPT.
+        str: The summarized response from LLM, or an error message if an error occurs..
     """
+
+    # Import here to avoid circular imports
+    from src.utils.output_utils import output_divider
+
     _ = load_dotenv(find_dotenv())
+
+    # Define a detailed system prompt for both extraction and summarization
+    system_prompt = """You are a data extraction specialist tasked with processing interview transcripts. 
+                           Your role is to extract and summarize information accurately and concisely. When referring to a person, 
+                           use their name explicitly and avoid pronouns like "he", "she", "him", "her", or "it/they". Exclude filler 
+                           words (e.g., "um", "well", "you know", "like") and irrelevant commentary, retaining only the core content 
+                           needed for clarity. """
 
     # First call: Extract the core phrase from the interviewee's response
     try:
@@ -76,30 +104,43 @@ async def extract_and_summarize_response_llm_async(context: str, query: str, llm
             # this could be a different string, if we need to debug/differentiate
             return "[No relevant response found]"
         
-        extract_prompt = build_extract_prompt(context, query)
+        extract_prompt = build_extract_prompt(context, query, custom_extract_prompt)
         response = await acompletion(
             model=llm_model,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": extract_prompt}
             ],
             temperature=0
         )
         extracted_phrase = response.choices[0].message.content
-        summarize_prompt = build_summarize_prompt(extracted_phrase, query)
+        summarize_prompt = build_summarize_prompt(extracted_phrase, query, custom_summarize_prompt)
 
         # Second call: Summarize the extracted phrase
         try:
+            if "[No relevant response found]" in extracted_phrase:
+                return ("[No relevant response found]", extracted_phrase)
+
             response = await acompletion(
                 model=llm_model,
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": summarize_prompt}
                 ],
                 temperature=0
             )
-            response_content = response.choices[0].message.content.strip('\"\'')
-            return (response_content, extracted_phrase)
+            summarized_phrase = response.choices[0].message.content.strip('\"\'')
+
+            output_divider(logger)
+            logger.info(f"Processing file: {file_name}")
+            logger.info(f"Extract Prompt: \n{extract_prompt}")
+            logger.info(f"Extracted Phrase: [{extracted_phrase}]")
+            logger.info(f"Summarize Prompt: \n{summarize_prompt}")
+            logger.info(f"Summarize Phrase: [{summarized_phrase}]")
+            output_divider(logger)
+
+            return (summarized_phrase, extracted_phrase)
+
         except Exception as e:
             logger.error(f"Error summarizing response: {str(e)}")
             return f"Error querying ChatGPT: {str(e)}"

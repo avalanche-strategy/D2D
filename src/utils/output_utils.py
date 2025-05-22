@@ -121,11 +121,13 @@ def find_reference_for_answers(match: dict, response: str, extracted_phrase: str
 
 async def generate_output_from_summarized_matches_async(transcript_files: list, matches_list: list, guide_questions: list,
                                                         llm_model: str, output_path: str,
-                                                        sampling_method: str = "top_k", top_k: int = 3,
                                                         max_concurrent_calls: int = 10,
                                                         logger: logging.Logger = None,
                                                         embedding_model: SentenceTransformer = None,
-                                                        device: torch.device = "cpu") -> None:
+                                                        device: torch.device = "cpu",
+                                                        custom_extract_prompt: str = None,
+                                                        custom_summarize_prompt: str = None
+                                                        ) -> None:
     """
     The Generator of the pipeline
     Generate a structured CSV with one row per interview and columns for guide questions, using summarized question matches.
@@ -151,7 +153,10 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
     async def extract_and_summarize_response(file_name, context, guide_question, match):
         async with semaphore:
             try:
-                return_val = await extract_and_summarize_response_llm_async(context, guide_question, llm_model, logger)
+                return_val = await extract_and_summarize_response_llm_async(file_name, context, guide_question, llm_model, logger,
+                                                                            custom_extract_prompt=custom_extract_prompt,
+                                                                            custom_summarize_prompt=custom_summarize_prompt
+                                                                            )
                 if isinstance(return_val, str):
                     response = return_val
                     extracted_phrase = None
@@ -178,19 +183,21 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
                 log.append("===End===")
                 generator_log.extend(log)
-                for l in log:
-                    logger.info(l)
+                # for l in log:
+                #     logger.info(l)
+                logger.info(f"Response from generator {return_val}")
                 # ===============================================================================================================
 
-
+                # Find reference points for answers in the transcript
                 (line_reference, response_position, interviewee_match, match_type) = find_reference_for_answers(match, response, extracted_phrase, embedding_model, device, logger)
 
-                logger.info(f"Summarized Response for '{guide_question}': {response}")
+
                 if extracted_phrase:
                     logger.info(f"Extracted Phrase was '{extracted_phrase}': Reference (Line={list(zip(line_reference, response_position))})")
                     logger.info(f"Referenced Interviewee Responses: {interviewee_match}")
                 else:
                     logger.info(f"Extracted Phrase was '{extracted_phrase}': [No Reference]")
+                logger.info(f"Summarized Response for '{guide_question}': {response}")
 
                 output_divider(logger, True)
                 return {
