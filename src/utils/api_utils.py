@@ -90,11 +90,16 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
     _ = load_dotenv(find_dotenv())
 
     # Define a detailed system prompt for both extraction and summarization
-    system_prompt = """You are a data extraction specialist tasked with processing interview transcripts. 
+    extraction_system_prompt = """You are a data extraction specialist tasked with processing interview transcripts. 
                            Your role is to extract and summarize information accurately and concisely. When referring to a person, 
                            use their name explicitly and avoid pronouns like "he", "she", "him", "her", or "it/they". Exclude filler 
                            words (e.g., "um", "well", "you know", "like") and irrelevant commentary, retaining only the core content 
                            needed for clarity. """
+
+    summarize_system_prompt = """You are a data summarization specialist tasked with processing extracted phrases from interview transcripts. 
+                                 Your role is to summarize information concisely while preserving the primary meaning. When referring to a person, 
+                                 use their name explicitly and avoid pronouns like "he", "she", "him", "her", or "it/they". Ensure outputs 
+                                 are concise, coherent phrases suitable for a CSV format."""
 
     # First call: Extract the core phrase from the interviewee's response
     try:
@@ -108,7 +113,7 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
         response = await acompletion(
             model=llm_model,
             messages=[
-                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": extraction_system_prompt},
                 {"role": "user", "content": extract_prompt}
             ],
             temperature=0
@@ -124,7 +129,7 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
             response = await acompletion(
                 model=llm_model,
                 messages=[
-                    {"role": "system", "content": system_prompt},
+                    {"role": "system", "content": summarize_system_prompt},
                     {"role": "user", "content": summarize_prompt}
                 ],
                 temperature=0
