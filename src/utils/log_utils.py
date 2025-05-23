@@ -34,8 +34,8 @@ def extract_retrieved_contexts(log_path: str, save_path: str = None) -> pd.DataF
             for bline in block:
                 if bline.startswith("Processing file:"):
                     respondent_id = bline.replace("Processing file:", "").strip()
-                elif bline.startswith("Processing guide question (top-k matches):"):
-                    guide_question = bline.replace("Processing guide question (top-k matches):", "").strip()
+                elif bline.startswith("Processing guide question"):
+                    guide_question = re.sub(r"^Processing guide question(?: \(top-k matches\))?:", "", bline).strip()
                 elif bline.startswith("Relevant Interviewee Responses:"):
                     context_lines = []  # reset and start collecting actual dialogue
                 elif bline.startswith("Interviewer:") or bline.startswith("Interviewee:"):
