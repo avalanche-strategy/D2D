@@ -8,8 +8,29 @@ sys.path.append(root_dir)
 
 from src.d2d import D2DEvaluator
 
-def main():
-    pass
+def main_eval():
+    evaluator = D2DEvaluator(
+        model="gpt-4.1-mini",
+        temperature=0.0
+    )
 
-if __name__ == '__main__':
-    main()
+    # Define paths (adjust as necessary)
+    log_input_path = os.path.join(root_dir, "results", "D2D_interview_48_generator_log_2025-05-23_14-45.txt")
+    context_output_path = os.path.join(root_dir, "eval_results", "retrieved_contexts.csv")
+    rag_csv_path = os.path.join(root_dir, "results", "D2D_interview_48_2025-05-23_14-45.csv")
+    ref_csv_path = os.path.join(root_dir, "data", "private_data", "references", "responses_48.csv")
+    eval_output_path = os.path.join(root_dir, "eval_results", "eval_output.csv")
+
+    evaluator.evaluate(
+        log_input_path=log_input_path,
+        context_output_path=context_output_path,
+        rag_csv_path=rag_csv_path,
+        ref_csv_path=ref_csv_path,
+        eval_output_path=eval_output_path
+    )
+
+if __name__ == "__main__":
+    start = time.time()
+    main_eval()
+    end = time.time()
+    print(f"Time taken: {end - start:.2f} seconds")
