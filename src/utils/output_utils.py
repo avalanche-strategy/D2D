@@ -81,7 +81,7 @@ def find_reference_for_answers(match: dict, response: str, extracted_phrase: str
             # if found, we record the line and position
             if current_line_match >= 0:
                 # make both line and character indexes 1-based
-                line_reference.append(m['interviewee_line_ref'] + 1)
+                line_reference.append(m['interviewee_line_ref'])
                 response_position.append(current_line_match + 1)
                 match_type = "EXACT"
                 interviewee_match.append(m['response'])
@@ -102,7 +102,7 @@ def find_reference_for_answers(match: dict, response: str, extracted_phrase: str
             top_response_matches = match_top_responses(embedding_model, device, logger, extracted_phrase,
                                                        match["matches"])
             for top_match in top_response_matches:
-                line_reference.append(top_match['interviewee_line_ref'] + 1)
+                line_reference.append(top_match['interviewee_line_ref'])
                 response_position.append(0)
                 interviewee_match.append(top_match['response'])
 
@@ -194,7 +194,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
                 output_divider(logger, True)
                 return {
-                    'relevant_lines': [m['interviewee_line_ref']+1 for m in match["matches"]],
+                    'relevant_lines': [m['interviewee_line_ref'] for m in match["matches"]],
                     'extracted_phrase': extracted_phrase,
                     'response': response.strip('\"\''),   
                     'match_type': match_type,                 

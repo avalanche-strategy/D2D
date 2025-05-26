@@ -45,13 +45,13 @@ def segment_transcript(transcript: str) -> list[dict]:
         line = line.strip()
         if line.startswith("Interviewer:"):
             # for backward compatibility, I append both the text and line_number, which will be separated in the dict
-            # also, we use Python-refs (0-index), so remember to +1 for human based indexes
+            # All line-refs are human-readable (start at index 1)
             list_interviewer.append( 
-                (line[len('Interviewer:'):].strip(), line_number)
+                (line[len('Interviewer:'):].strip(), line_number+1)
                 )  
         elif line.startswith("Interviewee:"):
             list_interviewee.append(
-                (line[len('Interviewee:'):].strip(), line_number)
+                (line[len('Interviewee:'):].strip(), line_number+1)
                 ) 
         # for now we skip blank lines or those not marked with either speaker, no else
     
