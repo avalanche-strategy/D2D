@@ -66,7 +66,7 @@ class D2DProcessor:
         output_divider(logger)
 
     def process_transcripts(self, data_dir: str, interview_name: str, output_dir: str,
-                            pipeline_name: str = "D2D", disable_logging: bool = False) -> None:
+                            disable_logging: bool = False) -> None:
         """
         Process all transcripts in the directory and generate summarized matches.
 
@@ -85,7 +85,9 @@ class D2DProcessor:
 
         transcript_dir = os.path.join(data_dir, interview_name)
         guidelines_path = os.path.join(data_dir, f"{interview_name}_guidelines.csv")
-        output_path = os.path.join(output_dir, f"{pipeline_name}_{interview_name}.csv")
+
+        interview_name = interview_name.split("_")[-1]
+        output_path = os.path.join(output_dir, f"D2D_survey_{interview_name}.csv")
 
         # Run async processing within the event loop
         loop = asyncio.get_event_loop()
@@ -96,18 +98,18 @@ class D2DProcessor:
             asyncio.set_event_loop(new_loop)
             try:
                 new_loop.run_until_complete(self._process_transcripts_async(
-                    transcript_dir, guidelines_path, output_path, pipeline_name, disable_logging
+                    transcript_dir, guidelines_path, output_path, disable_logging
                 ))
             finally:
                 new_loop.close()
         else:
             # Normal case: run in current loop
             loop.run_until_complete(self._process_transcripts_async(
-                transcript_dir, guidelines_path, output_path, pipeline_name, disable_logging
+                transcript_dir, guidelines_path, output_path, disable_logging
             ))
 
     async def _process_transcripts_async(self, transcript_dir: str, guidelines_path: str, output_path: str,
-                                         pipeline_name: str, disable_logging: bool) -> None:
+                                        disable_logging: bool) -> None:
         """
         Internal async method to process transcripts.
 
@@ -119,6 +121,7 @@ class D2DProcessor:
             disable_logging (bool): Whether to disable logging.
         """
         # Set up logging
+        pipeline_name = "D2D"
         logger = setup_logging(pipeline_name, output_path, disable_logging=disable_logging)
         logger.info("D2D processing pipeline started...")
         output_divider(logger, True)

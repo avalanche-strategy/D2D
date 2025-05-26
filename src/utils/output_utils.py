@@ -266,6 +266,14 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
     # ===============================================================================================================
     dir_name, file_name = os.path.split(output_path)
+    base_name, ext = os.path.splitext(file_name)
+    responses_file_name = f"{base_name}_responses_{timestamp}{ext}"
+    references_file_name = f"{base_name}_references_{timestamp}.json"
+    generator_log_file_name = f"{base_name}_generator_log_{timestamp}.txt"
+
+
+
+
     if file_name:
         base_name, ext = os.path.splitext(file_name)
         new_file_name = f"{base_name}_{timestamp}{ext}"
@@ -282,8 +290,8 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
     # ===============================================================================================================
     # Write matched responses to file
-    output_df.to_csv(new_output_path, index=False)
-    logger.info(f"Output saved to {new_output_path}")
+    output_df.to_csv(os.path.join(dir_name, responses_file_name), index=False)
+    logger.info(f"Responses saved to {new_output_path}")
     logger.info(output_df[["Interview File"] + guide_questions[:2]])
     # ===============================================================================================================
 
@@ -298,10 +306,10 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
     # ===============================================================================================================
     # save detailed response JSON
-    json_file_name = re.sub(r'\.csv$', '.json', new_output_path)
-    with open(json_file_name, 'w', encoding ='utf8') as file:
+    references_file = os.path.join(dir_name, references_file_name)
+    with open(references_file, 'w', encoding ='utf8') as file:
         json.dump(reference_data, file, indent=4)
-        logger.info(f"JSON output saved to {json_file_name}")
+        logger.info(f"JSON output saved to {references_file}")
     # ===============================================================================================================
 
     return None
