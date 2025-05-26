@@ -6,7 +6,7 @@ Dialogue2Data (D2D) is an open-source Python package that transforms unstructure
 ## Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/fathomthat/d2d.git
+git clone https://github.com/avalanche-strategy/D2D.git
 cd D2D
 ```
 2. Create and activate the Conda environment:
