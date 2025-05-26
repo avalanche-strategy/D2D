@@ -6,7 +6,7 @@ Dialogue2Data (D2D) is an open-source Python package that transforms unstructure
 ## Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/fathomthat/d2d.git
+git clone https://github.com/avalanche-strategy/D2D.git
 cd D2D
 ```
 2. Create and activate the Conda environment:
@@ -15,33 +15,40 @@ conda env create -f environment.yml
 conda activate d2d
 ```
 
-## Environment Configuration
-To use the OpenAI API, you need to set up an environment variable for your API key. Create a `.env` file in the root directory of the project with the following content:
+## Environment Configuration 
+To use the OpenAI and Anthropic API, you need to set up an environment variable for your API key. Create a `.env` file in the root directory of the project with the following content:
 
 ```bash
-OPENAI_API_KEY=[Please replace this with the OPENAI API key]
+OPENAI_API_KEY=[Please replace this with your OPENAI API key]
+ANTHROPIC_API_KEY=[Please replace this with your ANTHROPIC API key]
 ```
 
 Make sure to replace `[Please replace this with the OPENAI API key]` with your actual OpenAI API key. This file should not be committed to the repository, as it contains sensitive information.
 
-## Data Placement
-Due to confidentiality, you need to place your data in a specific directory structure:
+### Data Placement
 
-- Place all private data in the `data/private_data/` directory.
-- For each interview, create a subdirectory named after the interview (e.g., `interview_1090/`).
-- Place the transcript files directly inside the interview directory (e.g., `data/private_data/interview_1090/transcript.txt`).
-- Place the guidelines CSV file in the same interview directory (e.g., `data/private_data/interview_1090/interview_1090_guidelines.csv`).
+To ensure smooth operation of the processor, please organize your data as follows:
 
-**Note for Development:** Unless you want to process all interviews, place only one transcript in the interview directory during the development process.
+- **Interview Data Structure**:  
+  Each interview should have its own subdirectory. The name of this subdirectory is the **interview name**, which MUST be in the format `interview_XXXX`, where `XXXX` is a unique identifier for the interview (e.g., `interview_1090`). While it is suggested to place these directories under `data/private_data/` for confidentiality, you may choose a different location if needed.
 
+- **Transcript Files**:  
+  Place all transcript files directly inside the interview directory. For example:  
+  - `data/private_data/interview_1090/transcript.txt`
+
+- **Guidelines CSV File**:  
+  The guidelines CSV file must be placed in the same level of the interview directory and should be named consistently with the interview name. For example:  
+  - `data/private_data/interview_1090_guidelines.csv`
+
+- **Synthetic Data**:  
+  For demonstration purposes, synthetic data is provided in `data/synthetic_data/interview_food`. This can be used to test the processor without needing private data.
 
 ## Usage
 
-To run the baseline RAG model on your data, use the following command after setting up your environment and data:
+To run the processor on your data, use the following command after setting up your environment and data:
 
 ```python
-# You may replace "rag_baseline.py" with other models available in src/models
-python src/models/rag_baseline.py
+python examples/api_test/processor_test.py
 ```
 
 This script processes the transcript and guidelines in the specified interview directory and generates a structured CSV output. More detailed usage instructions will be added as the project develops.
