@@ -125,6 +125,7 @@ if __name__ == "__main__":
     # main_top_p()
     # main_custom_prompt()
     # main_top_k()
+    main_minimal_init()
 
     end_time = time.time()
     elapsed_time = end_time - start_time

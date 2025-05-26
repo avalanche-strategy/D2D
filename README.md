@@ -20,7 +20,7 @@ To use the OpenAI and Anthropic API, you need to set up an environment variable 
 
 ```bash
 OPENAI_API_KEY=[Please replace this with your OPENAI API key]
-ANTHROPIC_API_KEY=[Please replace this with your OPENAI API key]
+ANTHROPIC_API_KEY=[Please replace this with your ANTHROPIC API key]
 ```
 
 Make sure to replace `[Please replace this with the OPENAI API key]` with your actual OpenAI API key. This file should not be committed to the repository, as it contains sensitive information.
