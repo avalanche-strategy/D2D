@@ -5,10 +5,31 @@ from src.utils.eval_config_utils import client, ACTIVE_METRICS
 
 
 class D2DEvaluator:
+    """
+    D2DEvaluator is a pipeline orchestrator for evaluating outputs from a 
+    Retrieval-Augmented Generation (RAG) system against reference answers 
+    using GPT-based scoring.
 
+    It provides two main functions:
+    1. `evaluate`: Extracts context, runs RAGAS evaluation, and saves results.
+    2. `post_process_results`: Highlights low scores and computes a joint 
+       performance metric across multiple evaluation dimensions.
+
+    Attributes:
+        METRICS (List[str]): List of metric names used in evaluation scoring.
+        model (str): Name of the LLM model used for evaluation scoring (default "gpt-4o-mini").
+        temperature (float): Temperature setting for GPT-based evaluation prompts.
+    """
     METRICS = ["faithfulness", "correctness", "precision", "recall", "relevance"]
 
     def __init__(self, model: str = "gpt-4o-mini", temperature: float = 0.0):
+        """
+        Initialize the evaluator with model and decoding temperature.
+
+        Args:
+            model (str): LLM model name to use for evaluation.
+            temperature (float): Decoding temperature for GPT prompts.
+        """
         self.model = model
         self.temperature = temperature
 
@@ -21,13 +42,20 @@ class D2DEvaluator:
         eval_output_path: str
     ) -> pd.DataFrame:
         """
-        End-to-end evaluation pipeline:
-        1. Extract retrieved context from log
-        2. Run RAGAS evaluation using GPT
-        3. Save output and return results
+        Orchestrates the evaluation pipeline:
+        1. Extracts retrieved context from log files.
+        2. Runs RAGAS evaluation on the model answers against reference answers.
+        3. Saves the evaluation results to CSV.
+
+        Args:
+            log_input_path (str): Path to the generator log file.
+            context_output_path (str): Path where the extracted context CSV will be saved.
+            rag_csv_path (str): Path to the model-generated answers CSV.
+            ref_csv_path (str): Path to the human-annotated reference answers CSV.
+            eval_output_path (str): Path where the evaluation result CSV will be saved.
 
         Returns:
-            pd.DataFrame: Evaluation results
+            pd.DataFrame: A DataFrame containing the full evaluation results with metric scores.
         """
         # Step 1: Extract retrieved context
         extract_retrieved_contexts(log_input_path, context_output_path)
@@ -50,6 +78,24 @@ class D2DEvaluator:
         output_prefix: str = "post_eval",
         highlight_threshold: float = 1.0
     ) -> None:
+        """
+        Post-processes evaluation results by:
+        1. Highlighting rows with any score below or equal to a threshold.
+        2. Computing a joint metric score using a weighted average of individual metrics.
+
+        Saves two CSVs:
+        - `<output_prefix>_highlighted.csv`: Rows with low scores labeled.
+        - `<output_prefix>_joint_metric.csv`: Respondent-level joint scores.
+
+        Args:
+            results (pd.DataFrame): DataFrame containing evaluation results.
+            weights (dict): Dictionary assigning weights to each metric; must sum to 1.0.
+            output_prefix (str): Prefix for output file names (default: "post_eval").
+            highlight_threshold (float): Threshold under which scores are considered low (default: 1.0).
+
+        Raises:
+            ValueError: If weights are missing or do not sum to 1.0.
+        """
         highlight_rows = []
         for idx, row in results.iterrows():
             row_copy = row.copy()
