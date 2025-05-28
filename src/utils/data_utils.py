@@ -46,20 +46,29 @@ def segment_transcript(transcript: str) -> list[dict]:
     list_interviewer = []
     list_interviewee = []
     lines = transcript.split(sep='\n', )
+    previous_type = None
     for line_number, line in enumerate(lines):
         # strip and remove any whitespace at start or finish
         line = line.strip()
         if line.startswith("Interviewer:"):
+            # if the previous line was also Interviewer, we need to add a blank line for interviewee
+            if previous_type == "Interviewer:":
+                list_interviewee.append(("", -1))
             # for backward compatibility, I append both the text and line_number, which will be separated in the dict
             # also, we use Python-refs (0-index), so remember to +1 for human based indexes
             list_interviewer.append( 
-                (line[len('Interviewer:'):].strip(), line_number)
-                )  
+                (line[len('Interviewer:'):].strip(), line_number+1)
+                )
+            previous_type = "Interviewer:"
         elif line.startswith("Interviewee:"):
+            # append interviewer blank line if consecutive interviewee
+            if previous_type == "Interviewee:":
+                list_interviewer.append(("", -1))
             list_interviewee.append(
-                (line[len('Interviewee:'):].strip(), line_number)
+                (line[len('Interviewee:'):].strip(), line_number+1)
                 ) 
-        # for now we skip blank lines or those not marked with either speaker, no else
+            previous_type = "Interviewee:"
+        # for now we skip blank lines or those not marked with either speaker, no else statement
     
     groups = []
     speaking_round = 0
