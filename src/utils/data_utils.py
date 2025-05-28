@@ -12,7 +12,13 @@ def load_guidelines(guidelines_path: str) -> list[str]:
         list[str]: List of guide questions.
     """
     guidelines = pd.read_csv(guidelines_path)
-    return guidelines["guide_text"].tolist()
+    
+    if not ("guide_text" in guidelines.columns):
+        raise ValueError("Guidelines CSV file must contain the 'guide_text' column.")
+    guidelines_list = guidelines[guidelines["guide_text"].notna()]["guide_text"].tolist()
+    if len(guidelines_list)==0:
+        raise ValueError("Guidelines CSV file must contain at least one question.")
+    return guidelines_list
 
 def load_transcript(transcript_path: str) -> str:
     """
