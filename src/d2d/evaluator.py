@@ -22,16 +22,18 @@ class D2DEvaluator:
     """
     METRICS = ["faithfulness", "correctness", "precision", "recall", "relevance"]
 
-    def __init__(self, model: str = "gpt-4o-mini", temperature: float = 0.0):
+    def __init__(self, model: str = "gpt-4o-mini", temperature: float = 0.0, max_concurrent_calls=5):
         """
         Initialize the evaluator with model and decoding temperature.
 
         Args:
             model (str): LLM model name to use for evaluation.
             temperature (float): Decoding temperature for GPT prompts.
+            max_concurrent_calls (int): Maximum number of concurrent API calls to the LLM.
         """
         self.model = model
         self.temperature = temperature
+        self.max_concurrent_calls = max_concurrent_calls
 
     def evaluate(
         self,
@@ -65,7 +67,8 @@ class D2DEvaluator:
             rag_path=rag_csv_path,
             ref_path=ref_csv_path,
             context_path=context_output_path,
-            output_path=eval_output_path
+            output_path=eval_output_path,
+            max_concurrent_calls=self.max_concurrent_calls
         )
 
         results = pd.read_csv(eval_output_path)
