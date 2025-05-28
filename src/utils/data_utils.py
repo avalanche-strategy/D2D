@@ -55,10 +55,9 @@ def segment_transcript(transcript: str) -> list[dict]:
             if previous_type == "Interviewer:":
                 list_interviewee.append(("", -1))
             # for backward compatibility, I append both the text and line_number, which will be separated in the dict
-            # also, we use Python-refs (0-index), so remember to +1 for human based indexes
+            # All line-refs are human-readable (start at index 1)
             list_interviewer.append( 
                 (line[len('Interviewer:'):].strip(), line_number+1)
-                )
             previous_type = "Interviewer:"
         elif line.startswith("Interviewee:"):
             # append interviewer blank line if consecutive interviewee

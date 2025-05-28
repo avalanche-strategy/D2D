@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 # Load OpenAI client and metric config
 from src.utils.eval_config_utils import client, ACTIVE_METRICS
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # GPT scoring helpers
@@ -325,12 +326,11 @@ def score_ragas(row: pd.Series) -> pd.Series:
     return pd.Series(results)
 
 
-def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output_path: str):
+def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output_path: str, max_concurrent_calls: int = 5):
     rag_df = pd.read_csv(os.path.expanduser(rag_path))
     ref_df = pd.read_csv(os.path.expanduser(ref_path))
     context_df = pd.read_csv(os.path.expanduser(context_path))
 
-    # Clean column names
     rag_df.columns = rag_df.columns.str.strip()
     ref_df.columns = ref_df.columns.str.strip()
     context_df.columns = context_df.columns.str.strip()
@@ -339,22 +339,35 @@ def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output
     ref_df = ref_df.rename(columns={"respondent_id": "respondent_id"})
     context_df = context_df.rename(columns={"guide_question": "question"})
 
-    # Melt and merge
     rag_long = rag_df.melt(id_vars=["respondent_id"], var_name="question", value_name="answer_rag")
     ref_long = ref_df.melt(id_vars=["respondent_id"], var_name="question", value_name="answer_ref")
     merged_df = pd.merge(rag_long, ref_long, on=["respondent_id", "question"], how="left")
     merged_df = pd.merge(merged_df, context_df, on=["respondent_id", "question"], how="left")
 
-    # Evaluate
-    tqdm.pandas()
-    scores_df = merged_df.progress_apply(score_ragas, axis=1)
-    result_df = pd.concat([merged_df, scores_df], axis=1)
+    print(f"Scoring {len(merged_df)} examples with up to {max_concurrent_calls} concurrent threads...")
+
+    results = []
+    with ThreadPoolExecutor(max_workers=max_concurrent_calls) as executor:
+        futures = {executor.submit(score_ragas, row): idx for idx, row in merged_df.iterrows()}
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Scoring"):
+            idx = futures[future]
+            try:
+                result = future.result()
+                results.append((idx, result))
+            except Exception as e:
+                print(f"Error in row {idx}: {e}")
+                results.append((idx, pd.Series())) 
+
+    scores_df = pd.DataFrame([r[1] for r in sorted(results, key=lambda x: x[0])])
+    result_df = pd.concat([merged_df.reset_index(drop=True), scores_df], axis=1)
+
     result_df.to_csv(os.path.expanduser(output_path), index=False)
-    print(f"\n Evaluation completed. Saved to: {output_path}")
+    print(f"\nEvaluation completed. Saved to: {output_path}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run RAGAS evaluation pipeline.")
+    parser.add_argument("--max_concurrent_calls", type=int, default=5, help="Max number of concurrent LLM API calls.")
     parser.add_argument("--rag", required=True, help="Path to RAG-generated answer CSV file.")
     parser.add_argument("--ref", required=True, help="Path to reference answer CSV file.")
     parser.add_argument("--context", required=True, help="Path to retrieved context CSV file.")
@@ -363,6 +376,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_ragas_evaluation(
+        max_concurrent_calls=args.max_concurrent_calls,
         rag_path=args.rag,
         ref_path=args.ref,
         context_path=args.context,
