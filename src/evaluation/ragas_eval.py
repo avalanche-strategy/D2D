@@ -152,16 +152,88 @@ def build_prompt(metric: str, row: dict, chunk_list: list[str] = None) -> str:
 Question: {question}
 Answer: {answer}
 Rate from 1 (not relevant) to 5 (fully relevant). Explain briefly.
-Score: X
+Score: <value between 1 and 5>
 Feedback: ..."""
 
     elif metric == "faithfulness":
-        return f"""Evaluate the faithfulness of the answer to the retrieved context.
-Context: {context}
-Answer: {answer}
-Rate from 1 (hallucinated) to 5 (fully grounded). Explain.
-Score: X
-Feedback: ..."""
+        chunks = "\n\n".join(chunk_list or [])
+        rag_confused = is_answer_empty_or_confused(answer)
+        ref_confused = is_answer_empty_or_confused(answer_ref)
+
+        if rag_confused and ref_confused:
+            return f"""You are evaluating the **faithfulness** of a generated answer with respect to the retrieved context.
+
+The answer is ambiguous or refuses to answer (e.g., "No relevant response found"), and the reference answer is also ambiguous.
+
+In such cases, judge whether the **tone and attitude** of the answer are consistent with the context.
+- Score 1.0 → if the answer is cautious and aligned with the context
+- Score 0.5 → if it's neutral or unclear
+- Score 0.0 → if the answer misrepresents the attitude or implies something untrue
+
+Context:
+{chunks}
+
+Answer:
+{answer}
+
+Then clearly report:
+Score: <value between 0 and 1>
+Feedback: Explain your reasoning.
+
+Score:
+Feedback:
+"""
+
+        elif rag_confused and not ref_confused:
+            return f"""You are evaluating the **faithfulness** of a generated answer with respect to the retrieved context.
+
+The generated answer is ambiguous or refuses to answer (e.g., "No relevant response found"), but the reference answer contains concrete information.
+
+In this case, the answer failed to reflect key information from the context and should be penalized.
+
+Give a score of 0.0 and explain briefly.
+
+Context:
+{chunks}
+
+Answer:
+{answer}
+
+Reference:
+{answer_ref}
+
+Score:
+Feedback: The model failed to reflect key information available in the reference.
+"""
+
+        elif not rag_confused and not ref_confused:
+            return f"""You are evaluating the **faithfulness** of a generated answer with respect to the retrieved context.
+
+Context: 
+{chunks}
+
+Answer: 
+{answer}
+
+Instructions:
+1. Extract all factual claims made in the answer.
+2. For each fact, determine whether it is supported by the context.
+3. If a fact is not present in the context, it is a hallucination.
+4. Compute:  
+   faithfulness = (number of supported facts) / (total number of facts stated in the answer)
+
+Then clearly report:
+
+Score: <value between 0 and 1>  
+Feedback:  
+- Total facts: ...
+- Supported facts: ...  
+- Hallucinated facts: ...  
+- Explanation: ...
+
+Score:  
+Feedback:
+"""
 
     elif metric == "precision":
         chunks = "\n\n".join(chunk_list or [])
@@ -279,7 +351,7 @@ Question: {question}
 Answer: {answer}
 Reference: {reference}
 Rate from 1 (wrong) to 5 (semantically equivalent). Explain.
-Score: X
+Score: <value between 1 and 5>
 Feedback: ..."""
 
     else:
@@ -298,32 +370,56 @@ def score_ragas(row: pd.Series) -> pd.Series:
     Returns:
     - pd.Series: Contains new columns like '<metric>_score' and '<metric>_feedback'.
     """
-
+    results = {}
     metrics = []
-    if pd.notna(row.get("retrieved_context")):
+
+    # Clean & check fields
+    answer_ref = row.get("answer_ref")
+    retrieved_context = row.get("retrieved_context")
+
+    has_context = pd.notna(retrieved_context) and isinstance(retrieved_context, str) and retrieved_context.strip()
+    has_ref = pd.notna(answer_ref) and isinstance(answer_ref, str) and answer_ref.strip()
+
+    # Always allow correctness and relevance if enabled and valid
+    if ACTIVE_METRICS.get("relevance", False):
+        metrics.append("relevance")
+    if ACTIVE_METRICS.get("correctness", False) and has_ref:
+        metrics.append("correctness")
+
+    # Add context-related metrics only if retrieved context exists
+    if has_context:
         for m in ["faithfulness", "precision", "recall"]:
             if ACTIVE_METRICS.get(m, False):
                 metrics.append(m)
-    if ACTIVE_METRICS.get("relevance", False):
-        metrics.append("relevance")
-    if ACTIVE_METRICS.get("correctness", False) and pd.notna(row.get("answer_ref")):
-        metrics.append("correctness")
 
-    results = {}
-    chunk_list = split_chunks(row["retrieved_context"])
+    chunk_list = split_chunks(retrieved_context) if has_context else []
 
+    if not has_context:
+        # Provide fallback values for context-dependent metrics
+        if ACTIVE_METRICS.get("faithfulness", False):
+            results["faithfulness_score"] = 1.0
+            results["faithfulness_feedback"] = "No retrieved context. Cannot verify any factual claims. All considered hallucinated."
+
+        if ACTIVE_METRICS.get("recall", False):
+            results["recall_score"] = 1.0
+            results["recall_feedback"] = "No context available. None of the required information is covered."
+
+        if ACTIVE_METRICS.get("precision", False):
+            results["precision_score"] = np.nan
+            results["precision_feedback"] = "No retrieved chunks. Precision is not applicable."
+
+    # Main evaluation loop
     for metric in metrics:
-        if metric in ["precision", "recall"]:
-            prompt = build_prompt(metric, row, chunk_list=chunk_list)
-            score, feedback = ask_score_and_feedback(prompt, is_proportion=True)
-        else:
-            prompt = build_prompt(metric, row)
-            score, feedback = ask_score_and_feedback(prompt)
-        
+        use_chunks = metric in ["precision", "recall", "faithfulness"]
+        prompt = build_prompt(metric, row, chunk_list=chunk_list if use_chunks else None)
+        is_proportion_metric = metric in ["faithfulness", "precision", "recall"] 
+        score, feedback = ask_score_and_feedback(prompt, is_proportion=is_proportion_metric)
         results[f"{metric}_score"] = score
         results[f"{metric}_feedback"] = feedback
 
     return pd.Series(results)
+
+
 
 
 def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output_path: str, max_concurrent_calls: int = 5):
