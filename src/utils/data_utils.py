@@ -12,7 +12,13 @@ def load_guidelines(guidelines_path: str) -> list[str]:
         list[str]: List of guide questions.
     """
     guidelines = pd.read_csv(guidelines_path)
-    return guidelines["guide_text"].tolist()
+    
+    if not ("guide_text" in guidelines.columns):
+        raise ValueError("Guidelines CSV file must contain the 'guide_text' column.")
+    guidelines_list = guidelines[guidelines["guide_text"].notna()]["guide_text"].tolist()
+    if len(guidelines_list)==0:
+        raise ValueError("Guidelines CSV file must contain at least one question.")
+    return guidelines_list
 
 def load_transcript(transcript_path: str) -> str:
     """
@@ -40,20 +46,28 @@ def segment_transcript(transcript: str) -> list[dict]:
     list_interviewer = []
     list_interviewee = []
     lines = transcript.split(sep='\n', )
+    previous_type = None
     for line_number, line in enumerate(lines):
         # strip and remove any whitespace at start or finish
         line = line.strip()
         if line.startswith("Interviewer:"):
+            # if the previous line was also Interviewer, we need to add a blank line for interviewee
+            if previous_type == "Interviewer:":
+                list_interviewee.append(("", -1))
             # for backward compatibility, I append both the text and line_number, which will be separated in the dict
             # All line-refs are human-readable (start at index 1)
             list_interviewer.append( 
                 (line[len('Interviewer:'):].strip(), line_number+1)
-                )  
+            previous_type = "Interviewer:"
         elif line.startswith("Interviewee:"):
+            # append interviewer blank line if consecutive interviewee
+            if previous_type == "Interviewee:":
+                list_interviewer.append(("", -1))
             list_interviewee.append(
                 (line[len('Interviewee:'):].strip(), line_number+1)
                 ) 
-        # for now we skip blank lines or those not marked with either speaker, no else
+            previous_type = "Interviewee:"
+        # for now we skip blank lines or those not marked with either speaker, no else statement
     
     groups = []
     speaking_round = 0
