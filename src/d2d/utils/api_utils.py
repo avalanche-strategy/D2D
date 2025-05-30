@@ -85,7 +85,7 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
     """
 
     # Import here to avoid circular imports
-    from src.utils.output_utils import output_divider
+    from .output_utils import output_divider
 
     _ = load_dotenv(find_dotenv())
 
