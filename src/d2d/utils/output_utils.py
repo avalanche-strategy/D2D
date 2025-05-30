@@ -7,8 +7,8 @@ import re
 import json
 from sentence_transformers import SentenceTransformer, util
 import torch
-from src.utils.embedding_utils import match_top_responses
-from src.utils.api_utils import extract_and_summarize_response_llm_async
+from .embedding_utils import match_top_responses
+from .api_utils import extract_and_summarize_response_llm_async
 from rapidfuzz import fuzz
 from rapidfuzz.distance import Levenshtein
 #import traceback
