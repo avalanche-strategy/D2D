@@ -1,7 +1,7 @@
 import pandas as pd
-from src.utils.log_utils import extract_retrieved_contexts
-from src.evaluation.ragas_eval import run_ragas_evaluation
-from src.utils.eval_config_utils import client, ACTIVE_METRICS
+from .utils.log_utils import extract_retrieved_contexts
+from .evaluation.ragas_eval import run_ragas_evaluation
+from .utils.eval_config_utils import client, ACTIVE_METRICS
 
 
 class D2DEvaluator:

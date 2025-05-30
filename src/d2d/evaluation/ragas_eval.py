@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 
 # Load OpenAI client and metric config
-from src.utils.eval_config_utils import client, ACTIVE_METRICS
+from d2d.utils.eval_config_utils import client, ACTIVE_METRICS
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
