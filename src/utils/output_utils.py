@@ -9,7 +9,9 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 from src.utils.embedding_utils import match_top_responses
 from src.utils.api_utils import extract_and_summarize_response_llm_async
-
+from rapidfuzz import fuzz
+from rapidfuzz.distance import Levenshtein
+import traceback
 
 def get_divider(line_brk: bool = False):
     return f"================================================================================================{'\n' if line_brk else ''}"
@@ -67,57 +69,88 @@ def setup_logging(pipeline_name: str, output_path: str, disable_logging: bool = 
     return logger
 
 
-def find_reference_for_answers(match: dict, response: str, extracted_phrase: str = None, embedding_model: SentenceTransformer = None, device: torch.device = "cpu", logger: logging.Logger = None):
+def find_reference_for_answers(match: dict, extracted_phrase: str = None, embedding_model: SentenceTransformer = None, device: torch.device = "cpu", logger: logging.Logger = None):
     # Looking for reference points for answers in transcript
     response_position = []
-    line_reference = []
+    line_reference = set() # init as a set so that partial matches do not get added multiple times
     interviewee_match = []
     match_type = None
+    partial_match_threshold = 70 # set a 70% partial fuzzy match minimum with fuzz
+    fuzzy_scores = []
 
-    # Approach 1: check if the extracted phrase (if there is) from LLM can be found exactly from context
-    for m in match["matches"]:
-        if extracted_phrase:
-            current_line_match = m['response'].lower().find(extracted_phrase.lower())
-            # if found, we record the line and position
-            if current_line_match >= 0:
-                # make both line and character indexes 1-based
-                line_reference.append(m['interviewee_line_ref'])
-                response_position.append(current_line_match + 1)
+    if (not extracted_phrase) or (extracted_phrase == "No relevant response found"):
+        # nothing to be added
+        logger.info("No matches because extracted phrase is None/[No relevant response found]")
+    else:
+        # check for fuzzy or exact match on all matched lines
+        logger.info(f"{'*'*90}")
+        logger.info(f"Matched lines for '{extracted_phrase}'")
+        for m in match["matches"]:
+            src_string = extracted_phrase.lower()
+            dest_string = m['response'].lower()
+            fuzzy_match = fuzz.partial_ratio_alignment(src_string, dest_string)
+            fuzzy_scores.append({"line": m['interviewee_line_ref'], "score": fuzzy_match.score})
+            if fuzzy_match.score == 100:
+                # perfect match, add current line
+                line_reference.add(m['interviewee_line_ref'])
+                # reference is triple containing (line, start_index, end_index)
+                response_position.append({'line': m['interviewee_line_ref'],
+                                        'start': fuzzy_match.dest_start,
+                                        'end': fuzzy_match.dest_end})
                 match_type = "EXACT"
                 interviewee_match.append(m['response'])
+            # we can decide whether to ignore partial matches if we already have an exact
+            elif fuzzy_match.score >= partial_match_threshold:
+                # partial match, we will extract matching portions
+                opcodes = Levenshtein.opcodes(src_string, dest_string)
+                match_type = "PARTIAL"
+                for tag, i1, i2, j1, j2 in opcodes:
+                    if tag == "equal":
+                        # we leave out any non-word matches or partial matches shorter than 3 characters
+                        if(re.search(r'\w+', extracted_phrase[i1:i2]) and (i2-i1)>=3):
+                            logger.info(f"Match: extracted_phrase[{i1}:{i2}] == response[{j1}:{j2}]")
+                            logger.info(f"  extracted_phrase: '{extracted_phrase[i1:i2]}'")
+                            logger.info(f"  response: '{m['response'][j1:j2]}'")
+                            # add this reference
+                            line_reference.add(m['interviewee_line_ref'])
+                            response_position.append({'line': m['interviewee_line_ref'], 'start': j1, 'end': j2})
+                        else:
+                            logger.info(f"Very short match: extracted_phrase[{i1}:{i2}] == response[{j1}:{j2}]")
+                        logger.info("\n")
 
-    if len(line_reference) > 0:
-        logger.info(f"Line Reference: Exact Match at {line_reference}")
+            logger.info(f"{str(m['interviewee_line_ref']).rjust(3)} = ({fuzzy_match.score:3.1f}): {m['response']}")
 
-    # LLM could not find relevant answers
-    elif response == "[No relevant response found]":
-        response_position = []
-        line_reference = []
-
-    else:
-        # Could not find exact matches of extracted phrase from context
-        # Approach 2: find references using embedding of interviewee responses vs extracted response
-        if embedding_model:
-            logger.info(f"Finding semantic matches using embedding...")
-            top_response_matches = match_top_responses(embedding_model, device, logger, extracted_phrase,
-                                                       match["matches"])
-            for top_match in top_response_matches:
-                line_reference.append(top_match['interviewee_line_ref'])
-                response_position.append(0)
-                interviewee_match.append(top_match['response'])
-
-        # if still not found ...
-        if len(line_reference) == 0:
-            # assume all matching lines were used
-            logger.info(f"Line Reference: No matches found, assuming all references used.")
-            line_reference = [m['interviewee_line_ref'] for m in match["matches"]]
-            response_position = [0] * len(line_reference)  # no character index, whole line assumed
-            interviewee_match = [m['response'] for m in match["matches"]]
-            match_type = "ALL_RELEVANT"
+        if len(line_reference) > 0:
+            logger.info(f"Line References found using Fuzzy Match at {line_reference}")
         else:
-            logger.info(f"Line Reference: Semantic Match at {line_reference}")
-            match_type = "SEMANTIC"
-    return (line_reference, response_position, interviewee_match, match_type)
+            # Could not find fuzzy matches of extracted phrase from context
+            # Approach 2: find references using embedding of interviewee responses vs extracted response
+            if embedding_model:
+                logger.info(f"Finding semantic matches using embedding...")
+                top_response_matches = match_top_responses(embedding_model, device, logger, extracted_phrase,
+                                                        match["matches"], 
+                                                        p_threshold = partial_match_threshold/100.0)
+                for top_match in top_response_matches:
+                    line_reference.add(top_match['interviewee_line_ref'])
+                    response_position.append({'line': top_match['interviewee_line_ref'], 'start': -1, 'end': -1})
+                    interviewee_match.append(top_match['response'])
+
+            # if still not found ...
+            if len(line_reference) == 0:
+                # assume all matching lines were used
+                logger.info(f"Line Reference: No matches found using either method")
+                #pick the highest fuzzy score
+                max_fuzzy = max(fuzzy_scores, key=lambda s: s['score'])
+                line_reference.add(max_fuzzy['line'])
+                response_position.append({'line': max_fuzzy['line'], 'start': -1, 'end': -1})
+                match_type = "FUZZY"
+            else:
+                logger.info(f"Line Reference: Semantic Match at {line_reference}")
+                match_type = "SEMANTIC"
+
+        logger.info(f"{'*'*90}")
+
+    return (list(line_reference), response_position, interviewee_match, match_type)
 
 async def generate_output_from_summarized_matches_async(transcript_files: list, matches_list: list, guide_questions: list,
                                                         llm_model: str, output_path: str,
@@ -189,7 +222,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 # ===============================================================================================================
 
                 # Find reference points for answers in the transcript
-                (line_reference, response_position, interviewee_match, match_type) = find_reference_for_answers(match, response, extracted_phrase, embedding_model, device, logger)
+                (line_reference, response_position, interviewee_match, match_type) = find_reference_for_answers(match, extracted_phrase, embedding_model, device, logger)
 
 
                 if extracted_phrase:
@@ -200,8 +233,11 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                 logger.info(f"Summarized Response for '{guide_question}': {response}")
 
                 output_divider(logger, True)
+                relevant_lines = [(m['interviewer_line_ref'], m['interviewee_line_ref']) for m in match["matches"]]
+                relevant_lines = sorted(relevant_lines, key=lambda x: x[0])
                 return {
-                    'relevant_lines': [m['interviewee_line_ref'] for m in match["matches"]],
+                    # SI; I think we might need both interviewer and interviewee segments
+                    'relevant_lines': relevant_lines,
                     'extracted_phrase': extracted_phrase,
                     'response': response.strip('\"\''),   
                     'match_type': match_type,                 
@@ -209,7 +245,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                     'extracted_character_index': response_position if len(response_position)>0 else None
                     }, None
             except Exception as e:
-                #traceback.print_exc()
+                traceback.print_exc()
                 logger.error(f"Error summarizing response for guide question '{guide_question}': {str(e)}")
                 return {
                     'response':"[Error summarizing response]"

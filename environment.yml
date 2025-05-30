@@ -16,3 +16,4 @@ dependencies:
   - litellm
   - pytest  # Development only
   - pytest-subtests # Development only
+  - rapidfuzz

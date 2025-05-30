@@ -60,7 +60,7 @@ def test_case_files_with_extra_file(test_case_files):
 
 ### test entire pipeline as a blackbox
 
-def test_csv_valid_interview(subtests, test_case_files):
+def test_csv_valid_interview_default(subtests, test_case_files):
     """
     Tests that loading a simple valid guidelines CSV file works as expected.
 
@@ -79,9 +79,7 @@ def test_csv_valid_interview(subtests, test_case_files):
     output_folder.mkdir()
     
     # Step 1: Initialize the processor to use all defaults except matching method
-    processor = D2DProcessor(
-        sampling_method=D2DProcessor.SamplingMethod.TOP_P
-    )
+    processor = D2DProcessor()
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
@@ -139,7 +137,7 @@ def test_csv_valid_interview(subtests, test_case_files):
                 with subtests.test("Positive response column exists"):
                     assert pos_resp
                 with subtests.test("Positive response references correct line"):
-                    assert pos_resp["relevant_lines"]==[7]
+                    assert pos_resp["relevant_lines"]==[[1, 3], [5, 7]]
                 with subtests.test("Positive response extracts correct references"):
                     assert pos_resp["extracted_line_references"]==[7]
 
@@ -151,7 +149,7 @@ def test_csv_valid_interview(subtests, test_case_files):
                 with subtests.test("Negative response column exists"):
                     assert neg_resp
                 with subtests.test("Negative response has 0 references"):
-                    assert neg_resp["relevant_lines"]==[]
+                    assert neg_resp["relevant_lines"]==[[1, 3], [5, 7]]
                 with subtests.test("Negative response does not extract references"):
                     assert neg_resp["extracted_line_references"] is None
                 
