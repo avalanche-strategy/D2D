@@ -11,7 +11,7 @@ from src.utils.embedding_utils import match_top_responses
 from src.utils.api_utils import extract_and_summarize_response_llm_async
 from rapidfuzz import fuzz
 from rapidfuzz.distance import Levenshtein
-import traceback
+#import traceback
 
 def get_divider(line_brk: bool = False):
     return f"================================================================================================{'\n' if line_brk else ''}"
@@ -245,7 +245,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                     'extracted_character_index': response_position if len(response_position)>0 else None
                     }, None
             except Exception as e:
-                traceback.print_exc()
+                #traceback.print_exc()
                 logger.error(f"Error summarizing response for guide question '{guide_question}': {str(e)}")
                 return {
                     'response':"[Error summarizing response]"
