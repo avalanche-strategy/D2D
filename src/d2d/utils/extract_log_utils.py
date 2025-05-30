@@ -1,7 +1,7 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import argparse
-from src.utils.log_utils import extract_retrieved_contexts
+from .log_utils import extract_retrieved_contexts
 
 
 def main():
