@@ -1,7 +1,7 @@
 import logging
 import asyncio
 from sentence_transformers import SentenceTransformer, util
-from src.utils.api_utils import summarize_question_async
+from src.d2d.utils.api_utils import summarize_question_async
 
 import torch
 

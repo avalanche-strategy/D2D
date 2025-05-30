@@ -4,10 +4,10 @@ from glob import glob
 import torch
 from litellm.litellm_core_utils.litellm_logging import Logging
 from sentence_transformers import SentenceTransformer
-from src.utils.data_utils import load_guidelines, load_transcript, segment_transcript
-from src.utils.embedding_utils import summarize_embed_groups_async, summarize_match_top_k_questions_async, summarize_match_top_p_questions_async
-from src.utils.output_utils import generate_output_from_summarized_matches_async, setup_logging, output_divider
-from src.utils.api_utils import summarize_question_async
+from src.d2d.utils.data_utils import load_guidelines, load_transcript, segment_transcript
+from src.d2d.utils.embedding_utils import summarize_embed_groups_async, summarize_match_top_k_questions_async, summarize_match_top_p_questions_async
+from src.d2d.utils.output_utils import generate_output_from_summarized_matches_async, setup_logging, output_divider
+from src.d2d.utils.api_utils import summarize_question_async
 from dotenv import load_dotenv
 from enum import Enum
 import logging

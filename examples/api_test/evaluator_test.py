@@ -56,12 +56,12 @@ def main_default_eval():
     max_concurrent_calls = 5
     weights = None
 
-    log_input = "~/results/D2D_survey_48_generator_log_2025-05-26_14-00.txt"
-    context_output = "~/eval_results/retrieved_contexts.csv"
-    rag_csv = "~/results/D2D_survey_48_responses_2025-05-26_14-00.csv"
-    ref_csv = "~/data/private_data/references/responses_48.csv"
-    eval_output = "~/eval_results/eval_output.csv"
-    post_eval_prefix = "~/eval_results/eval_output_post"
+    log_input = "results/D2D_survey_48_generator_log_2025-05-26_14-00.txt"
+    context_output = "eval_results/retrieved_contexts.csv"
+    rag_csv = "results/D2D_survey_48_responses_2025-05-26_14-00.csv"
+    ref_csv = "data/private_data/references/responses_48.csv"
+    eval_output = "eval_results/eval_output.csv"
+    post_eval_prefix = "eval_results/eval_output_post"
 
     main_eval(
         model=model,
