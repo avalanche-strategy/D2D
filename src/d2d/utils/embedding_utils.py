@@ -90,7 +90,7 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
     logger.info("Questions summarized and embedded.")
 
     # Importing here to avoid circular import error
-    from src.utils.output_utils import output_divider
+    from src.d2d.utils.output_utils import output_divider
     output_divider(logger, True)
 
     return group_embeddings
