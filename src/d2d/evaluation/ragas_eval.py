@@ -30,10 +30,12 @@ def ask_score_and_feedback(prompt: str, temperature: float = 0.0, model: str = "
     Raises:
     - ValueError: If no score can be parsed from GPT response.
     """
-
+    if not prompt or not isinstance(prompt, str) or not prompt.strip():
+        raise ValueError(f"Invalid prompt: expected non-empty string, got {type(prompt).__name__}: {prompt}")
+    
     messages = [
         {"role": "system", "content": "You are a helpful evaluation assistant. Respond in this format:\nScore: <number between 0 and 1>\nFeedback: <explanation>"},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": prompt.strip()}
     ]
     response = client.chat.completions.create(
         model=model,
@@ -74,6 +76,7 @@ def split_chunks(context: str) -> list[str]:
     return [chunk.strip() for chunk in matches if chunk.strip()]
 
 
+
 def is_answer_empty_or_confused(text: str) -> bool:
     """
     Determine if the answer is empty, ambiguous, or doctoring (non-informative).
@@ -88,6 +91,10 @@ def is_answer_empty_or_confused(text: str) -> bool:
         return True
 
     text_lower = text.lower()
+    
+    # Remove brackets and other punctuation, then clean up spaces
+    text_clean = re.sub(r'[^\w\s]', ' ', text_lower)
+    text_clean = re.sub(r'\s+', ' ', text_clean).strip()
 
     # Keywords indicating confusion or lack of knowledge
     confusion_keywords = [
@@ -112,8 +119,11 @@ def is_answer_empty_or_confused(text: str) -> bool:
         r"one could interpret this in different ways"
     ]
 
-    # Direct keyword match
+    # Direct keyword match (check both original and cleaned text)
     if any(kw in text_lower for kw in confusion_keywords):
+        return True
+    
+    if any(kw in text_clean for kw in confusion_keywords):
         return True
 
     # Regex pattern match for doctoring
@@ -160,7 +170,36 @@ Feedback: ..."""
         rag_confused = is_answer_empty_or_confused(answer)
         ref_confused = is_answer_empty_or_confused(answer_ref)
 
-        if rag_confused and ref_confused:
+        if not rag_confused:
+            return f"""You are evaluating the **faithfulness** of a generated answer with respect to the retrieved context.
+
+Context: 
+{chunks}
+
+Answer: 
+{answer}
+
+Instructions:
+1. Extract all factual claims made in the answer.
+2. For each fact, determine whether it is supported by the context.
+3. If a fact is not present in the context, it is a hallucination.
+4. Compute:  
+   faithfulness = (number of supported facts) / (total number of facts stated in the answer)
+
+Then clearly report:
+
+Score: <value between 0 and 1>  
+Feedback:  
+- Total facts: ...
+- Supported facts: ...  
+- Hallucinated facts: ...  
+- Explanation: ...
+
+Score:  
+Feedback:
+"""
+
+        elif rag_confused and ref_confused:
             return f"""You are evaluating the **faithfulness** of a generated answer with respect to the retrieved context.
 
 The answer is ambiguous or refuses to answer (e.g., "No relevant response found"), and the reference answer is also ambiguous.
@@ -206,34 +245,6 @@ Score:
 Feedback: The model failed to reflect key information available in the reference.
 """
 
-        elif not rag_confused and not ref_confused:
-            return f"""You are evaluating the **faithfulness** of a generated answer with respect to the retrieved context.
-
-Context: 
-{chunks}
-
-Answer: 
-{answer}
-
-Instructions:
-1. Extract all factual claims made in the answer.
-2. For each fact, determine whether it is supported by the context.
-3. If a fact is not present in the context, it is a hallucination.
-4. Compute:  
-   faithfulness = (number of supported facts) / (total number of facts stated in the answer)
-
-Then clearly report:
-
-Score: <value between 0 and 1>  
-Feedback:  
-- Total facts: ...
-- Supported facts: ...  
-- Hallucinated facts: ...  
-- Explanation: ...
-
-Score:  
-Feedback:
-"""
 
     elif metric == "precision":
         chunks = "\n\n".join(chunk_list or [])
@@ -346,6 +357,19 @@ Feedback: """
 
     
     elif metric == "correctness":
+        if is_answer_empty_or_confused(answer) and is_answer_empty_or_confused(reference):
+            return f"""Both the generated answer and the reference answer indicate that no relevant response was possible.
+            
+Question: {question}
+Answer: {answer}
+Reference: {reference}
+
+In this case, treat the generated answer as semantically equivalent to the reference.
+
+Score: 5.0  
+Feedback: The generated answer correctly matches the reference in indicating no relevant information was found.
+"""
+            
         return f"""Compare the generated answer with the reference.
 Question: {question}
 Answer: {answer}
@@ -378,12 +402,12 @@ def score_ragas(row: pd.Series) -> pd.Series:
     retrieved_context = row.get("retrieved_context")
 
     has_context = pd.notna(retrieved_context) and isinstance(retrieved_context, str) and retrieved_context.strip()
-    has_ref = pd.notna(answer_ref) and isinstance(answer_ref, str) and answer_ref.strip()
+    has_ref = True
 
     # Always allow correctness and relevance if enabled and valid
     if ACTIVE_METRICS.get("relevance", False):
         metrics.append("relevance")
-    if ACTIVE_METRICS.get("correctness", False) and has_ref:
+    if ACTIVE_METRICS.get("correctness", False):
         metrics.append("correctness")
 
     # Add context-related metrics only if retrieved context exists
@@ -410,15 +434,38 @@ def score_ragas(row: pd.Series) -> pd.Series:
 
     # Main evaluation loop
     for metric in metrics:
-        use_chunks = metric in ["precision", "recall", "faithfulness"]
-        prompt = build_prompt(metric, row, chunk_list=chunk_list if use_chunks else None)
-        is_proportion_metric = metric in ["faithfulness", "precision", "recall"] 
-        score, feedback = ask_score_and_feedback(prompt, is_proportion=is_proportion_metric)
-        results[f"{metric}_score"] = score
-        results[f"{metric}_feedback"] = feedback
+        try:
+            # Handle special case for correctness when both answers are empty/confused
+            if metric == "correctness":
+                rag_answer = row.get("answer_rag", "")
+                ref_answer = row.get("answer_ref", "")
+                
+                if is_answer_empty_or_confused(rag_answer) and is_answer_empty_or_confused(ref_answer):
+                    results["correctness_score"] = 5.0
+                    results["correctness_feedback"] = "The generated answer correctly matches the reference in indicating no relevant information was found."
+                    continue
+
+            use_chunks = metric in ["precision", "recall", "faithfulness"]
+            prompt = build_prompt(metric, row, chunk_list=chunk_list if use_chunks else None)
+        
+            if not prompt or not prompt.strip():
+                print(f"Warning: Empty prompt for metric {metric} in row {row.name}")
+                results[f"{metric}_score"] = None
+                results[f"{metric}_feedback"] = f"Failed to generate prompt for {metric}"
+                continue
+            
+            is_proportion_metric = metric in ["faithfulness", "precision", "recall"] 
+            score, feedback = ask_score_and_feedback(prompt, is_proportion=is_proportion_metric)
+            results[f"{metric}_score"] = score
+            results[f"{metric}_feedback"] = feedback
+        
+        except Exception as e:
+            print(f"Error evaluating {metric} for row {row.name}: {e}")
+            results[f"{metric}_score"] = None
+            results[f"{metric}_feedback"] = f"Error: {str(e)}"
+
 
     return pd.Series(results)
-
 
 
 
