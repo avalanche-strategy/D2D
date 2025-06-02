@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from itertools import zip_longest
 
 def load_guidelines(guidelines_path: str) -> list[str]:
     """
@@ -70,7 +71,7 @@ def segment_transcript(transcript: str) -> list[dict]:
     
     groups = []
     speaking_round = 0
-    for qa_pair in zip(list_interviewer, list_interviewee):
+    for qa_pair in zip_longest(list_interviewer, list_interviewee, fillvalue=("", -1)):
         groups.append({
             "interviewer": [qa_pair[0][0]],
             "interviewee": [qa_pair[1][0]],
