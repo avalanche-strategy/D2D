@@ -9,60 +9,11 @@ import pandas as pd
 import json
 import uuid
 
-### fixture functions
-
-@pytest.fixture
-def test_case_files(tmp_path):
-    def _copy_matching_case(test_case: str):
-        """
-        Fixture to copy all files and folders from the 'fixtures/' directory
-        that have `test_case` as a substring in their filename or folder name.
-        """
-        fixtures_dir = Path(__file__).parent / "fixtures"
-
-        # check whether the file or folder contains the case_name
-        for item in fixtures_dir.iterdir():
-            if test_case in item.name:
-                dest = tmp_path / item.name
-                if item.is_dir():
-                    shutil.copytree(item, dest)
-                else:
-                    shutil.copy2(item, dest)
-
-        return tmp_path
-    return _copy_matching_case
-
-@pytest.fixture
-def test_case_files_with_extra_file(test_case_files):
-    """
-    Copies matching test case files into a temporary directory and creates an additional empty text file.
-
-    Extends `test_case_files` fixture by adding a manually created text file
-    to the temporary directory after copying the matching fixture files.
-
-    Args:
-        test_case (str): The name or substring to match fixture files or directories against.
-        extra_filename (str, optional): Name of the extra file. Defaults to "dummy.txt".
-        file_content (str, optional): Content to write into the created text file. Default value is empty string.
-
-    Returns:
-        pathlib.Path: Path to the temporary directory containing the copied fixture files and the extra file.
-    """
-    def _copy_and_add_file(test_case: str, extra_filename="dummy.txt", file_content=""):
-        path = test_case_files(test_case)
-
-        # add the new file with specified content
-        extra_file = path / f"interview_{test_case}" /extra_filename
-        extra_file.write_text(file_content)
-
-        return path
-    return _copy_and_add_file
-
 ### test entire pipeline as a blackbox
 
 def test_csv_valid_interview_default(subtests, test_case_files):
     """
-    Tests that loading a simple valid guidelines CSV file works as expected.
+    Tests that loading a simple valid interview set (guidelines + transcripts) with default settings.
 
     Args:
         test_case_files (fixture function): A fixture function that create a
@@ -78,7 +29,7 @@ def test_csv_valid_interview_default(subtests, test_case_files):
     output_folder = temp_folder / "results"
     output_folder.mkdir()
     
-    # Step 1: Initialize the processor to use all defaults except matching method
+    # Step 1: Initialize the processor to use all defaults
     processor = D2DProcessor()
 
     # Step 3: Start transcripts processing
@@ -156,7 +107,8 @@ def test_csv_valid_interview_default(subtests, test_case_files):
 
 def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_file):
     """
-    Tests that loading a simple valid guidelines CSV file and an empty transcript work as expected.
+    Tests that loading a simple valid interview set (guidelines + transcripts), with an additional
+        empty transcript works as expected with the default settings.
 
     Args:
         test_case_files (fixture function): A fixture function that create a
