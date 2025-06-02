@@ -17,3 +17,5 @@ dependencies:
   - pytest  # Development only
   - pytest-subtests # Development only
   - rapidfuzz
+  - dash=3.0.4
+  - dash-bootstrap-components=2.0.3
