@@ -82,7 +82,7 @@ def main_default_eval():
 
     log_input, rag_csv = find_latest_files(base_dir, topic)
     context_output = os.path.join(eval_dir, f"retrieved_contexts_{topic}.csv")
-    ref_csv = os.path.join(ref_dir, f"interview_{topic}_guidelines.csv")
+    ref_csv = os.path.join(ref_dir, f"responses_{topic}.csv")
     eval_output = os.path.join(eval_dir, f"eval_output_{topic}.csv")
     post_eval_prefix = os.path.join(eval_dir, f"eval_output_post_{topic}")
 
