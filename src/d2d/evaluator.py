@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from .utils.log_utils import extract_retrieved_contexts
 from .evaluation.ragas_eval import run_ragas_evaluation
 from .utils.eval_config_utils import client, ACTIVE_METRICS
@@ -59,6 +60,10 @@ class D2DEvaluator:
         Returns:
             pd.DataFrame: A DataFrame containing the full evaluation results with metric scores.
         """
+        # Make sure output directory exists
+        os.makedirs(os.path.dirname(context_output_path), exist_ok=True)
+        os.makedirs(os.path.dirname(eval_output_path), exist_ok=True)
+
         # Step 1: Extract retrieved context
         extract_retrieved_contexts(log_input_path, context_output_path)
 

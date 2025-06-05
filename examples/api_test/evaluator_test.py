@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+import glob
 
 # Add the root directory (D2D/) to sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
@@ -49,19 +50,41 @@ def main_eval(
         output_prefix=post_eval_prefix
     )
 
-# Example 1: Default test setup
+# Automatically finds most recent log and response files
+def find_latest_files(base_dir: str, topic: str):
+    log_pattern = os.path.join(base_dir, f"D2D_survey_{topic}_generator_log_*.txt")
+    rag_pattern = os.path.join(base_dir, f"D2D_survey_{topic}_responses_*.csv")
+
+    log_files = glob.glob(log_pattern)
+    rag_files = glob.glob(rag_pattern)
+
+    if not log_files:
+        raise FileNotFoundError(f"No log files found for {topic}")
+    if not rag_files:
+        raise FileNotFoundError(f"No response files found for {topic}")
+
+    latest_log = max(log_files, key=os.path.getmtime)
+    latest_rag = max(rag_files, key=os.path.getmtime)
+
+    return latest_log, latest_rag
+
+# Default test setup
 def main_default_eval():
+    topic = "food"
+    base_dir = "results"
+    eval_dir = "eval_results"
+    ref_dir = "data/synthetic_data"
+
     model = "gpt-4o-mini"
     temperature = 0.0
     max_concurrent_calls = 5
     weights = None
 
-    log_input = "results/D2D_survey_food_generator_log_2025-05-30_09-45.txt"
-    context_output = "eval_results/retrieved_contexts.csv"
-    rag_csv = "results/D2D_survey_food_responses_2025-05-30_09-45.csv"
-    ref_csv = "data/private_data/references/responses_food.csv"
-    eval_output = "eval_results/eval_output.csv"
-    post_eval_prefix = "eval_results/eval_output_post"
+    log_input, rag_csv = find_latest_files(base_dir, topic)
+    context_output = os.path.join(eval_dir, f"retrieved_contexts_{topic}.csv")
+    ref_csv = os.path.join(ref_dir, f"responses_{topic}.csv")
+    eval_output = os.path.join(eval_dir, f"eval_output_{topic}.csv")
+    post_eval_prefix = os.path.join(eval_dir, f"eval_output_post_{topic}")
 
     main_eval(
         model=model,
