@@ -5,38 +5,6 @@ from .api_utils import summarize_question_async
 
 import torch
 
-# def embed_groups(groups: list[dict], model: SentenceTransformer, device: torch.device) -> list[dict]:
-#     """
-#     Embed interviewer questions and interviewee response from the groups.
-#
-#     Args:
-#         groups (list[dict]): List of groups containing interviewer and interviewee turns.
-#         model (SentenceTransformer): The embedding model.
-#         device (torch.device): The device to use for computation.
-#
-#     Returns:
-#         list[dict]: List of dictionaries with embeddings original texts, line references, and speaking rounds.
-#     """
-#     group_embeddings = []
-#     # adding index so we know the order of speaking
-#     for index, group in enumerate(groups):
-#         interviewer_question = " ".join(group["interviewer"]).replace("Interviewer: ", "")
-#         embedding = model.encode(interviewer_question, convert_to_tensor=True, device=device)
-#         # embed the response to enable semantic match in reference line search
-#         interviewee_response = " ".join(group["interviewee"]).replace("Interviewee: ", "")
-#         response_embedding = model.encode(interviewee_response, convert_to_tensor=True, device=device)
-#         group_embeddings.append({
-#             "interviewer_question": interviewer_question,
-#             "interviewee_response": interviewee_response,
-#             "embedding": embedding,
-#             "response_embedding": response_embedding,
-#             "interviewer_line_ref": group["interviewer_line_ref"],
-#             "interviewee_line_ref": group["interviewee_line_ref"],
-#             "speaking_round": group["speaking_round"]
-#         })
-#     return group_embeddings
-
-
 async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransformer, device: torch.device, gpt_model: str,
                                 logger: logging.Logger = None) -> list[dict]:
     """
@@ -156,40 +124,6 @@ async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, g
     # do not sort and change the order of speaking!
     #ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
     return ret_similarity[:max_matches]
-
-
-# def match_top_p_questions(guide_embedding: torch.Tensor, group_embeddings: list[dict],
-#                                                 p: float = 0.5, max_matches: int = 5) -> list[dict]:
-#     """
-#     For answers referencing
-#     Match a guideline question to the top k groups based on similarity.
-#
-#     Args:
-#         group_embeddings (list[dict]): List of embedded groups.
-#         p (float): Threshold for similarity.
-#         max_matches (int): Maximum number of matches to return
-#
-#     Returns:
-#         list[dict]: Top p matches with similarity scores.
-#     """
-#     # question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
-#     similarities = []
-#     for group in group_embeddings:
-#         similarity = util.cos_sim(guide_embedding, group["embedding"]).cpu().numpy()[0][0]
-#         similarities.append({
-#             "response": group["interviewee_response"],
-#             "question": group["interviewer_question"],
-#             "speaking_round": group["speaking_round"],
-#             "similarity": float(similarity),
-#             "interviewer_line_ref": group["interviewer_line_ref"],
-#             "interviewee_line_ref": group["interviewee_line_ref"],
-#             "response_embedding": group["response_embedding"],
-#         })
-#
-#     ret_similarity = [s for s in similarities if s["similarity"] >= p]
-#     # do not sort and change the order of speaking!
-#     # ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
-#     return ret_similarity[:max_matches]
 
 
 def match_top_responses(model: SentenceTransformer,

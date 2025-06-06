@@ -129,4 +129,5 @@ if __name__ == "__main__":
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Time taken: {elapsed_time:.4f} seconds")
+
+    print(f"Process completed in {elapsed_time:.4f} seconds")
