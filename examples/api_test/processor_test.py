@@ -29,7 +29,7 @@ def main_top_k():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging=False
+        disable_logging_to_console=False
     )
     # Process completed
 
@@ -55,7 +55,7 @@ def main_top_p():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging=False
+        disable_logging_to_console=False
     )
     # Process completed
 
@@ -92,7 +92,7 @@ def main_custom_prompt():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging=False
+        disable_logging_to_console=False
     )
     # Process completed
 
@@ -112,7 +112,7 @@ def main_minimal_init():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging=False
+        disable_logging_to_console=True
     )
     # Process completed
 

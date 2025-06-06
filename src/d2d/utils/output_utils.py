@@ -20,32 +20,28 @@ def output_divider(logger: logging.Logger, line_brk: bool = False):
     logger.info(get_divider(line_brk))
 
 # Configure logging
-def setup_logging(pipeline_name: str, output_path: str, disable_logging: bool = False):
+def setup_logging(pipeline_name: str, output_path: str, disable_logging_to_console: bool = False):
     """
-    Set up logging to output to both console and a timestamped log file.
+    Set up logging to output to a timestamped log file and optionally to console.
 
     Args:
+        pipeline_name (str): Name of the pipeline for the logger.
         output_path (str): The base path for the output CSV file, used to determine the log file path.
+        disable_logging_to_console (bool): If True, disable console output but still write to log file.
     """
     # Create a logger
     logger = logging.getLogger(pipeline_name)
-    if disable_logging:
-        # Disable logging by setting the level above CRITICAL
-        logger.setLevel(logging.CRITICAL + 1)
-        # No handlers needed since no messages will be processed
-        return logger
-
-    # Normal logging setup if isn't disabled
     logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all messages
 
     # Create formatter
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)  # Show INFO and above on the console
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    # Console handler (only if disable_logging_to_console is False)
+    if not disable_logging_to_console:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)  # Show INFO and above on the console
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
     # File handler
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")

@@ -33,7 +33,7 @@ class D2DProcessor:
             embedding_model (str): SentenceTransformer model name (default: "multi-qa-mpnet-base-dot-v1").
             max_concurrent_calls (int): Maximum concurrent API calls for async processing.
         """
-        load_dotenv()
+
         self.llm_model = llm_model
         self.max_concurrent_calls = max_concurrent_calls
         self.sampling_method = sampling_method
@@ -66,7 +66,7 @@ class D2DProcessor:
         output_divider(logger)
 
     def process_transcripts(self, data_dir: str, interview_name: str, output_dir: str,
-                            disable_logging: bool = False) -> None:
+                            disable_logging_to_console: bool = False) -> None:
         """
         Process all transcripts in the directory and generate summarized matches.
 
@@ -98,18 +98,18 @@ class D2DProcessor:
             asyncio.set_event_loop(new_loop)
             try:
                 new_loop.run_until_complete(self._process_transcripts_async(
-                    transcript_dir, guidelines_path, output_path, disable_logging
+                    transcript_dir, guidelines_path, output_path, disable_logging_to_console
                 ))
             finally:
                 new_loop.close()
         else:
             # Normal case: run in current loop
             loop.run_until_complete(self._process_transcripts_async(
-                transcript_dir, guidelines_path, output_path, disable_logging
+                transcript_dir, guidelines_path, output_path, disable_logging_to_console
             ))
 
     async def _process_transcripts_async(self, transcript_dir: str, guidelines_path: str, output_path: str,
-                                        disable_logging: bool) -> None:
+                                         disable_logging_to_console: bool) -> None:
         """
         Internal async method to process transcripts.
 
@@ -118,11 +118,11 @@ class D2DProcessor:
             guidelines_path (str): Path to the guidelines CSV file.
             output_path (str): Path for the output CSV file.
             pipeline_name (str): Name of the pipeline for logging.
-            disable_logging (bool): Whether to disable logging.
+            disable_logging_to_console (bool): Whether to disable logging.
         """
         # Set up logging
         pipeline_name = "D2D"
-        logger = setup_logging(pipeline_name, output_path, disable_logging=disable_logging)
+        logger = setup_logging(pipeline_name, output_path, disable_logging_to_console=disable_logging_to_console)
         logger.info("D2D processing pipeline started...")
         output_divider(logger, True)
         self.log_config(logger)
@@ -132,8 +132,6 @@ class D2DProcessor:
 
         # Load guidelines
         guide_questions = load_guidelines(guidelines_path)
-
-        print(transcript_dir)
 
         # Find transcript files
         transcript_files = glob(os.path.join(transcript_dir, "*.txt"))
