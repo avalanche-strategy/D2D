@@ -105,7 +105,7 @@ The D2D pipeline produces structured output by matching interviewee responses to
   - Responses are concise, summarizing key points from the transcript.  
 - **Example**:
 | Interview File | What’s a dish that reminds you of your childhood? | Can you describe a meal that has a special meaning for you?                          |...|
-|-|--|||
+|----------------|--------------------------------------------------|------------------------------------------------------------------------------------|---|
 | 001            | Grandma’s chicken and rice                       | 18th birthday dinner with favorite dishes cooked by parents.                        |...|
 | 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, roasted pork, rice, beans; loud, chaotic, full of stories. |...|
 |...|...|...|...|
@@ -138,6 +138,108 @@ python examples/api_test/processor_test.py
 ## Output Storage
 The output CSV file will be generated and stored in the `results/` directory. Due to confidentiality, this file should not be pushed to the repository. The `.gitignore` file is already configured to exclude the `results/` directory, so you don’t need to worry about accidentally committing sensitive output files.
 
+
+## Evaluator
+
+## Data Format and Sample Data Output
+
+### Data Input
+The D2D pipeline (evaluator part) evaluates the performance of the processor and scores the pipeline result with 5 metrics (faithfulness, correctness, precision, recall, and relevance) and a weighted join score. 
+The evaluator takes 2 outputs of the processor and a reference answer as inputs.
+
+### 1. CSV Output from Processor
+- **Description**: A CSV file of the structured output of the D2D pipeline for the given dataset. Each row typically corresponds to a single transcript,
+  with columns containing summarized responses aligned with the guideline questions from the interview guidelines.
+- **Format**: Comma-separated values (`.csv`)
+- **Structure**:
+  - Columns:
+    - `Interview File`: Identifier of the source transcript file (e.g., `001`, `002`).
+    - Additional columns named after guideline questions (e.g., "What’s a dish that reminds you of your childhood?").
+  - Each row corresponds to one interview, with cells containing the extracted response text.
+  - Responses are concise, summarizing key points from the transcript.  
+- **Example**:
+  - **File**: `D2D_survey_food_responses_*.csv (located in the results/ directory by default)`
+| Interview File | What’s a dish that reminds you of your childhood? | Can you describe a meal that has a special meaning for you?                          |...|
+|----------------|--------------------------------------------------|------------------------------------------------------------------------------------|---|
+| 001            | Grandma’s chicken and rice                       | 18th birthday dinner with favorite dishes cooked by parents.                        |...|
+| 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, roasted pork, rice, beans; loud, chaotic, full of stories. |...|
+|...|...|...|...|
+
+### 2. Log (TXT) Output from Processor
+- **Description**: The log file records the processing steps applied to the given interview dataset within the D2D pipeline.
+  It captures details such as segmentation, embedding, matching, and summarization, along with any informational messages, warnings,
+  or errors encountered during execution.
+- **Format**: Plain text (`.txt`)
+- **Structure**:
+  - Each chunk of text marked with `===Start===` and `===End===` includes one analyzed guideline question from a single interview file.
+  - Each chunk is consisted of the file name, guideline question, and relevant chunks of questions and answers that may contain the response. 
+- **Example**:
+  - **File**: `D2D_survey_food_generator_log_*.txt (located in the results/ directory by default)`
+  > ===Start===  
+  > Processing file: 002  
+  > Processing guide question: How do food and family traditions connect for you?  
+  > Relevant Interviewee Responses:  
+  > Interviewer: What about food and family traditions—how do they connect?  
+  > Interviewee: They’re basically the same thing in my family. Recipes are sacred. Like, if you try to tweak my aunt’s flan recipe, you might start a family feud. [laughs]  
+  > Interviewer: Any food tied to a place or person for you?  
+  > Interviewee: Yeah—empanadas always remind me of my grandma in Buenos Aires. She’d let me help fold the dough, and I’d sneak bits of the filling when she wasn’t looking.  
+  > Interviewer: Favorite dish from another culture?  
+  > Interviewee: Japanese ramen. The broth, the noodles, the toppings—it’s like a bowl of magic. I tried making it once. Total disaster. [laughs]  
+  > Interviewer: Alright, diving into food and memories—what dish instantly brings your childhood back?  
+  > Interviewee: Oh man, my mom’s arroz con leche. She’d make it every time I was sick, or honestly, just when I needed cheering up. The cinnamon smell still makes me emotional sometimes.  
+  > Interviewer: What’s the first thing you learned to cook?  
+  > Interviewee: French toast! I was like nine, and I made it for my dad on Father’s Day. I used way too much cinnamon, but he ate it like it was gourmet. I’ll never forget that.  
+  > ===End===
+  
+### 3. CSV Input from Reference
+- **Description**: A CSV file containing the reference ground truth. This file serves as the correct output to evaluate the performance of the model output.
+- **Format**: Comma-separated values (`.csv`)
+- **Structure**:
+  - Columns:
+    - `respondent_id`: Identifier of the source transcript file (e.g., `001`, `002`).
+    - Additional columns named after guideline questions (e.g., "What’s a dish that reminds you of your childhood?").
+  - Each row corresponds to one interview, with cells containing the extracted response text.
+- **Example**:
+  - **File**: `[responses_food.csv](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/responses_food.csv)`
+| respondent_id | What’s a dish that reminds you of your childhood? | Can you describe a meal that has a special meaning for you?                          |...|
+|----------------|--------------------------------------------------|------------------------------------------------------------------------------------|---|
+| 001            | Grandma’s chicken and rice                       | 18th birthday dinner when family made all my favorite foods.                        |...|
+| 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, pork, beans, family stories. |...|
+|...|...|...|...|
+
+## How It Works (Evaluator part)
+
+The evaluator works with these steps:
+1. **Merging**: Convert all files to long format (1 row per Q&A) merge on `respondent_id` and `question`.
+2. **Prompting**: Build GPT prompts per metric using:Question, Model answer, Reference answer (if any), and Retrieved context.
+3. **GPT Scoring**: Send prompts to GPT to get scores and explanations on faithfulness, correctness, relevance, precision, and recall.
+4. **Output**: Save scored results to a CSV file.
+5. **Post-Processing**: Hilights any rows with any score less than a specified threshold, and computes a weighted joint score.
+6. **End Output**: 4 csv files of retrieved contexts, scores and feedback, highlighted low scores, and joint metric scores. 
+
+## Usage
+
+To run the evaluator on the synthetic data, use the following command after running the processor and obtained output from processor:
+
+```bash
+python examples/api_test/evaluator_test.py
+```
+
+## Data Output
+
+After finishing the evaluation process, the evaluator generates 4 output `csv`s. In the example, the `csv`s are stored under the `eval_results/` directory. For the synthetic interview dataset `interview_food`, these following files are outputted:
+
+- **`eval_output_post_joint_metric.csv`**
+  - **Description**: An aggregated summary showing the average score per metric for each respondent, along with a joint score calculated using user-defined metric weights that sum to 1.0. The joint score reflects an overall performance index.
+
+- **`eval_output_post_highlighted.csv`**
+  - **Description**: A filtered version of the evaluation output, containing only the rows where at least one metric score falls below a specified threshold. Low scores are tagged for easy identification (e.g., `low-1.0`).
+
+- **`eval_output.csv`**
+  - **Description**: This is the core evaluation output generated after running the GPT-based scoring pipeline. Each row represents a (`respondent_id`, `question`) pair and includes the model-generated answer, reference answer (if available), retrieved context, and evaluation results for each enabled metric.
+
+- **`retrieved_contexts.csv`**
+  - **Description**: A file that logs the retrieved chunks or evidence segments for each (`respondent_id`, `question`) pair. These context chunks are used to support the model's generation and are referenced during evaluations for metrics like faithfulness, precision, and recall.
 
 ## Detailed Documentation
 For more detailed Documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb)
