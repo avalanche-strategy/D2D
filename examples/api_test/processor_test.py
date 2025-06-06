@@ -9,7 +9,7 @@ sys.path.append(root_dir)
 from src.d2d import D2DProcessor
 
 # Example 1
-def main_top_k():
+def test_top_k():
     # Step 1: Initialize the processor
     processor = D2DProcessor(
         llm_model="gpt-4o-mini",
@@ -29,12 +29,12 @@ def main_top_k():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging_to_console=False
+        disable_logging_to_console=True
     )
     # Process completed
 
 # Example 2
-def main_top_p():
+def test_top_p():
     # Step 1: Initialize the processor
     processor = D2DProcessor(
         llm_model="gpt-4o-mini",
@@ -55,12 +55,12 @@ def main_top_p():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging_to_console=False
+        disable_logging_to_console=True
     )
     # Process completed
 
 # Example 3
-def main_custom_prompt():
+def test_custom_prompt():
     """
      Example usage of custom prompts and summarization
      Note that
@@ -92,12 +92,12 @@ def main_custom_prompt():
         data_dir=data_dir,
         interview_name=interview_name,
         output_dir=output_dir,
-        disable_logging_to_console=False
+        disable_logging_to_console=True
     )
     # Process completed
 
-# Example 4
-def main_minimal_init():
+# Example 4 Minimal setup of the processor
+def test_minimal_init():
     # Step 1: Initialize the processor with no custom parameter
     processor = D2DProcessor()
 
@@ -116,16 +116,39 @@ def main_minimal_init():
     )
     # Process completed
 
+# Example 5 With transcript deviate a lot from the guideline question
+def test_thematic_alignment_mismatch_transcript():
+    """
+        Test thematic alignment check for a transcript that deviates significantly from guideline questions.
+        Verifies that low similarity triggers a user prompt and skipping behavior when 'n' is entered.
+    """
+    # Step 1: Initialize the processor with no custom parameter
+    processor = D2DProcessor()
 
+    # Step 2: Define paths relative to the root directory
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+    data_dir = os.path.join(root_dir, "data", "synthetic_data")
+    interview_name = "interview_foodMismatch"
+    output_dir = os.path.join(root_dir, "results")
+
+    # Step 3: Start transcripts processing
+    processor.process_transcripts(
+        data_dir=data_dir,
+        interview_name=interview_name,
+        output_dir=output_dir,
+        disable_logging_to_console=True
+    )
+    # Process completed
 
 
 if __name__ == "__main__":
     start_time = time.time()
 
-    # main_top_p()
-    # main_custom_prompt()
-    # main_top_k()
-    main_minimal_init()
+    # test_top_p()
+    # test_custom_prompt()
+    # test_top_k()
+    # test_minimal_init()
+    test_thematic_alignment_mismatch_transcript()
 
     end_time = time.time()
     elapsed_time = end_time - start_time
