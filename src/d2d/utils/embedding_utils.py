@@ -8,17 +8,25 @@ import torch
 async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransformer, device: torch.device, gpt_model: str,
                                 logger: logging.Logger = None) -> list[dict]:
     """
-    Embed summarized interviewer questions from the groups asynchronously.
+    Summarize and embed interviewer questions and interviewee responses from groups asynchronously.
 
     Args:
-        groups (list[dict]): List of groups containing interviewer and interviewee turns.
-        model (SentenceTransformer): The embedding model.
-        device (torch.device): The device to use for computation.
-        gpt_model (str): The GPT model for summarization.
+        groups (list[dict]): List of dictionaries containing interviewer and interviewee turns.
+        model (SentenceTransformer): The embedding model for generating embeddings.
+        device (torch.device): The PyTorch device for computation (e.g., CPU or GPU).
+        gpt_model (str): The LLM model name for question summarization (compatible with LiteLLM).
         logger (logging.Logger, optional): Logger instance for logging execution information.
 
     Returns:
-        list[dict]: List of dictionaries with embeddings, summarized questions, and original texts.
+        list[dict]: List of dictionaries, each containing:
+            - original_question (str): The original interviewer question.
+            - summarized_question (str): The summarized interviewer question.
+            - original_response (str): The original interviewee response.
+            - embedding (torch.Tensor): Embedding of the summarized question.
+            - response_embedding (torch.Tensor): Embedding of the interviewee response.
+            - interviewer_line_ref (int): Line number of the interviewer’s turn.
+            - interviewee_line_ref (int): Line number of the interviewee’s turn.
+            - speaking_round (int): The conversation round index.
     """
 
     group_embeddings = []
@@ -65,15 +73,22 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
 
 async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict], k: int = 3) -> list[dict]:
     """
-    Match a summarized guideline question to the top k groups based on similarity.
+    Match a summarized guideline question to the top k groups based on cosine similarity.
 
     Args:
-        guide_embedding (torch.Tensor): The embedding of the guide question.
-        group_embeddings (list[dict]): List of embedded groups.
-        k (int): Number of top matches to return.
+        guide_embedding (torch.Tensor): The embedding of the guideline question.
+        group_embeddings (list[dict]): List of dictionaries with embedded group data.
+        k (int): Number of top matches to return (default: 3).
 
     Returns:
-        list[dict]: Top k matches with similarity scores, using original texts.
+        list[dict]: List of up to k dictionaries, each containing:
+            - response (str): The original interviewee response.
+            - question (str): The original interviewer question.
+            - similarity (float): Cosine similarity score.
+            - interviewer_line_ref (int): Line number of the interviewer’s turn.
+            - interviewee_line_ref (int): Line number of the interviewee’s turn.
+            - speaking_round (int): The conversation round index.
+            - response_embedding (torch.Tensor): Embedding of the interviewee response.
     """
     similarities = []
     for group in group_embeddings:
@@ -96,15 +111,23 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
 async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict],
                           p: float = 0.5, max_matches: int = 5) -> list[dict]:
     """
-    Match a guideline question to the top k groups based on similarity.
-    
+    Match a guideline question to groups with similarity above a threshold.
+
     Args:
-        group_embeddings (list[dict]): List of embedded groups.
-        p (float): Threshold for similarity.
-        max_matches (int): Maximum number of matches to return
-    
+        guide_embedding (torch.Tensor): The embedding of the guideline question.
+        group_embeddings (list[dict]): List of dictionaries with embedded group data.
+        p (float): Minimum cosine similarity threshold (default: 0.5).
+        max_matches (int): Maximum number of matches to return (default: 5).
+
     Returns:
-        list[dict]: Top p matches with similarity scores.
+        list[dict]: List of dictionaries for matches with similarity >= p, up to max_matches, each containing:
+            - response (str): The original interviewee response.
+            - question (str): The original interviewer question.
+            - similarity (float): Cosine similarity score.
+            - interviewer_line_ref (int): Line number of the interviewer’s turn.
+            - interviewee_line_ref (int): Line number of the interviewee’s turn.
+            - speaking_round (int): The conversation round index.
+            - response_embedding (torch.Tensor): Embedding of the interviewee response.
     """
     #question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
     similarities = []
@@ -132,18 +155,22 @@ def match_top_responses(model: SentenceTransformer,
                         extracted_phrase: str, group_embeddings: list[dict],
                         p_threshold: float = 0.8, max_matches: int = 3) -> list[dict]:
     """
-    For answers referencing
-    Match the extracted phrase to the top p groups context based on similarity for reference line search.
+    Match an extracted phrase to interviewee responses based on similarity for reference line search.
 
     Args:
-        model (SentenceTransformer): The embedding model.
-        device (torch.device): The device to use for computation.
-        group_embeddings (list[dict]): List of embedded groups.
-        p_threshold (float): Threshold for similarity.
-        max_matches (int): Maximum number of matches to return
+        model (SentenceTransformer): The embedding model for generating embeddings.
+        device (torch.device): The PyTorch device for computation (e.g., CPU or GPU).
+        logger (logging.Logger): Logger instance for logging execution information.
+        extracted_phrase (str): The phrase to match against interviewee responses.
+        group_embeddings (list[dict]): List of dictionaries with embedded group data.
+        p_threshold (float): Minimum cosine similarity threshold (default: 0.8).
+        max_matches (int): Maximum number of matches to return (default: 3).
 
     Returns:
-        list[dict]: Top k matches with similarity scores.
+        list[dict]: List of dictionaries for matches with similarity >= p_threshold, up to max_matches, each containing:
+            - similarity (float): Cosine similarity score.
+            - interviewee_line_ref (int): Line number of the interviewee’s turn.
+            - response (str): The original interviewee response.
     """
     query_embedding = model.encode(extracted_phrase, convert_to_tensor=True, device=device)
     similarities = []

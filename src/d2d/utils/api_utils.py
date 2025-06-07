@@ -72,16 +72,17 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
     Query LLM with the provided context and query asynchronously.
 
     Args:
+        file_name (str): The name of the file being processed.
         context (str): The dialogue context.
         query (str): The query to answer.
         llm_model (str): The LLM model to use.
-        api_key (str): The OpenAI API key.
         logger (logging.Logger, optional): Logger instance for logging execution information.
         custom_extract_prompt (str, optional): Custom prompt template for extracting responses.
         custom_summarize_prompt (str, optional): Custom prompt template for summarizing responses.
 
     Returns:
-        str: The summarized response from LLM, or an error message if an error occurs..
+        tuple[str, str] | str: A tuple of (summarized phrase, extracted phrase) on success, or a string
+        containing "[No relevant response found]" or an error message if an error occurs.
     """
 
     # Import here to avoid circular imports
@@ -155,15 +156,15 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
 
 async def summarize_question_async(question: str, llm_model: str, logger: logging.Logger = None) -> str:
     """
-    Summarize a question using the LiteLLM asynchronously.
+    Summarize a question using LiteLLM asynchronously.
 
     Args:
         question (str): The question to summarize.
-        llm_model (str): The GPT model to use.
+        llm_model (str, optional): The LLM model to use, or None for an identity summary (returns the original question).
         logger (logging.Logger, optional): Logger instance for logging execution information.
 
     Returns:
-        str: The summarized question.
+        str: The summarized question, or the original question if an error occurs or llm_model is None.
     """
     _ = load_dotenv(find_dotenv())
     prompt = f"""Summarize the following question into a concise, single sentence that captures its core intent, 
