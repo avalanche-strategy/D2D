@@ -1,8 +1,7 @@
 # Dialogue2Data (D2D)
 
 ## About
-Dialogue2Data (D2D) is an open-source Python package that transforms unstructured interview transcripts into structured data for analysis. Using NLP and discussion guides, it automates topic matching and generates structured outputs (e.g., CSV) compatible with Fathom's survey analysis pipeline.
-
+Dialogue2Data (D2D) is an open-source Python package that transforms unstructured interview transcripts into structured data for analysis. It consists of two major components: the **Processor**, which leverages natural language processing (NLP), large language models (LLMs), and sentence embeddings to automate topic matching, response extraction, and summarization based on discussion guides, generating structured outputs (e.g., CSV, JSON); and the **Evaluator**, which assesses output quality using metrics like faithfulness, correctness, precision, recall, and relevance. D2D is ideal for researchers and analysts processing qualitative interview data.
 
 
 ## Installation
