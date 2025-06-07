@@ -20,7 +20,7 @@ conda activate d2d
 
 
 ## Environment Configuration
-To use the OpenAI and Anthropic API, you need to set up an environment variable for your API key. Create a `.env` file in the root directory of the project with the following content:
+To use the OpenAI and Anthropic APIs, you need to set up an environment variable for your API key. Create a `.env` file in the root directory of the project with the following content:
 
 - **Example:**  
 ```bash
@@ -28,7 +28,7 @@ OPENAI_API_KEY=sk-abc123XYZ789pqr456STU012vwx789YZ
 ANTHROPIC_API_KEY=sk-ant-987ZYX654WVU321TSR098qwe456PLM
 ```
 
-**Note: This are fictional keys.**
+**Note: These are fictional keys. To ensure smooth operation, please use your own API keys**
 
 
 
@@ -36,11 +36,13 @@ ANTHROPIC_API_KEY=sk-ant-987ZYX654WVU321TSR098qwe456PLM
 
 To ensure smooth operation, please organize your data as follows:
 
+**Note: Due to confidentiality, the data used in this repository, including the examples below, is synthetic.**
+
 - **Interview Data Structure (for processor)**:
-  Each interview should have its own subdirectory. The name of this subdirectory is the **interview name**, which should be in the format `interview_XXXX`, where `XXXX`, WITHOUT underscore `_` in it, is a unique identifier for the interview (e.g., `interview_food` is a folder containing interview transcript files for food theme.). While it is suggested to place these directories under `data/private_data/` for confidentiality, you may choose a different location if needed.
+  Each interview should have its own subdirectory. The name of this subdirectory is the **interview name**, which should be in the format `interview_XXXX`, where `XXXX` (without underscores), is a unique identifier for the interview (e.g., `interview_food` is a folder containing interview transcript files for food theme.). While it is suggested to place these directories under `data/private_data/` for confidentiality, you may choose a different location if needed.
 
 - **Transcript TXT Files (for processor)**:
-  There is no requirement for the naming of the transcript files. Just make sure all transcript files are placed directly inside the interview directory. For example:
+  There are no naming requirements for the naming of the transcript files. But they must be placed directly inside the interview directory. For example:
   - `data/private_data/interview_food/transcript1.txt`
   - `data/private_data/interview_food/transcript2.txt`
   - etc.  
@@ -117,7 +119,7 @@ The D2D pipeline produces structured output by matching interviewee responses to
 
 The processor follows these steps:
 1. **Segmentation**: Divides the transcript into question-response pairs.
-2. **Summarization**: Summarize the questions in the transcript and guideline questions.
+2. **Summarization**: Summarizes the questions in the transcript and guideline questions.
 3. **Embedding**: Uses a SentenceTransformer model to embed summarized questions in the transcript and guideline questions.
 4. **Matching**: Matches segments to guideline questions via cosine similarity.
 5. **Summarization**: Summarizes matched segments using an LLM.
@@ -174,7 +176,7 @@ The evaluator takes 2 outputs of the processor and a reference answer as inputs.
 - **Format**: Plain text (`.txt`)
 - **Structure**:
   - Each chunk of text marked with `===Start===` and `===End===` includes one analyzed guideline question from a single interview file.
-  - Each chunk is consisted of the file name, guideline question, and relevant chunks of questions and answers that may contain the response. 
+  - Each chunk consists of the file name, guideline question, and relevant chunks of questions and answers that may contain the response. 
 - **Example**:
   - **File**: `D2D_survey_food_generator_log_*.txt (located in the results/ directory by default)`
   > ===Start===  
@@ -217,7 +219,7 @@ The evaluator works with these steps:
 2. **Prompting**: Build GPT prompts per metric using:Question, Model answer, Reference answer (if any), and Retrieved context.
 3. **GPT Scoring**: Send prompts to GPT to get scores and explanations on faithfulness, correctness, relevance, precision, and recall.
 4. **Output**: Save scored results to a CSV file.
-5. **Post-Processing**: Hilights any rows with any score less than a specified threshold, and computes a weighted joint score.
+5. **Post-Processing**: Highlights any rows with any score less than a specified threshold, and computes a weighted joint score.
 6. **End Output**: 4 csv files of retrieved contexts, scores and feedback, highlighted low scores, and joint metric scores. 
 
 ## Usage
