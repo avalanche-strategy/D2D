@@ -14,9 +14,28 @@ from rapidfuzz.distance import Levenshtein
 #import traceback
 
 def get_divider(line_brk: bool = False):
+    """
+        Generate a divider string for logging.
+
+        Args:
+            line_brk (bool): If True, append a newline to the divider (default: False).
+
+        Returns:
+            str: The divider string.
+    """
     return f"================================================================================================{'\n' if line_brk else ''}"
 
 def output_divider(logger: logging.Logger, line_brk: bool = False):
+    """
+    Log a divider string using the provided logger.
+
+    Args:
+        logger (logging.Logger): Logger instance for logging the divider.
+        line_brk (bool): If True, append a newline to the divider (default: False).
+
+    Returns:
+        None
+    """
     logger.info(get_divider(line_brk))
 
 # Configure logging
@@ -27,7 +46,10 @@ def setup_logging(pipeline_name: str, output_path: str, disable_logging_to_conso
     Args:
         pipeline_name (str): Name of the pipeline for the logger.
         output_path (str): The base path for the output CSV file, used to determine the log file path.
-        disable_logging_to_console (bool): If True, disable console output but still write to log file.
+        disable_logging_to_console (bool): If True, disable console output but still write to log file (default: False).
+
+    Returns:
+        logging.Logger: Configured logger instance for the pipeline.
     """
     # Create a logger
     logger = logging.getLogger(pipeline_name)
@@ -66,7 +88,23 @@ def setup_logging(pipeline_name: str, output_path: str, disable_logging_to_conso
 
 
 def find_reference_for_answers(match: dict, extracted_phrase: str = None, embedding_model: SentenceTransformer = None, device: torch.device = "cpu", logger: logging.Logger = None):
-    # Looking for reference points for answers in transcript
+    """
+    Find reference points in the transcript for an extracted phrase using fuzzy and semantic matching.
+
+    Args:
+        match (dict): Dictionary containing matched transcript segments.
+        extracted_phrase (str, optional): The phrase to match against interviewee responses.
+        embedding_model (SentenceTransformer, optional): Model for semantic matching.
+        device (torch.device, optional): PyTorch device for embedding computation (default: "cpu").
+        logger (logging.Logger, optional): Logger instance for logging execution information.
+
+    Returns:
+        tuple[list[int], list[dict], list[str], str]: A tuple containing:
+            - line_reference (list[int]): List of line numbers where matches were found.
+            - response_position (list[dict]): List of dictionaries with line, start, and end indices for matches.
+            - interviewee_match (list[str]): List of matched interviewee responses.
+             - match_type (str): Type of match ("EXACT", "PARTIAL", "SEMANTIC", "FUZZY", or None).
+    """
     response_position = []
     line_reference = set() # init as a set so that partial matches do not get added multiple times
     interviewee_match = []
@@ -158,17 +196,23 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                                                         custom_summarize_prompt: str = None
                                                         ) -> None:
     """
-    The Generator of the pipeline
-    Generate a structured CSV with one row per interview and columns for guide questions, using summarized question matches.
+    Generate output files (CSV, JSON, and log) for interview transcripts based on summarized question matches.
 
     Args:
         transcript_files (list[str]): List of transcript file paths.
         matches_list (list[list[dict]]): List of matches for each transcript based on summarized questions.
-        guide_questions (list[str]): List of guide questions.
-        llm_model (str): The GPT model to use.
-        api_key (str): The OpenAI API key.
-        output_path (str): The base path for the output CSV file. The timestamp will be appended to the filename.
+        guide_questions (list[str]): List of guideline questions.
+        llm_model (str): The LLM model name for summarization (compatible with LiteLLM).
+        output_path (str): The base path for output files (CSV, JSON, and log); a timestamp will be appended.
+        max_concurrent_calls (int): Maximum number of concurrent LLM calls (default: 10).
         logger (logging.Logger, optional): Logger instance for logging execution information.
+        embedding_model (SentenceTransformer, optional): Model for embedding-based reference matching.
+        device (torch.device, optional): PyTorch device for embedding computation (default: "cpu").
+        custom_extract_prompt (str, optional): Custom prompt template for response extraction.
+        custom_summarize_prompt (str, optional): Custom prompt template for response summarization.
+
+    Returns:
+        None: Writes output to CSV (responses), JSON (references), and text (generator log) files.
     """
     logger.info("Generator processing...")
 
@@ -241,7 +285,6 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
                     'extracted_character_index': response_position if len(response_position)>0 else None
                     }, None
             except Exception as e:
-                #traceback.print_exc()
                 logger.error(f"Error summarizing response for guide question '{guide_question}': {str(e)}")
                 return {
                     'response':"[Error summarizing response]"
