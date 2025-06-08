@@ -5,12 +5,15 @@ from itertools import zip_longest
 def load_guidelines(guidelines_path: str) -> list[str]:
     """
     Load discussion guide questions from a CSV file.
-    
+
     Args:
         guidelines_path (str): Path to the CSV file containing guidelines.
-    
+
     Returns:
-        list[str]: List of guide questions.
+        list[str]: List of guide questions from the 'guide_text' column.
+
+    Raises:
+        ValueError: If the CSV file lacks a 'guide_text' column or contains no questions.
     """
     guidelines = pd.read_csv(guidelines_path)
     
@@ -24,12 +27,16 @@ def load_guidelines(guidelines_path: str) -> list[str]:
 def load_transcript(transcript_path: str) -> str:
     """
     Load a transcript file into a string.
-    
+
     Args:
         transcript_path (str): Path to the transcript file.
-    
+
     Returns:
         str: Content of the transcript file.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist.
+        IOError: If an error occurs while reading the file.
     """
     with open(transcript_path, "r", encoding="utf-8") as f:
         return f.read()
@@ -37,12 +44,17 @@ def load_transcript(transcript_path: str) -> str:
 def segment_transcript(transcript: str) -> list[dict]:
     """
     Segment the transcript into question-response pairs.
-    
+
     Args:
         transcript (str): The transcript text.
-    
+
     Returns:
-        list[dict]: List of dictionaries containing interviewer and interviewee turns and their line reference number (0-indexed).
+        list[dict]: List of dictionaries, each containing:
+            - interviewer (list[str]): The interviewer's turn.
+            - interviewee (list[str]): The interviewee's turn.
+            - interviewer_line_ref (int): Line number (1-indexed) of the interviewer's turn, or -1 if empty.
+            - interviewee_line_ref (int): Line number (1-indexed) of the interviewee's turn, or -1 if empty.
+            - speaking_round (int): The index of the conversation round (0-indexed).
     """
     list_interviewer = []
     list_interviewee = []
