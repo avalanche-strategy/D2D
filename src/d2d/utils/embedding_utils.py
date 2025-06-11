@@ -42,10 +42,22 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
     tasks = [summarize_with_limit(q) for q in original_questions]
     summarized_questions = await asyncio.gather(*tasks, return_exceptions=True)
 
+    # check for task errors
+    error_results = [e for e in summarized_questions if isinstance(e, Exception)]
+    good_results = [r for r in summarized_questions if not isinstance(r, Exception)]
+
+    if len(good_results)==0 and len(error_results)>0:
+        error_list = set([e.__class__.__qualname__ for e in error_results])
+        logger.error(f"All Question Summarizing tasks returned errors of type: {error_list}")
+        raise error_results[0]
+    elif len(error_results)>0:
+        logger.warning("Some Question Summarizing tasks in have errors.")
+
     for group, original_question, summarized_question in zip(groups, original_questions, summarized_questions):
         # Handle exceptions from asyncio.gather
         if isinstance(summarized_question, Exception):
             logger.error(f"Error summarizing question '{original_question}': {str(summarized_question)}")
+            logger.warning(f"Switching to original question '{original_question}'")
             summarized_question = original_question  # Fallback to original question
 
         embedding = model.encode(summarized_question, convert_to_tensor=True, device=device)
