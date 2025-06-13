@@ -149,8 +149,13 @@ class D2DProcessor:
 
         # Precompute embeddings for guide questions
         logger.info("Summarizing and embedding guide questions...")
-        guide_question_data = await self._summarize_guide_questions(guide_questions, logger)
-        logger.info("Guide question embeddings precomputed.")
+
+        try:
+            guide_question_data = await self._summarize_guide_questions(guide_questions, logger)
+            logger.info("Guide question embeddings precomputed.")
+        except Exception as e:
+            logger.error(f"Error computing Guide question embeddings {e}")
+            raise e
         output_divider(logger, True)
 
         # Process each transcript and filter out skipped ones
@@ -201,10 +206,26 @@ class D2DProcessor:
                 return await summarize_question_async(question, self.llm_model, logger)
 
         tasks = [summarize_with_limit(q) for q in guide_questions]
-        summarized_questions = await asyncio.gather(*tasks)
+        summarized_questions = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # check for task errors
+        error_results = [e for e in summarized_questions if isinstance(e, Exception)]
+        good_results = [r for r in summarized_questions if not isinstance(r, Exception)]
+
+        if len(good_results)==0 and len(error_results)>0:
+            error_list = set([e.__class__.__qualname__ for e in error_results])
+            logger.error(f"All Guide Question Summarizing tasks returned errors of type: {error_list}")
+            raise error_results[0]
+        elif len(error_results)>0:
+            logger.warning("Some Guide Question Summarizing tasks have errors.")
 
         guide_question_data = []
         for guide_question, summarized_question in zip(guide_questions, summarized_questions):
+            # Fallback to original question if this instance resulted in an error
+            if isinstance(summarized_question, Exception):
+                logger.error(f"Error summarizing guide question '{guide_question}': {str(summarized_question)}")
+                summarized_question = guide_question  
+
             embedding = self.embedding_model.encode(summarized_question, convert_to_tensor=True, device=self.device)
             guide_question_data.append({
                 "guide_question": guide_question,
@@ -274,9 +295,14 @@ class D2DProcessor:
 
         # Summarize and embed the interviewer questions and interviewee responses for each group
         # Uses the LLM to summarize questions and SentenceTransformer to generate embeddings
-        group_embeddings = await summarize_embed_groups_async(
-            groups, self.embedding_model, self.device, self.llm_model, logger
-        )
+        try:
+            group_embeddings = await summarize_embed_groups_async(
+                groups, self.embedding_model, self.device, self.llm_model, logger
+                )
+        except Exception as e:
+            logger.info(f"Error embedding file {transcript_path.split('/')[-1]} due to {e}")
+            return []
+        
 
         # Check thematic alignment between transcript and guideline
         logger.info("Checking thematic alignment between transcript and guideline...")

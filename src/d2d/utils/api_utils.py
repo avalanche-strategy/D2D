@@ -64,7 +64,8 @@ def build_summarize_prompt(extracted_phrase: str, query: str, custom_summarize_p
 async def extract_and_summarize_response_llm_async(file_name: str, context: str, query: str, llm_model: str,
                                                 logger: logging.Logger = None,
                                                    custom_extract_prompt: str = None,
-                                                   custom_summarize_prompt: str = None
+                                                   custom_summarize_prompt: str = None,
+                                                   api_timeout: int = 30
                                                    ) -> str:
 
     """
@@ -117,7 +118,8 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
                 {"role": "system", "content": extraction_system_prompt},
                 {"role": "user", "content": extract_prompt}
             ],
-            temperature=0
+            temperature=0,
+            timeout=api_timeout
         )
         extracted_phrase = response.choices[0].message.content
         summarize_prompt = build_summarize_prompt(extracted_phrase, query, custom_summarize_prompt)
@@ -133,7 +135,8 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
                     {"role": "system", "content": summarize_system_prompt},
                     {"role": "user", "content": summarize_prompt}
                 ],
-                temperature=0
+                temperature=0,
+                timeout=api_timeout
             )
             summarized_phrase = response.choices[0].message.content.strip('\"\'')
 
@@ -154,7 +157,8 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
         logger.error(f"Error extracting response: {str(e)}")
         return f"Error querying ChatGPT: {str(e)}"
 
-async def summarize_question_async(question: str, llm_model: str, logger: logging.Logger = None) -> str:
+async def summarize_question_async(question: str, llm_model: str, logger: logging.Logger = None, 
+                                   api_timeout: int = 30) -> str:
     """
     Summarize a question using LiteLLM asynchronously.
 
@@ -176,7 +180,8 @@ async def summarize_question_async(question: str, llm_model: str, logger: loggin
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                timeout=api_timeout
             )
             summarized_question = response.choices[0].message.content.strip('\"\'')
         else:
@@ -188,5 +193,7 @@ async def summarize_question_async(question: str, llm_model: str, logger: loggin
         return summarized_question
     except Exception as e:
         logger.error(f"Error summarizing question: {str(e)}")
-        return question  # Fallback to the original question on error
+        #return question  # Fallback to the original question on error
+        # we need to re-throw the error to ensure the task is marked as error
+        raise e
 

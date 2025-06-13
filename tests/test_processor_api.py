@@ -40,7 +40,7 @@ def test_openai_apikey(test_case_files, setup_bad_apikey, subtests):
             data_dir=str(temp_folder),
             interview_name=f"interview_{test_case}",
             output_dir=output_folder,
-            disable_logging=False
+            disable_logging_to_console=False
         )
     
     # dump content of all files in the output folder to verify output, if needed "-s flag"
