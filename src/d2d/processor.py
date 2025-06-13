@@ -155,7 +155,7 @@ class D2DProcessor:
             logger.info("Guide question embeddings precomputed.")
         except Exception as e:
             logger.error(f"Error computing Guide question embeddings {e}")
-            return
+            raise e
         output_divider(logger, True)
 
         # Process each transcript and filter out skipped ones
@@ -217,7 +217,7 @@ class D2DProcessor:
             logger.error(f"All Guide Question Summarizing tasks returned errors of type: {error_list}")
             raise error_results[0]
         elif len(error_results)>0:
-            logger.warning("Some Guide Question Summarizing tasks in have errors.")
+            logger.warning("Some Guide Question Summarizing tasks have errors.")
 
         guide_question_data = []
         for guide_question, summarized_question in zip(guide_questions, summarized_questions):
