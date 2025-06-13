@@ -37,7 +37,7 @@ def test_csv_valid_interview_default(subtests, test_case_files):
         data_dir=str(temp_folder),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
-        disable_logging=False
+        disable_logging_to_console=True
     )
 
     # check that the output folder exists - should be True
@@ -137,7 +137,7 @@ def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_fil
         data_dir=str(temp_folder),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
-        disable_logging=False
+        disable_logging_to_console=True
     )
 
     # check that the output folder exists - should be True
@@ -199,7 +199,7 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
         data_dir=str(temp_folder),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
-        disable_logging=False
+        disable_logging_to_console=True
     )
 
     # check that the output folder exists - should be True
