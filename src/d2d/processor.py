@@ -302,7 +302,6 @@ class D2DProcessor:
         except Exception as e:
             logger.info(f"Error embedding file {transcript_path.split('/')[-1]} due to {e}")
             return []
-        #TODO: Check
         
 
         # Check thematic alignment between transcript and guideline
