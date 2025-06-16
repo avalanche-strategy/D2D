@@ -1,0 +1,71 @@
+---
+title: | 
+  Dialogue2Data (D2D): \ 
+  Transforming Interviews into Structured Data \ 
+  Final Project Report
+author: "Sienko Ikhabi, Dominic Lam, Wangkai Zhu, Yun Zhou"
+format:
+    pdf:
+        toc: true
+        toc-depth: 3
+        number-sections: true
+execute:
+  echo: false
+  warning: false
+---
+
+\newpage
+
+# Executive Summary
+
+{{< include _executive_summary.qmd >}}
+
+# Project Introduction
+
+## Problem Statement
+
+{{< include _intro_problem_statement.qmd >}}
+
+## Project Objectives
+
+{{< include _intro_project_objectives.qmd >}}
+
+## Data Formats
+
+{{< include _intro_data_format.qmd >}}
+
+## Solution Overview
+
+{{< include _intro_pipeline_overview.qmd >}}
+
+\newpage
+
+# Data Science Techniques
+
+## Description of Techniques Used
+
+{{< include _ds_techniques_description.qmd >}}
+
+## Challenges and Shortcomings
+
+{{< include _ds_techniques_challenges.qmd >}}
+
+## Evaluation
+
+{{< include _ds_techniques_evaluation.qmd >}}
+
+\newpage
+
+# Data Product and Results
+
+## Description of Data Product
+
+{{< include _data_product_description.qmd >}}
+
+## Future Improvements
+
+{{< include _data_product_future_work.qmd >}}
+
+# Conclusion and Recommendations
+
+{{< include _conclusion.qmd >}}
