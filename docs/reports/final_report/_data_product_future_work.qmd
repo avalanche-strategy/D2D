@@ -1,1 +1,23 @@
 
+The current release delivers practical business use. But as any project, new versions will be released with improved features and more flexibility.
+
+Below are the improvements that can be developed in the next few releases by the partner: -
+
+- **Integration Testing**: so far our evaluation has been restricted to using the evaluator and our personal judgement. The first and most obvious next step would be for our capstone partner to test the data product in their standard pipeline with the sample data that they had provided
+- If you visualize the heatmap of the how QA Pairs match up to interview guideline questions based on cosine similarity of the embeddings, you will see that it is perfectly linear (along the diagonal from top-left to bottom right) in the synthetic dataset in @fig-heatmap-food-similarity. Generating realistic dialogue was not easy, and the "perfectly linear" nature of the similarity matching shows this. Nonetheless, the heatmap generated from one of the partner's actual datasets show that our pipeline is robust enough and still finds the required matches when the interview length and format varies (@fig-heatmap-1090-similarity). Despite this, with the real-world data, we still see the diagonal pattern as much as it is less pronounced. Another area of testing for robustness would be to process some **non-sequential interviews** whose flow does not follow the same general flow as guideline questions
+- Still referring to @fig-heatmap-1090-similarity, we notice that in most interviews, there are some dialogue sections that have very low similarity matches to any of the guideline questions. A more precise snapshot is highlighted in @fig-heatmap-1090-similarity-post for one interview, with such sections marked with dotted lines. To improve the current process, a **post-processing step** for the matches can be added. The first objective of this step would be to fill in the gaps to any previously un-answered guideline question. For example, in @fig-heatmap-1090-similarity-post Guideline Question 2 (second column) had "[No relevant response found]" output due to the low similarity matches. However, in the transcript, this question was answered by the interview dialogue pairs 2 and 3 (with the respective row numbers), given that Guideline Question 1 is answered in the first exchange (row 1) and Guideline Question 3 is answered in row 4. After this post-processing, any remaining un-used dialogue portions might be "out of topic" exchanges (for example "exit pleasantries" like _"Thank you for making time to speak with me."_ at the end [rows 16 & 17]) or they could be additional information that was not covered by the guideline questions but could be useful to extract. Our partner had set this as a stretch goal for the capstone project. Despite having limited time we had to implement it, our work has set a good stage for this objective to be achieved
+
+
+::: {layout="[[-5, 90, -5], [-5, 90, -5] ]"}
+
+![Heatmap with QA Pairs similarity to Guidelines (Synthetic Data)](img/similarity_heatmap_food.png){#fig-heatmap-food-similarity width=50%}
+
+![Heatmap with QA Pairs similarity to Guidelines (Real Data)](img/similarity_heatmap_1090.png){#fig-heatmap-1090-similarity}
+
+:::
+
+::: {layout="[[-5, 50, -45]]"}
+
+![Heatmap showing Unused QA Pairs](img/similarity_heatmap_1090_post.png){#fig-heatmap-1090-similarity-post width=60%}
+
+:::
