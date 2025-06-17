@@ -121,7 +121,7 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
 
 
 async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict],
-                          p: float = 0.5, max_matches: int = 5) -> list[dict]:
+                          p: float = 0.5, max_matches: int = 5, index = 0) -> list[dict]:
     """
     Match a guideline question to groups with similarity above a threshold.
 
