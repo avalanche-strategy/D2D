@@ -36,15 +36,15 @@ execute:
 
 # Data Science Methods
 
-## Description of Methods Used
+## Overview
 
 {{< include _ds_methods_overview.qmd >}}
 
-## Processor
+## Processing Framework
 
 {{< include _ds_methods_processor.qmd >}}
 
-## Evaluation
+## Evaluation Framework
 
 {{< include _ds_methods_evaluation.qmd >}}
 
