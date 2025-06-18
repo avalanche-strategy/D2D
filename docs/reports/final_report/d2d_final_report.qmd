@@ -50,10 +50,23 @@ execute:
 
 {{< include _data_product_description.qmd >}}
 
+## Key Results
+
+{{< include _key_results.qmd >}}
+
 ## Future Improvements
 
 {{< include _data_product_future_work.qmd >}}
 
+\newpage
+
 # Conclusion and Recommendations
 
 {{< include _conclusion.qmd >}}
+
+\newpage
+
+# References
+
+- [1] S. Es, J. James, L. Espinosa-Anke, and S. Schockaert, “RAGAS: Automated Evaluation of Retrieval Augmented Generation,” arXiv preprint arXiv:2309.15217, Sep. 2023. [Online]. Available: https://doi.org/10.48550/arXiv.2309.15217    
+- [2] DS-Daedalus Team, "DS-Daedalus v4: Increments and Updates," Internal Presentation Report, Mar. 2025

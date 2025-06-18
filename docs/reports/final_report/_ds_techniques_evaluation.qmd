@@ -1,1 +1,20 @@
 
+To assess the quality of D2D’s output, we have designed the evaluator to ensure that the answers are not only accurate in meaning, but also generated through a reliable and precise process.
+
+Inspired by RAGAS (Retrieval-Augmented Generation Assessment)[1] and partner’s internal documentation Daedalus v4[2], the evaluation framework provides five core metrics:
+
+- **Correctness**: Measures how well the answer is consistent with the reference (ground truth).
+- **Faithfulness**: Evaluates whether the answer is fully supported by the retrieved context and avoids hallucinations.
+- **Precision**: Assesses the proportion of the answer that is actually supported by the retrieved chunks.
+- **Recall**: Captures how many relevant facts from the context are included in the answer.
+- **Relevance**: Reflects how closely the answer relates to the original guideline question. This metric is used only to assess questionnaire quality, not processor performance.
+
+These metrics are computed using LLM-based prompting, with carefully designed templates and decision logic for edge cases such as ambiguous or evasive responses. Compared to the standard RAGAS pipeline, our customized evaluator introduces three key enhancements:
+
+First, each metric uses a tailored LLM prompt designed to calculate metric score and handle edge cases such as vague or non-informative answers. Nonspecific or uninformative answers are detected through keyword matching and scored conservatively to ensure evaluation accuracy.
+
+Second, built-in feedback mechanism: Each score includes LLM-generated feedback, improving interpretability and helping users understand and validate scoring results.
+
+Third, flexible scoring and low-score highlighting: Users can customize metric weights and set thresholds to flag low-scoring responses, helping streamline validation and adapt to varied evaluation needs.
+
+Finally, to validate metric correctness, we have built a small but diverse golden sample set across ten topics, such as climate change, food, NBA, and workplace culture. By varying the number of interviews across topics, the sample better reflects real-world diversity.

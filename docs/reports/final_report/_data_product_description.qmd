@@ -1,1 +1,4 @@
 
+Dialogue2Data (D2D) is a Python package that extracts answers from the unstructured interview transcripts based on the guideline questions for further statistical analysis. It includes two modules: the Processor, which applies embeddings and LLMs to match and generate responses to predefined guideline questions; and the Evaluator, which scores the outputs across five metrics such as correctness and faithfulness. The system supports csv/json outputs, logs, and flexible configuration via .env files. 
+
+D2D supports synchronous processing for high efficiency, incorporates detailed error handling for user-friendly operation, and integrates answer reference and evaluation feedback to aid manual verification. We quantified repeatability through multiple runs to ensure the system produces consistent and reliable results.
