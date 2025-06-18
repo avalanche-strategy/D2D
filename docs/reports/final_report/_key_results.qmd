@@ -1,0 +1,24 @@
+
+To understand the performance of D2D processor, we conducted experiments using golden samples. We compared developed models against the client’s baseline (vanilla LLM method), analyzed the average scores and distributions of different models across all metrics, and tuned retrieval parameters (top_k and top_p) to recommend optimal settings based on golden samples.
+
+According to Figure 1, all of our developed models achieved much higher correctness scores compared to the client’s baseline method. The baseline model scored only 2.20, while all developed models scored above 3.90, and the best-performing model top-k with gpt4-1, reached 4.22. This clear improvement demonstrates the strength of our RAG approach.
+
+::: {.cell}
+![Correctness Comparison to Baseline](img/correctness_comparison.png)
+:::
+
+Then, we compared multiple model variants across all six evaluation metrics under the setting of k = 5 and p = 0.5, as shown in Figure 2. Overall, top-k configurations performed slightly better than their top-p counterparts. Among models using the same retriever, GPT-4.1 and GPT-4.1-mini showed slightly better performance than Claude 3.5 and GPT-4o-mini. We also observed that the variance across 10 runs was minimal, indicating stable and repeatable results. Moreover, the differences between models were relatively small across all metrics. Taking both performance and cost into account, we recommend top-k = 5 with GPT-4o-mini as the default setting.
+
+::: {.cell}
+![Metric Comparison with Distribution](img/metric_dist.png)
+::: 
+
+Finally, we tuned the retriever parameters using our golden sample set. As shown in Figure 3, for top-k retrieval, k = 5 yielded the best correctness and joint scores, making it the recommended setting. Similarly, Figure 4 shows the performance of models using top-p retrievers across different p values. The optimal performance was observed in the 0.52–0.56 range, suggesting that future p tuning efforts should focus within this interval.
+
+::: {.cell}
+![Model Performance Across Top-k Values (k = 3 - 6)](img/top_k.png)
+::: 
+
+::: {.cell}
+![Model Performance Across Top-p Values (p = 0.46 - 0.58)](img/top_p.png)
+::: 
