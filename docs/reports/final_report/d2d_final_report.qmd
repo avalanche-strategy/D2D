@@ -20,23 +20,11 @@ execute:
 
 {{< include _executive_summary.qmd >}}
 
+\newpage
+
 # Project Introduction
 
-## Problem Statement
-
-{{< include _intro_problem_statement.qmd >}}
-
-## Project Objectives
-
-{{< include _intro_project_objectives.qmd >}}
-
-## Data Formats
-
-{{< include _intro_data_format.qmd >}}
-
-## Solution Overview
-
-{{< include _intro_pipeline_overview.qmd >}}
+{{< include _project_introduction.qmd >}}
 
 \newpage
 

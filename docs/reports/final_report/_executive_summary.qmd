@@ -1,6 +1,7 @@
 Open-ended text data holds immense potential for discovering user insights, but extracting those insights efficiently remains a major challenge—particularly in unstructured formats. Our capstone partner, Fathom, specializes in surfacing insights from raw survey data and interview transcripts to support client decision-making. While structured survey responses follow a question-and-answer format, interview transcripts are conversational and free-flowing, making them more difficult and time-consuming to analyze reliably.
 
 To address this challenge, we designed and implemented a data product that automates the extraction of relevant responses from unstructured interview transcripts. Our solution leverages a Retrieval-Augmented Generation (RAG) framework, which consists of:
+
 - A **retriever** that selects the most relevant passages from the transcript based on a guideline question,
 - A **generator** that formulates concise answers using the retrieved text and prompt,
 - And an **evaluator** that scores each generated response on five key quality metrics and flags uncertain cases for human review.
