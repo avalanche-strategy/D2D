@@ -1,3 +1,9 @@
+<!--
+To render the PDF, please run
+$ quarto render docs/reports/final_report/d2d_final_report.qmd --to pdf
+The generated PDF will appear in the reports/ directory.
+-->
+
 ---
 title: | 
   Dialogue2Data (D2D): \ 
@@ -28,19 +34,19 @@ execute:
 
 \newpage
 
-# Data Science Techniques
+# Data Science Methods
 
-## Description of Techniques Used
+## Description of Methods Used
 
-{{< include _ds_techniques_description.qmd >}}
+{{< include _ds_methods_overview.qmd >}}
 
-## Challenges and Shortcomings
+## Processor
 
-{{< include _ds_techniques_challenges.qmd >}}
+{{< include _ds_methods_processor.qmd >}}
 
 ## Evaluation
 
-{{< include _ds_techniques_evaluation.qmd >}}
+{{< include _ds_methods_evaluation.qmd >}}
 
 \newpage
 
