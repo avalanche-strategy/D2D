@@ -4,15 +4,15 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.12
+  - python=3.9
   - pandas
   - numpy
   - python-dotenv
   - jupyter
   - pytorch
   - sentence-transformers
-  - openai # To be deleted
-  - anthropic # To be deleted
+#  - openai # To be deleted
+#  - anthropic # To be deleted
   - litellm
   - pytest  # Development only
   - pytest-subtests # Development only

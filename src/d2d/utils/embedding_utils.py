@@ -5,8 +5,10 @@ from .api_utils import summarize_question_async
 
 import torch
 
-async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransformer, device: torch.device, gpt_model: str,
-                                logger: logging.Logger = None) -> list[dict]:
+
+async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransformer, device: torch.device,
+                                       gpt_model: str,
+                                       logger: logging.Logger = None) -> list[dict]:
     """
     Summarize and embed interviewer questions and interviewee responses from groups asynchronously.
 
@@ -46,11 +48,11 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
     error_results = [e for e in summarized_questions if isinstance(e, Exception)]
     good_results = [r for r in summarized_questions if not isinstance(r, Exception)]
 
-    if len(good_results)==0 and len(error_results)>0:
+    if len(good_results) == 0 and len(error_results) > 0:
         error_list = set([e.__class__.__qualname__ for e in error_results])
         logger.error(f"All Question Summarizing tasks returned errors of type: {error_list}")
         raise error_results[0]
-    elif len(error_results)>0:
+    elif len(error_results) > 0:
         logger.warning("Some Question Summarizing tasks in have errors.")
 
     for group, original_question, summarized_question in zip(groups, original_questions, summarized_questions):
@@ -83,7 +85,9 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
 
     return group_embeddings
 
-async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict], k: int = 3) -> list[dict]:
+
+async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict],
+                                                k: int = 3) -> list[dict]:
     """
     Match a summarized guideline question to the top k groups based on cosine similarity.
 
@@ -115,13 +119,13 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
             "response_embedding": group["response_embedding"],
 
         })
-        
+
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
     return similarities[:k]
 
 
 async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict],
-                          p: float = 0.5, max_matches: int = 5) -> list[dict]:
+                                                p: float = 0.5, max_matches: int = 5, index=0) -> list[dict]:
     """
     Match a guideline question to groups with similarity above a threshold.
 
@@ -141,7 +145,7 @@ async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, g
             - speaking_round (int): The conversation round index.
             - response_embedding (torch.Tensor): Embedding of the interviewee response.
     """
-    #question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
+    # question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
     similarities = []
     for group in group_embeddings:
         similarity = util.cos_sim(guide_embedding, group["embedding"]).cpu().numpy()[0][0]
@@ -154,10 +158,10 @@ async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, g
             "interviewee_line_ref": group["interviewee_line_ref"],
             "response_embedding": group["response_embedding"],
         })
-    
-    ret_similarity = [s for s in similarities if s["similarity"]>=p]
+
+    ret_similarity = [s for s in similarities if s["similarity"] >= p]
     # do not sort and change the order of speaking!
-    #ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
+    # ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
     return ret_similarity[:max_matches]
 
 

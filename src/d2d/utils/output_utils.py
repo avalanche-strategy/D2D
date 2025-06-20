@@ -23,7 +23,9 @@ def get_divider(line_brk: bool = False):
         Returns:
             str: The divider string.
     """
-    return f"================================================================================================{'\n' if line_brk else ''}"
+    divider = "=" * 100  # or keep your exact 97 equals signs
+    newline = "\n" if line_brk else ""
+    return f"{divider}{newline}"
 
 def output_divider(logger: logging.Logger, line_brk: bool = False):
     """
@@ -37,6 +39,7 @@ def output_divider(logger: logging.Logger, line_brk: bool = False):
         None
     """
     logger.info(get_divider(line_brk))
+
 
 # Configure logging
 def setup_logging(pipeline_name: str, output_path: str, disable_logging_to_console: bool = False):
