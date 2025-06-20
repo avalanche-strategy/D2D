@@ -170,8 +170,24 @@ def test_thematic_alignment_mismatch_transcript():
     )
     # Process completed
 
+def suppress_pydantic_serializer_warnings():
+    """
+    Suppress specific Pydantic serializer warnings related to unexpected values during serialization.
+
+    This filter ignores UserWarnings emitted by Pydantic's main module that start with
+    "Pydantic serializer warnings:". These warnings typically occur when non-Pydantic
+    objects (e.g., LiteLLM response types) are passed to Pydantic's serialization methods.
+    """
+    import warnings
+    warnings.filterwarnings(
+        "ignore",
+        message="Pydantic serializer warnings:",
+        category=UserWarning,
+        module="pydantic.main"
+    )
 
 if __name__ == "__main__":
+    suppress_pydantic_serializer_warnings()
     start_time = time.time()
 
     # test_top_p()

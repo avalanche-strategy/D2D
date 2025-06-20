@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 from enum import Enum
 import logging
 
-
 class D2DProcessor:
 
     class SamplingMethod(Enum):
@@ -86,7 +85,7 @@ class D2DProcessor:
             pipeline_log.log: Log file for the pipeline execution.
         """
 
-        # Userfriendly output to console
+        # User friendly output to console
         print(get_divider())
         print(f"Processing transcripts for interview: \"{interview_name}\" \nin \"{data_dir}\" \nand saving to \"{output_dir}\" ...")
         print(get_divider())
