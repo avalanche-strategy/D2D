@@ -51,3 +51,20 @@ from .processor import D2DProcessor
 from .evaluator import D2DEvaluator
 
 __all__ = ["D2DProcessor", "D2DEvaluator"]
+
+def suppress_pydantic_serializer_warnings():
+    """
+    Suppress specific Pydantic serializer warnings related to unexpected values during serialization.
+
+    This filter ignores UserWarnings emitted by Pydantic's main module that start with
+    "Pydantic serializer warnings:". These warnings typically occur when non-Pydantic
+    objects (e.g., LiteLLM response types) are passed to Pydantic's serialization methods.
+    """
+    import warnings
+    warnings.filterwarnings(
+        "ignore",
+        message="Pydantic serializer warnings:",
+        category=UserWarning,
+        module="pydantic.main"
+    )
+suppress_pydantic_serializer_warnings()
