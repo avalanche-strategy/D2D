@@ -2,9 +2,6 @@ import logging
 from litellm import completion, acompletion
 from dotenv import load_dotenv, find_dotenv
 
-
-
-
 def build_extract_prompt(context: str, query: str, custom_extract_prompt: str = None) -> str:
     """
     Build the extract prompt for LLM.
