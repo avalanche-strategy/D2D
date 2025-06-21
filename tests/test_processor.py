@@ -22,6 +22,7 @@ def test_csv_valid_interview_default(subtests, test_case_files):
 
     test_case = "000"
     temp_folder = test_case_files(test_case)
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -34,7 +35,8 @@ def test_csv_valid_interview_default(subtests, test_case_files):
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=str(temp_folder),
+        transcripts_dir=str(transcripts_path),
+        guidelines_path=str(guidelines_file),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
         disable_logging_to_console=True
@@ -120,6 +122,7 @@ def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_fil
     temp_folder = test_case_files_with_extra_file(test_case, 
                                                   extra_filename=extra_file_name,
                                                   file_content="This file is empty.")
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -134,7 +137,8 @@ def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_fil
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=str(temp_folder),
+        transcripts_dir=str(transcripts_path),
+        guidelines_path=str(guidelines_file),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
         disable_logging_to_console=True
@@ -184,6 +188,7 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
 
     test_case = "000"
     temp_folder = test_case_files(test_case)
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -196,7 +201,8 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=str(temp_folder),
+        transcripts_dir=str(transcripts_path),
+        guidelines_path=str(guidelines_file),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
         disable_logging_to_console=True
