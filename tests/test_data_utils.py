@@ -26,7 +26,7 @@ def test_csv_valid_guidelines(subtests, test_case_files):
     with subtests.test(f"Guidelines case {test_case} has 2 questions"):
         assert len(guidelines_data) == 2
     with subtests.test(f"Guidelines case {test_case} Question 1"):
-        assert guidelines_data[0] == "How are you doing at the moment?"
+        assert guidelines_data[0] == "How are you feeling at work?"
     with subtests.test(f"Guidelines case {test_case} Question 2"):
         assert guidelines_data[1] == "What plans do you have for summer?"
 
