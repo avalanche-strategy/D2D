@@ -23,6 +23,7 @@ def test_openai_apikey(test_case_files, setup_bad_apikey, subtests):
     # set up default processor
     test_case = "000"
     temp_folder = test_case_files(test_case)
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -37,7 +38,8 @@ def test_openai_apikey(test_case_files, setup_bad_apikey, subtests):
     with pytest.raises(AuthenticationError):
         # Step 3: Start transcripts processing
         processor.process_transcripts(
-            data_dir=str(temp_folder),
+            transcripts_dir=str(transcripts_path),
+            guidelines_path=str(guidelines_file),
             interview_name=f"interview_{test_case}",
             output_dir=output_folder,
             disable_logging_to_console=False
