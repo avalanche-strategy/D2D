@@ -6,6 +6,10 @@ from src.d2d.utils.data_utils import load_guidelines, load_transcript, segment_t
 from pathlib import Path
 import shutil
 from dotenv import load_dotenv
+import logging
+import torch
+from sentence_transformers import SentenceTransformer
+
 
 ### fixture functions
 
@@ -72,3 +76,25 @@ def setup_bad_apikey(monkeypatch):
     """
     monkeypatch.setenv('OPENAI_API_KEY', 'this-will-not-work')
     load_dotenv()
+
+@pytest.fixture
+def logger():
+    """A fixture logger for test cases that require logging variable."""
+    logger = logging.getLogger("test_logger")
+    logger.setLevel(logging.INFO)
+    return logger
+
+@pytest.fixture
+def embedding_model():
+    """A fixture SentenceTransformer for test cases that require embedding."""
+    sentence_model_name = "multi-qa-mpnet-base-dot-v1"
+    return SentenceTransformer(sentence_model_name)
+
+@pytest.fixture
+def torch_device():
+    """A fixture torch.device test cases that require device to be set"""
+    torch_device = torch.device(
+        "mps" if torch.backends.mps.is_available()
+        else "cuda" if torch.cuda.is_available()
+        else "cpu"
+        )
