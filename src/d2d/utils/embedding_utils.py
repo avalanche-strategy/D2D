@@ -22,10 +22,10 @@ async def summarize_embed_groups_async(groups: list[dict], model: SentenceTransf
     Returns:
         list[dict]: List of dictionaries, each containing:
             - original_question (str): The original interviewer question.
-            - summarized_question (str): The summarized interviewer question.
+            - summarized_question (str): The summarized interviewer question, or the original if summarization fails.
             - original_response (str): The original interviewee response.
-            - embedding (torch.Tensor): Embedding of the summarized question.
-            - response_embedding (torch.Tensor): Embedding of the interviewee response.
+            - embedding (torch.Tensor): Embedding of the summarized question on the specified device.
+            - response_embedding (torch.Tensor): Embedding of the interviewee response on the specified device.
             - interviewer_line_ref (int): Line number of the interviewer’s turn.
             - interviewee_line_ref (int): Line number of the interviewee’s turn.
             - speaking_round (int): The conversation round index.
@@ -98,9 +98,9 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
 
     Returns:
         list[dict]: List of up to k dictionaries, each containing:
-            - response (str): The original interviewee response.
-            - question (str): The original interviewer question.
-            - similarity (float): Cosine similarity score.
+            - response (str): The original interviewee response from the group.
+            - question (str): The original interviewer question from the group.
+            - similarity (float): Cosine similarity score between the guide embedding and the group's question embedding.
             - interviewer_line_ref (int): Line number of the interviewer’s turn.
             - interviewee_line_ref (int): Line number of the interviewee’s turn.
             - speaking_round (int): The conversation round index.
@@ -117,7 +117,6 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
             "interviewee_line_ref": group["interviewee_line_ref"],
             "speaking_round": group["speaking_round"],
             "response_embedding": group["response_embedding"],
-
         })
 
     similarities.sort(key=lambda x: x["similarity"], reverse=True)
@@ -125,7 +124,7 @@ async def summarize_match_top_k_questions_async(guide_embedding: torch.Tensor, g
 
 
 async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, group_embeddings: list[dict],
-                                                p: float = 0.5, max_matches: int = 5, index=0) -> list[dict]:
+                                                p: float = 0.5, max_matches: int = 5) -> list[dict]:
     """
     Match a guideline question to groups with similarity above a threshold.
 
@@ -137,15 +136,14 @@ async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, g
 
     Returns:
         list[dict]: List of dictionaries for matches with similarity >= p, up to max_matches, each containing:
-            - response (str): The original interviewee response.
-            - question (str): The original interviewer question.
-            - similarity (float): Cosine similarity score.
+            - response (str): The original interviewee response from the group.
+            - question (str): The original interviewer question from the group.
+            - similarity (float): Cosine similarity score between the guide embedding and the group's question embedding.
             - interviewer_line_ref (int): Line number of the interviewer’s turn.
             - interviewee_line_ref (int): Line number of the interviewee’s turn.
             - speaking_round (int): The conversation round index.
             - response_embedding (torch.Tensor): Embedding of the interviewee response.
     """
-    # question_embedding = model.encode(guide_question, convert_to_tensor=True, device=device)
     similarities = []
     for group in group_embeddings:
         similarity = util.cos_sim(guide_embedding, group["embedding"]).cpu().numpy()[0][0]
@@ -160,8 +158,6 @@ async def summarize_match_top_p_questions_async(guide_embedding: torch.Tensor, g
         })
 
     ret_similarity = [s for s in similarities if s["similarity"] >= p]
-    # do not sort and change the order of speaking!
-    # ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
     return ret_similarity[:max_matches]
 
 
@@ -184,9 +180,9 @@ def match_top_responses(model: SentenceTransformer,
 
     Returns:
         list[dict]: List of dictionaries for matches with similarity >= p_threshold, up to max_matches, each containing:
-            - similarity (float): Cosine similarity score.
+            - similarity (float): Cosine similarity score between the extracted phrase and the response embedding.
             - interviewee_line_ref (int): Line number of the interviewee’s turn.
-            - response (str): The original interviewee response.
+            - response (str): The original interviewee response from the group.
     """
     query_embedding = model.encode(extracted_phrase, convert_to_tensor=True, device=device)
     similarities = []
@@ -200,6 +196,4 @@ def match_top_responses(model: SentenceTransformer,
     logger.info(f"Similarities for '{extracted_phrase}'")
     logger.info([round(s["similarity"], 3) for s in similarities])
     ret_similarity = [s for s in similarities if s["similarity"] >= p_threshold]
-    # do not sort and change order of speaking!
-    # ret_similarity.sort(key=lambda x: x["similarity"], reverse=True)
     return ret_similarity[:max_matches]

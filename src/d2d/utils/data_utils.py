@@ -1,6 +1,6 @@
 import pandas as pd
-import re
 from itertools import zip_longest
+
 
 def load_guidelines(guidelines_path: str) -> list[str]:
     """
@@ -16,13 +16,14 @@ def load_guidelines(guidelines_path: str) -> list[str]:
         ValueError: If the CSV file lacks a 'guide_text' column or contains no questions.
     """
     guidelines = pd.read_csv(guidelines_path)
-    
+
     if not ("guide_text" in guidelines.columns):
         raise ValueError("Guidelines CSV file must contain the 'guide_text' column.")
     guidelines_list = guidelines[guidelines["guide_text"].notna()]["guide_text"].tolist()
-    if len(guidelines_list)==0:
+    if len(guidelines_list) == 0:
         raise ValueError("Guidelines CSV file must contain at least one question.")
     return guidelines_list
+
 
 def load_transcript(transcript_path: str) -> str:
     """
@@ -40,6 +41,7 @@ def load_transcript(transcript_path: str) -> str:
     """
     with open(transcript_path, "r", encoding="utf-8") as f:
         return f.read()
+
 
 def segment_transcript(transcript: str) -> list[dict]:
     """
@@ -69,18 +71,18 @@ def segment_transcript(transcript: str) -> list[dict]:
                 list_interviewee.append(("", -1))
             # for backward compatibility, I append both the text and line_number, which will be separated in the dict
             # All line-refs are human-readable (start at index 1)
-            list_interviewer.append((line[len('Interviewer:'):].strip(), line_number+1))
+            list_interviewer.append((line[len('Interviewer:'):].strip(), line_number + 1))
             previous_type = "Interviewer:"
         elif line.startswith("Interviewee:"):
             # append interviewer blank line if consecutive interviewee
             if previous_type == "Interviewee:":
                 list_interviewer.append(("", -1))
             list_interviewee.append(
-                (line[len('Interviewee:'):].strip(), line_number+1)
-                ) 
+                (line[len('Interviewee:'):].strip(), line_number + 1)
+            )
             previous_type = "Interviewee:"
         # for now we skip blank lines or those not marked with either speaker, no else statement
-    
+
     groups = []
     speaking_round = 0
     for qa_pair in zip_longest(list_interviewer, list_interviewee, fillvalue=("", -1)):
@@ -91,6 +93,5 @@ def segment_transcript(transcript: str) -> list[dict]:
             "interviewee_line_ref": qa_pair[1][1],
             "speaking_round": speaking_round
         })
-        speaking_round +=1
+        speaking_round += 1
     return groups
-    
