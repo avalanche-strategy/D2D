@@ -15,15 +15,19 @@ from rapidfuzz.distance import Levenshtein
 
 def get_divider(line_brk: bool = False):
     """
-        Generate a divider string for logging.
+    Generate a divider line matching the terminal width or a fallback width.
 
-        Args:
-            line_brk (bool): If True, append a newline to the divider (default: False).
+    Args:
+        fallback_width (int): Width to use if terminal size is unavailable (default: 80).
 
-        Returns:
-            str: The divider string.
+    Returns:
+        str: A divider line of '=' characters.
     """
-    divider = "=" * 100  # or keep your exact 97 equals signs
+    try:
+        width = os.get_terminal_size().columns
+    except OSError:
+        width = 100
+    divider = "=" * width  # or keep your exact 97 equals signs
     newline = "\n" if line_brk else ""
     return f"{divider}{newline}"
 

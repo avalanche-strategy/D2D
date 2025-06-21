@@ -67,13 +67,13 @@ class D2DProcessor:
         logger.info(f"Custom Summarize Prompt: {'Set' if self.custom_summarize_prompt else 'Not set'}")
         output_divider(logger)
 
-    def process_transcripts(self, data_dir: str, interview_name: str, output_dir: str,
+    def process_transcripts(self, transcripts_dir:str, guidelines_path:str, interview_name: str, output_dir: str,
                             disable_logging_to_console: bool = True) -> None:
         """
         Process all transcripts in the directory and generate summarized matches.
 
         Args:
-            data_dir (str): Directory containing transcript files.
+            transcripts_dir (str): Directory containing transcript files.
             interview_name (str): The interview to be processed, e.g., "interview_1090" or "interview_abcr".
             output_dir (str): Path for the output files directory.
             pipeline_name (str): Name of the pipeline for logging.
@@ -87,11 +87,10 @@ class D2DProcessor:
 
         # User friendly output to console
         print(get_divider())
-        print(f"Processing transcripts for interview: \"{interview_name}\" \nin \"{data_dir}\" \nand saving to \"{output_dir}\" ...")
+        print(f"Processing transcripts in \"{transcripts_dir}\" \nfor guidelines {guidelines_path} \nand saving output to \"{output_dir}\" ...")
         print(get_divider())
 
-        transcript_dir = os.path.join(data_dir, interview_name)
-        guidelines_path = os.path.join(data_dir, f"{interview_name}_guidelines.csv")
+
 
         interview_name = interview_name.split("_")[-1]
         output_path = os.path.join(output_dir, f"D2D_survey_{interview_name}.csv")
@@ -105,14 +104,14 @@ class D2DProcessor:
             asyncio.set_event_loop(new_loop)
             try:
                 new_loop.run_until_complete(self._process_transcripts_async(
-                    transcript_dir, guidelines_path, output_path, disable_logging_to_console
+                    transcripts_dir, guidelines_path, output_path, disable_logging_to_console
                 ))
             finally:
                 new_loop.close()
         else:
             # Normal case: run in current loop
             loop.run_until_complete(self._process_transcripts_async(
-                transcript_dir, guidelines_path, output_path, disable_logging_to_console
+                transcripts_dir, guidelines_path, output_path, disable_logging_to_console
             ))
 
     async def _process_transcripts_async(self, transcript_dir: str, guidelines_path: str, output_path: str,
