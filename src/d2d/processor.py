@@ -16,6 +16,9 @@ import logging
 class D2DProcessor:
 
     class SamplingMethod(Enum):
+        """
+        Enumeration of sampling methods for matching transcript groups to guide questions.
+        """
         TOP_K = "top_k"
         TOP_P = "top_p"
         # THRESHOLD = "threshold"
@@ -32,7 +35,13 @@ class D2DProcessor:
         Args:
             llm_model (str): The LLM model to use for summarization (default: "gpt-4o-mini").
             embedding_model (str): SentenceTransformer model name (default: "multi-qa-mpnet-base-dot-v1").
-            max_concurrent_calls (int): Maximum concurrent API calls for async processing.
+            sampling_method (SamplingMethod): Method for sampling matches (default: SamplingMethod.TOP_K).
+            max_concurrent_calls (int): Maximum concurrent API calls for async processing (default: 10).
+            top_k (int): Number of top matches to consider when using TOP_K sampling (default: 5).
+            top_p (float): Similarity threshold for TOP_P sampling (default: 0.5).
+            thematic_alignment_similarity_threshold (float): Threshold for thematic alignment check (default: 0.4).
+            custom_extract_prompt (str, optional): Custom prompt for extraction (default: None).
+            custom_summarize_prompt (str, optional): Custom prompt for summarization (default: None).
         """
 
         self.llm_model = llm_model
@@ -55,6 +64,12 @@ class D2DProcessor:
         self.embedding_model.to(self.device)
 
     def log_config(self, logger = logging.Logger):
+        """
+        Log the current configuration of the D2DProcessor using the provided logger.
+
+        Args:
+            logger (logging.Logger): Logger instance to use for logging.
+        """
         logger.info("Pipeline configuration:")
         logger.info(f"LLM Model: {self.llm_model}")
         logger.info(f"Embedding Model: {self.embedding_model_name}")
@@ -67,31 +82,27 @@ class D2DProcessor:
         logger.info(f"Custom Summarize Prompt: {'Set' if self.custom_summarize_prompt else 'Not set'}")
         output_divider(logger)
 
-    def process_transcripts(self, data_dir: str, interview_name: str, output_dir: str,
+    def process_transcripts(self, transcripts_dir:str, guidelines_path:str, interview_name: str, output_dir: str,
                             disable_logging_to_console: bool = True) -> None:
         """
-        Process all transcripts in the directory and generate summarized matches.
+        Process all transcripts in the directory and generate a single CSV file with summarized matches for all transcripts.
 
         Args:
-            data_dir (str): Directory containing transcript files.
-            interview_name (str): The interview to be processed, e.g., "interview_1090" or "interview_abcr".
-            output_dir (str): Path for the output files directory.
-            pipeline_name (str): Name of the pipeline for logging.
-            disable_logging (bool): Whether to disable logging.
+            transcripts_dir (str): Directory containing transcript files.
+            guidelines_path (str): Path to the guidelines CSV file.
+            interview_name (str): The interview identifier, used in the output file name.
+            output_dir (str): Directory to save the output CSV file.
+            disable_logging_to_console (bool): Whether to disable logging to console (default: True).
 
-        Output: files will be saved to the output directory(output_dir) as follows::
-            matched_responses.csv: CSV file with matched responses for each transcript.
-            generator_log.txt: Log file for the generator execution.
-            pipeline_log.log: Log file for the pipeline execution.
+        Output:
+            A CSV file named "D2D_survey_{interview_name}.csv" will be saved in the output directory,
+            containing the summarized matches for all processed transcripts.
         """
 
         # User friendly output to console
         print(get_divider())
-        print(f"Processing transcripts for interview: \"{interview_name}\" \nin \"{data_dir}\" \nand saving to \"{output_dir}\" ...")
+        print(f"Processing transcripts in \"{transcripts_dir}\" \nfor guidelines {guidelines_path} \nand saving output to \"{output_dir}\" ...")
         print(get_divider())
-
-        transcript_dir = os.path.join(data_dir, interview_name)
-        guidelines_path = os.path.join(data_dir, f"{interview_name}_guidelines.csv")
 
         interview_name = interview_name.split("_")[-1]
         output_path = os.path.join(output_dir, f"D2D_survey_{interview_name}.csv")
@@ -105,27 +116,26 @@ class D2DProcessor:
             asyncio.set_event_loop(new_loop)
             try:
                 new_loop.run_until_complete(self._process_transcripts_async(
-                    transcript_dir, guidelines_path, output_path, disable_logging_to_console
+                    transcripts_dir, guidelines_path, output_path, disable_logging_to_console
                 ))
             finally:
                 new_loop.close()
         else:
             # Normal case: run in current loop
             loop.run_until_complete(self._process_transcripts_async(
-                transcript_dir, guidelines_path, output_path, disable_logging_to_console
+                transcripts_dir, guidelines_path, output_path, disable_logging_to_console
             ))
 
     async def _process_transcripts_async(self, transcript_dir: str, guidelines_path: str, output_path: str,
                                          disable_logging_to_console: bool) -> None:
         """
-        Internal async method to process transcripts.
+        Internal async method to process transcripts and generate the output CSV.
 
         Args:
             transcript_dir (str): Directory containing transcript files.
             guidelines_path (str): Path to the guidelines CSV file.
-            output_path (str): Path for the output CSV file.
-            pipeline_name (str): Name of the pipeline for logging.
-            disable_logging_to_console (bool): Whether to disable logging.
+            output_path (str): Path to save the output CSV file.
+            disable_logging_to_console (bool): Whether to disable logging to console.
         """
         # Set up logging
         pipeline_name = "D2D"
@@ -189,14 +199,14 @@ class D2DProcessor:
 
     async def _summarize_guide_questions(self, guide_questions: list, logger) -> list:
         """
-        Summarize and embed guide questions asynchronously.
+        Summarize and embed guide questions asynchronously using the LLM.
 
         Args:
-            guide_questions (list): List of guide questions.
-            logger: Logger instance for logging.
+            guide_questions (list): List of guide questions to summarize and embed.
+            logger (logging.Logger): Logger instance for logging.
 
         Returns:
-            list: List of dictionaries with guide question data and embeddings.
+            list: List of dictionaries, each containing the original guide question, its summarized version, and its embedding.
         """
         semaphore = asyncio.Semaphore(self.max_concurrent_calls)
 
@@ -235,16 +245,18 @@ class D2DProcessor:
 
     async def _thematic_alignment_check(self, group_embeddings: list, guide_question_data: list, transcript_path: str, logger: logging.Logger) -> bool:
         """
-        Check thematic alignment between transcript and guideline questions using cosine similarity.
+        Check if the transcript is thematically aligned with the guideline questions based on cosine similarity.
+
+        If the similarity is below the threshold, prompt the user to decide whether to proceed.
 
         Args:
             group_embeddings (list): List of transcript group embeddings and metadata.
             guide_question_data (list): List of guide question data with embeddings.
-            transcript_path (str): Path to the transcript file for display in prompt.
-            similarity_threshold (float): Threshold for acceptable thematic similarity (default: 0.3).
+            transcript_path (str): Path to the transcript file for display in the user prompt.
+            logger (logging.Logger): Logger instance for logging.
 
         Returns:
-            bool: True if processing should proceed (aligned or user agrees), False if transcript should be skipped.
+            bool: True if the transcript is aligned or the user chooses to proceed, False if the user chooses to skip.
         """
         # Aggregate transcript content by concatenating summarized questions
         transcript_text = " ".join(group["summarized_question"] for group in group_embeddings)
@@ -274,15 +286,16 @@ class D2DProcessor:
 
     async def _process_single_transcript(self, transcript_path: str, guide_question_data: list, logger: logging.Logger) -> list:
         """
-        Process a single transcript and match it against guide questions.
+        Process a single transcript by segmenting it, summarizing and embedding its content,
+        and matching it against the guide questions based on the sampling method.
 
         Args:
             transcript_path (str): Path to the transcript file.
             guide_question_data (list): List of guide question data with embeddings.
-            logger: Logger instance for logging.
+            logger (logging.Logger): Logger instance for logging.
 
         Returns:
-            list: List of matches for the transcript.
+            list: List of dictionaries, each containing a guide question and its matched transcript groups.
         """
 
         # Load the transcript file into a structured format

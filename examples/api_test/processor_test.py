@@ -34,12 +34,17 @@ def test_top_k():
     # Step 2: Define paths relative to the root directory
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
     data_dir = os.path.join(root_dir, "data", "synthetic_data")
+
+    transcript_dir = os.path.join(data_dir, "transcripts_food")
+    guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
+
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=data_dir,
+        transcripts_dir=transcript_dir,
+        guidelines_path=guidelines_path,
         interview_name=interview_name,
         output_dir=output_dir,
         disable_logging_to_console=True
@@ -67,12 +72,17 @@ def test_top_p():
     # Step 2: Define paths relative to the root directory
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
     data_dir = os.path.join(root_dir, "data", "synthetic_data")
+
+    transcript_dir = os.path.join(data_dir, "transcripts_food")
+    guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
+
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=data_dir,
+        transcripts_dir=transcript_dir,
+        guidelines_path=guidelines_path,
         interview_name=interview_name,
         output_dir=output_dir,
         disable_logging_to_console=True
@@ -102,12 +112,17 @@ def test_custom_prompt():
     # Step 2: Define paths relative to the root directory
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
     data_dir = os.path.join(root_dir, "data", "synthetic_data")
+
+    transcript_dir = os.path.join(data_dir, "transcripts_food")
+    guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
+
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=data_dir,
+        transcripts_dir=transcript_dir,
+        guidelines_path=guidelines_path,
         interview_name=interview_name,
         output_dir=output_dir,
         disable_logging_to_console=True
@@ -129,12 +144,17 @@ def test_minimal_init():
     # Step 2: Define paths relative to the root directory
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
     data_dir = os.path.join(root_dir, "data", "synthetic_data")
+
+    transcript_dir = os.path.join(data_dir, "transcripts_food")
+    guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
+
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=data_dir,
+        transcripts_dir=transcript_dir,
+        guidelines_path=guidelines_path,
         interview_name=interview_name,
         output_dir=output_dir,
         disable_logging_to_console=True
@@ -158,12 +178,17 @@ def test_thematic_alignment_mismatch_transcript():
     # Step 2: Define paths relative to the root directory
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
     data_dir = os.path.join(root_dir, "data", "synthetic_data")
+
+    transcript_dir = os.path.join(data_dir, "transcripts_foodMismatch")
+    guidelines_path = os.path.join(data_dir, "interview_foodMismatch_guidelines.csv")
+
     interview_name = "interview_foodMismatch"
     output_dir = os.path.join(root_dir, "results")
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=data_dir,
+        transcripts_dir = transcript_dir,
+        guidelines_path = guidelines_path,
         interview_name=interview_name,
         output_dir=output_dir,
         disable_logging_to_console=True
@@ -178,8 +203,8 @@ if __name__ == "__main__":
     # test_top_p()
     # test_custom_prompt()
     # test_top_k()
-    # test_minimal_init()
-    test_thematic_alignment_mismatch_transcript()
+    test_minimal_init()
+    # test_thematic_alignment_mismatch_transcript()
 
     end_time = time.time()
     elapsed_time = end_time - start_time
