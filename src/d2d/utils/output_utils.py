@@ -338,7 +338,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         logger.info(f"File {file_name} processing complete.")
         output_divider(logger, True)
         output_data.append(row)
-        reference_data.append({"interview": file_name, "responses": interview_refs})
+        reference_data.append({"interview": file_name, "transcript": file_path,"responses": interview_refs})
 
     output_df = pd.DataFrame(output_data)
     # ===============================================================================================================
