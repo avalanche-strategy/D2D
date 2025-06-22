@@ -276,6 +276,10 @@ def test_find_references_no_match(subtests, intermediate_objs,
 @pytest.mark.asyncio
 async def test_generate_output_from_summarized_matches_async_valid(subtests, tmp_path, intermediate_objs, logger, 
                                                                    embedding_model, torch_device):
+    """
+    Unit test to output simple valid interview (test case 004). CSV file and JSON should be produced,
+        with the expected contents as per the test cases.
+    """
     base_output_name = "result"
     output_folder = tmp_path / "output" 
     output_folder.mkdir()
@@ -368,6 +372,10 @@ async def test_generate_output_from_summarized_matches_async_valid(subtests, tmp
 @pytest.mark.asyncio
 async def test_generate_output_from_summarized_matches_async_empty(subtests, tmp_path, intermediate_objs, logger, 
                                                                    embedding_model, torch_device):
+    """
+    Unit test to check that passing empty lists for the CSV rows (interview files) 
+        or colums (guideline questions), raise errors 
+    """
     base_output_name = "result"
     output_folder = tmp_path / "output" 
     output_folder.mkdir()
