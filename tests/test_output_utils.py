@@ -200,7 +200,7 @@ def test_find_references_semantic(subtests, intermediate_objs,
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)  # Show INFO and above on the console
     console_handler.setFormatter(formatter)
-    # logger.addHandler(console_handler)
+    logger.addHandler(console_handler)
 
     (
         line_reference, response_position,
@@ -315,11 +315,7 @@ async def test_generate_output_from_summarized_matches_async_valid(subtests, tmp
     # check the folder contents
     for filename in os.listdir(str(output_folder)):
         file_path = os.path.join(str(output_folder), filename)
-        # print(f"--- Contents of {filename} ---")
-        # with open(file_path, 'r') as file:
-        #     print(file.read())
-        # print("\n\n") # separator
-
+        
         # test the content in the CSV file produced in output
         if(filename.endswith(".csv")):
             # filename should start with the specified basename
@@ -385,7 +381,7 @@ async def test_generate_output_from_summarized_matches_async_empty(subtests, tmp
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)  # Show INFO and above on the console
     console_handler.setFormatter(formatter)
-    # logger.addHandler(console_handler)
+    logger.addHandler(console_handler)
     
     # more set up
     llm_model = "gpt-4o-mini"
