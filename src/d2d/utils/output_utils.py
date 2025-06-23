@@ -15,15 +15,19 @@ from rapidfuzz.distance import Levenshtein
 
 def get_divider(line_brk: bool = False):
     """
-        Generate a divider string for logging.
+    Generate a divider line matching the terminal width or a fallback width.
 
-        Args:
-            line_brk (bool): If True, append a newline to the divider (default: False).
+    Args:
+        fallback_width (int): Width to use if terminal size is unavailable (default: 80).
 
-        Returns:
-            str: The divider string.
+    Returns:
+        str: A divider line of '=' characters.
     """
-    divider = "=" * 100  # or keep your exact 97 equals signs
+    try:
+        width = os.get_terminal_size().columns
+    except OSError:
+        width = 100
+    divider = "=" * width  # or keep your exact 97 equals signs
     newline = "\n" if line_brk else ""
     return f"{divider}{newline}"
 
@@ -174,13 +178,9 @@ def find_reference_for_answers(match: dict, extracted_phrase: str = None, embedd
 
             # if still not found ...
             if len(line_reference) == 0:
-                # assume all matching lines were used
+                # No lines references
                 logger.info(f"Line Reference: No matches found using either method")
-                #pick the highest fuzzy score
-                max_fuzzy = max(fuzzy_scores, key=lambda s: s['score'])
-                line_reference.add(max_fuzzy['line'])
-                response_position.append({'line': max_fuzzy['line'], 'start': -1, 'end': -1})
-                match_type = "FUZZY"
+                match_type = None
             else:
                 logger.info(f"Line Reference: Semantic Match at {line_reference}")
                 match_type = "SEMANTIC"
@@ -334,7 +334,7 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
         logger.info(f"File {file_name} processing complete.")
         output_divider(logger, True)
         output_data.append(row)
-        reference_data.append({"interview": file_name, "responses": interview_refs})
+        reference_data.append({"interview": file_name, "transcript": file_path,"responses": interview_refs})
 
     output_df = pd.DataFrame(output_data)
     # ===============================================================================================================

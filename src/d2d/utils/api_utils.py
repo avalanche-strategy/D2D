@@ -3,8 +3,6 @@ from litellm import completion, acompletion
 from dotenv import load_dotenv, find_dotenv
 
 
-
-
 def build_extract_prompt(context: str, query: str, custom_extract_prompt: str = None) -> str:
     """
     Build the extract prompt for LLM.
@@ -58,16 +56,16 @@ def build_summarize_prompt(extracted_phrase: str, query: str, custom_summarize_p
                         Remove unnecessary words, excluding secondary details entirely, to ensure the 
                         phrase retains the key verb and subject and maintains semantic clarity. The 
                         result must be a coherent phrase, not broken into disconnected fragments. It 
-                        doesn't have to be a complete sentence. Do not add introductory phrases or extra 
+                        doesn’t have to be a complete sentence. Do not add introductory phrases or extra 
                         details."""
 
+
 async def extract_and_summarize_response_llm_async(file_name: str, context: str, query: str, llm_model: str,
-                                                logger: logging.Logger = None,
+                                                   logger: logging.Logger = None,
                                                    custom_extract_prompt: str = None,
                                                    custom_summarize_prompt: str = None,
                                                    api_timeout: int = 30
                                                    ) -> str:
-
     """
     The core function of the Generator in the pipeline.
     Query LLM with the provided context and query asynchronously.
@@ -80,6 +78,7 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
         logger (logging.Logger, optional): Logger instance for logging execution information.
         custom_extract_prompt (str, optional): Custom prompt template for extracting responses.
         custom_summarize_prompt (str, optional): Custom prompt template for summarizing responses.
+        api_timeout (int, optional): Timeout for the API call in seconds (default: 30).
 
     Returns:
         tuple[str, str] | str: A tuple of (summarized phrase, extracted phrase) on success, or a string
@@ -105,12 +104,12 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
 
     # First call: Extract the core phrase from the interviewee's response
     try:
-        if len(context.strip())==0:
+        if len(context.strip()) == 0:
             # no matches using p
             logger.info("Line Referencing: No matching dialog, appending [No relevant response found]")
             # this could be a different string, if we need to debug/differentiate
             return "[No relevant response found]"
-        
+
         extract_prompt = build_extract_prompt(context, query, custom_extract_prompt)
         response = await acompletion(
             model=llm_model,
@@ -157,7 +156,8 @@ async def extract_and_summarize_response_llm_async(file_name: str, context: str,
         logger.error(f"Error extracting response: {str(e)}")
         return f"Error querying ChatGPT: {str(e)}"
 
-async def summarize_question_async(question: str, llm_model: str, logger: logging.Logger = None, 
+
+async def summarize_question_async(question: str, llm_model: str, logger: logging.Logger = None,
                                    api_timeout: int = 30) -> str:
     """
     Summarize a question using LiteLLM asynchronously.
@@ -166,9 +166,13 @@ async def summarize_question_async(question: str, llm_model: str, logger: loggin
         question (str): The question to summarize.
         llm_model (str, optional): The LLM model to use, or None for an identity summary (returns the original question).
         logger (logging.Logger, optional): Logger instance for logging execution information.
+        api_timeout (int, optional): Timeout for the API call in seconds (default: 30).
 
     Returns:
-        str: The summarized question, or the original question if an error occurs or llm_model is None.
+        str: The summarized question if successful, or the original question if llm_model is None.
+
+    Raises:
+        Exception: If an error occurs during the summarization process.
     """
     _ = load_dotenv(find_dotenv())
     prompt = f"""Summarize the following question into a concise, single sentence that captures its core intent, 
@@ -187,13 +191,12 @@ async def summarize_question_async(question: str, llm_model: str, logger: loggin
         else:
             # you can pass None for llm_model for an "Identity" summary i.e. copied directly
             summarized_question = question
-        
+
         logger.info("Original Question: %s", question)
         logger.info("Summarized Question: %s", f"{summarized_question}\n")
         return summarized_question
     except Exception as e:
         logger.error(f"Error summarizing question: {str(e)}")
-        #return question  # Fallback to the original question on error
+        # return question  # Fallback to the original question on error
         # we need to re-throw the error to ensure the task is marked as error
         raise e
-

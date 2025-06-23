@@ -4,6 +4,12 @@ data/private_data/
 *.txt 
 *.json 
 !data/synthetic_data/
+# manually include test fixture data
+!tests/fixtures/
+# And the CSV, TXT and JSON files in them
+!tests/fixtures/**/*.csv
+!tests/fixtures/**/*.txt
+!tests/fixtures/**/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

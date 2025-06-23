@@ -16,6 +16,8 @@ dependencies:
   - litellm
   - pytest  # Development only
   - pytest-subtests # Development only
+  - pytest-asyncio  # Development only
+  - pytest-mock  # Development only
   - rapidfuzz
   - dash=3.0.4
   - dash-bootstrap-components=2.0.3

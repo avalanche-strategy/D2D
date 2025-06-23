@@ -22,6 +22,7 @@ def test_csv_valid_interview_default(subtests, test_case_files):
 
     test_case = "000"
     temp_folder = test_case_files(test_case)
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -34,7 +35,8 @@ def test_csv_valid_interview_default(subtests, test_case_files):
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=str(temp_folder),
+        transcripts_dir=str(transcripts_path),
+        guidelines_path=str(guidelines_file),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
         disable_logging_to_console=True
@@ -63,12 +65,12 @@ def test_csv_valid_interview_default(subtests, test_case_files):
             # check that the columns come from the guidelines
             with subtests.test("Output CSV has required columns"):
                 assert "Interview File" in df.columns
-                assert "How are you doing at the moment?" in df.columns
+                assert "How are you feeling at work?" in df.columns
                 assert "What plans do you have for summer?" in df.columns
             # check that the row for the sample interview is as expected
             test_row = df[df["Interview File"]=="fe4b129c-a507"]
             with subtests.test("Output CSV row has expected values"):
-                assert test_row["How are you doing at the moment?"].str.contains("overwhelmed", case=False).all()
+                assert test_row["How are you feeling at work?"].str.contains("overwhelmed", case=False).all()
                 assert (test_row["What plans do you have for summer?"] == "[No relevant response found]").all()
 
         # test the content in the JSON file produced in output
@@ -83,7 +85,7 @@ def test_csv_valid_interview_default(subtests, test_case_files):
                 # positive response
                 pos_resp = (
                     next((obj for obj in data[0]["responses"] 
-                          if obj["guide_question"] == "How are you doing at the moment?"), None)
+                          if obj["guide_question"] == "How are you feeling at work?"), None)
                 )
                 with subtests.test("Positive response column exists"):
                     assert pos_resp
@@ -120,6 +122,7 @@ def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_fil
     temp_folder = test_case_files_with_extra_file(test_case, 
                                                   extra_filename=extra_file_name,
                                                   file_content="This file is empty.")
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -134,7 +137,8 @@ def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_fil
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=str(temp_folder),
+        transcripts_dir=str(transcripts_path),
+        guidelines_path=str(guidelines_file),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
         disable_logging_to_console=True
@@ -164,12 +168,12 @@ def test_csv_valid_interview_plus_empty(subtests, test_case_files_with_extra_fil
             # check that the columns come from the guidelines
             with subtests.test("Output CSV has required columns"):
                 assert "Interview File" in df.columns
-                assert "How are you doing at the moment?" in df.columns
+                assert "How are you feeling at work?" in df.columns
                 assert "What plans do you have for summer?" in df.columns
             # check that the row for the sample interview is as expected
             test_row = df[df["Interview File"]==extra_file_name]
             with subtests.test("Output CSV row has expected values"):
-                assert (test_row["How are you doing at the moment?"] == "[No relevant response found]").all()
+                assert (test_row["How are you feeling at work?"] == "[No relevant response found]").all()
                 assert (test_row["What plans do you have for summer?"] == "[No relevant response found]").all()
 
 
@@ -184,6 +188,7 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
 
     test_case = "000"
     temp_folder = test_case_files(test_case)
+    transcripts_path = temp_folder / f"interview_{test_case}"
     guidelines_file = temp_folder / f"interview_{test_case}_guidelines.csv"
     assert guidelines_file.exists()
 
@@ -196,7 +201,8 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
 
     # Step 3: Start transcripts processing
     processor.process_transcripts(
-        data_dir=str(temp_folder),
+        transcripts_dir=str(transcripts_path),
+        guidelines_path=str(guidelines_file),
         interview_name=f"interview_{test_case}",
         output_dir=output_folder,
         disable_logging_to_console=True
@@ -225,12 +231,12 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
             # check that the columns come from the guidelines
             with subtests.test("Output CSV has required columns"):
                 assert "Interview File" in df.columns
-                assert "How are you doing at the moment?" in df.columns
+                assert "How are you feeling at work?" in df.columns
                 assert "What plans do you have for summer?" in df.columns
             # check that the row for the sample interview is as expected
             test_row = df[df["Interview File"]=="fe4b129c-a507"]
             with subtests.test("Output CSV row has expected values"):
-                assert test_row["How are you doing at the moment?"].str.contains("overwhelmed", case=False).all()
+                assert test_row["How are you feeling at work?"].str.contains("overwhelmed", case=False).all()
                 assert (test_row["What plans do you have for summer?"] == "[No relevant response found]").all()
 
         # test the content in the JSON file produced in output
@@ -245,7 +251,7 @@ def test_csv_valid_interview_top_p(subtests, test_case_files):
                 # positive response
                 pos_resp = (
                     next((obj for obj in data[0]["responses"] 
-                          if obj["guide_question"] == "How are you doing at the moment?"), None)
+                          if obj["guide_question"] == "How are you feeling at work?"), None)
                 )
                 with subtests.test("Positive response column exists"):
                     assert pos_resp
