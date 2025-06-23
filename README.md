@@ -40,29 +40,33 @@ OPENAI_API_KEY=sk-abc123XYZ789pqr456STU012vwx789YZ
 ANTHROPIC_API_KEY=sk-ant-987ZYX654WVU321TSR098qwe456PLM
 ```
 
-**Note: These are fictional keys. To ensure smooth operation, please use your own API keys. You only need to set the key for the API you will use.**
+**Note: These are fictional keys. To ensure smooth operation, please use your own API keys.** 
+
+You do not need to set up keys for both APIs. If you will only use one, set up the key for just that API.
 
 
 ### Data Placement
 
 To ensure smooth operation, please organize your data as follows:
 
-**Note: Due to confidentiality, the data used in this repository, including the examples below, is synthetic.**
+**Note: Due to confidentiality of clients and interviewees, the data used in this repository, including the examples below, are synthetic.**
 
 - **Interview Data Structure (for processor)**:
-  Each interview should have its own subdirectory. The name of this subdirectory is the **interview name**, which should be in the format `interview_XXXX`, where `XXXX` (without underscores), is a unique identifier for the interview (e.g., `interview_food` is a folder containing interview transcript files for food theme.). While it is suggested to place these directories under `data/private_data/` for confidentiality, you may choose a different location if needed.
 
+  As input, the processor requires the guidelines CSV file and the name of a directory that contains the transcript TXT files.
+  
 - **Transcript TXT Files (for processor)**:
-  There are no naming requirements for the naming of the transcript files. But they must be placed directly inside the interview directory. For example:
+  There are no naming requirements for the naming either the transcript folder nor the transcript files within the folder. The only expectation is that the TXT files with tine interview transcript text must be placed directly inside the interview transcripts directory. For example:
   - `data/private_data/interview_food/transcript1.txt`
   - `data/private_data/interview_food/transcript2.txt`
-  - etc.  
+  - etc. 
+  You will then need to pass the name of the directory (`data/private_data/interview_food`) in the example above, to the processor. You may pass a relative path, as in the example, or an absolute path.
 
 - **Guidelines CSV File (for processor)**:
-  A CSV file named `interview_xxx_guidelines.csv` containing the guideline questions. There should be a column named `guide_text` with the guideline questions. For example:
+  A CSV file containing the guideline questions. The CSV file must contain a column named `guide_text` with the guideline questions. There are no naming restrictions by the processor. However, for your own organization and keeping track of guidelines and transcript folder pairing (if you manage several interviews), it might be easy to align the naming. For example:
   - `interview_food_guidelines.csv` contains the guideline questions for the interviews of food theme.
 
-- **Reference Answer (for evaluation)**: A CSV file named `response_xxx.csv` containing the reference answers for the guideline questions. The first column should be `respondent_id`, and the remaining columns should be the reference answers to the corresponding guideline questions. For example:
+- **Reference Answer (for evaluation, optional)**: If you will plan to evaluate the output of the processor, you will need to prepare a CSV file named `response_xxx.csv`. This file will contain the reference answers for the guideline questions. The first column should be `respondent_id`, corresponding to the interview filename (e.g. `transcript1` for the responses you expect from `transcript1.txt`), and the remaining columns should be the reference answers to the corresponding guideline questions. For example:
   - `response_food.csv` contains the reference answers for the food theme.
 
 
@@ -77,7 +81,7 @@ The D2D pipeline (processor part) processes two types of input files to extract 
 - **Format**: Comma-separated values (`.csv`)
 - **Structure**:
   - Single column named `guide_text` with each row containing a question or prompt.
-  - Questions align with those asked in transcripts for matching purposes.
+  - The questions should semantically align with those asked in transcripts for matching purposes.
 - **Example**:
   - **File**: Extract from [interview_food_sample_guidelines.csv](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food_guidelines.csv)
     > `guide_text`  
@@ -89,7 +93,7 @@ The D2D pipeline (processor part) processes two types of input files to extract 
 - **Description**: Raw text files containing conversational interview data, with alternating lines or labeled segments for interviewers and interviewees.
 - **Format**: Plain text (`.txt`)
 - **Structure**:
-  - Each file represents one interview.
+  - Each file represents one two-person interview (Interviewer and Interviewee).
   - Content includes dialogue, with questions from interviewers and responses from interviewees.
 - **Example**:
   - **File**: Extract from [001.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/001.txt)
@@ -108,6 +112,9 @@ The D2D pipeline (processor part) processes two types of input files to extract 
 
 
 ### Sample Data Output
+
+#### CSV (Responses)
+
 The D2D pipeline produces structured output by matching interviewee responses to guideline questions, consolidating results for analysis.
 - **Format**: Comma-separated values (`.csv`)
 - **Structure**:
@@ -124,7 +131,75 @@ The D2D pipeline produces structured output by matching interviewee responses to
 | 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, roasted pork, rice, beans; loud, chaotic, full of stories. |...|
 |...|...|...|...|
 
+#### JSON (Responses and References)
 
+In addition to the CSV output, the D2D pipeline produces structured JSON output that provides more details about each of the final response in the CSV file.
+- **Format**: JavaScript Object Notation (`.json`)
+- **Structure**:
+  - An array of interview output objects, analogous to the rows in the CSV file. Each object corresponds to an `Interview File` and has the following attributes:
+    - `interview`: An identifier of the source transcript file (e.g., `001`, `002`).
+    - `transcript`: The full path of the filename referenced for the responses (e.g., `/home/user/data/private_data/interview_food/transcript1.txt`).
+    - `responses`: An array of response output objects, analogous to the columns in the CSV file. Each object corresponds to a `Guideline question` and will also contain elements that are extracted from the corresponding `Interview File` in response to the `Guideline question`. Each object has the following attributes:
+      - `guide_question`: An identifier of the source transcript file (e.g., `001`, `002`).
+      - `relevant_lines`: An array with tuples of line numbers from the transcript TXT file that semantically match the guideline question. These lines would have been identified by the algorithm (described in the documentation) to be close to the guideline question. For each line number tuple, the first pair is the "Interviewer" line number and the second pair is the "Interviewee" line number. For example, when `relevant_lines` has `[[4, 5], [10, 12]]`, there were two segments of the interview that matched the guideline question; First, line 4(Interviewer)+line 5(Interviewee) and then line 10(Interviewer)+line 12(Interviewee)
+      - `extracted_phrase`: A phrase extracted from the transcript that can directly answer the `guide_question` (or the text, `[No relevant response]`, if none is found).
+      - `response`: This is the final concise response, which is also output to the CSV file.
+      - `match_type`: Text indicating how you can find `extracted_phrase` in the transcript.
+        - "EXACT": The text can be found, as a whole, using a simple search or `str.contains`. For instance, if the phrase that was extracted were _"mom’s arroz con leche"_, you can search and find it just like that.
+        - "PARTIAL": To find the text, you need to search for specific overlapping segments of the phrase. For instance, if the extracted text were _"Scrambled eggs, dad taught me when I was seven"_ you can find the referenced text through two partial searches for _"Scrambled eggs"_ and _"dad taught me when I was seven"_.
+        - "SEMANTIC": No exact or partial text matches exist. However, the extracted phrase has the same meaning as a given line in the transcript. For instance, a response of _"The interviewee reported that work is going very well"_ when the transcript says _"Work is really fantastic at the moment!"_
+        - "NONE": If no references were found
+      - `extracted_line_references`: An array of all the line numbers from which the `extracted_phrase` was obtained (e.g., just one line - `[7]` or two different lines `[9, 11]`). These will only be based on the Interviewee lines
+      - `extracted_character_index`: An array with a triple of character index references in the text. Each triple contains:
+        - `line`: The line number (e.g., `17`, `33`)
+        - `start`: The position/character within the line text that marks the start of the match. If the match is "SEMANTIC" this will always be `-1`.
+        - `end`: The position/character within the line text that marks the end of the match. If the match is "SEMANTIC" this will always be `-1`.
+        Note that if several portions/segments of the text are found on one line, the line number will be repeated in different `extracted_character_index` triples, but reported just once under `extracted_line_references`.
+     
+_Line numbers and character indexes are numbered from 1. Character Index will be counted **after** the marker "Interviewee: "._
+
+- **Example**:
+
+```json
+[
+  {
+    "interview": "001",
+    "transcript": "/home/userdata/synthetic_data/transcripts_food/001.txt",
+    "responses": [
+      {
+        "guide_question": "What’s a dish that reminds you of your childhood?",
+        "relevant_lines": [[1, 3], [13, 15], [21, 23]],
+        "extracted_phrase": "My grandma’s chicken and rice",
+        "response": "Grandma’s chicken and rice",
+        "match_type": "EXACT",
+        "extracted_line_references": [3],
+        "extracted_character_index": [
+          {
+            "line": 3,
+            "start": 11,
+            "end": 40
+          }
+        ]
+      },
+      {
+        "guide_question": "Can you describe a meal that has a special meaning for you?",
+        "relevant_lines": [[5, 7], [13, 15], [17, 19]],
+        "extracted_phrase": "My 18th birthday dinner. My parents surprised me by cooking all my favorite dishes—pad thai, roasted veggies, and this chocolate lava cake I was obsessed with",
+        "response": "18th birthday dinner with favorite dishes cooked by parents.",
+        "match_type": "EXACT",
+        "extracted_line_references": [7],
+        "extracted_character_index": [
+          {
+            "line": 7,
+            "start": 16,
+            "end": 174
+          }
+        ]
+      }
+    ]
+  }
+]
+```
 
 ## How It Works (Processor part)
 
@@ -263,24 +338,29 @@ For more detailed Documentation, please navigate to [here](https://github.com/av
 ## Dependencies
 
 - `conda` (version 23.9.0 or higher)
-- `conda-lock` (version 2.5.7 or higher)
-- `jupyterlab` (version 4.0.0 or higher)
-- `nb_conda_kernels` (version 2.3.1 or higher)
 - Python and packages listed in [`environment.yml`](environment.yml)
-- [Docker](https://www.docker.com/)
+- (Optional) `jupyterlab` (version 4.0.0 or higher) to run the interactive [examples](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb)
 
 ### Adding a new dependency
 
 1. Add the dependency to the `environment.yml` file on a new branch.
 
-2. Run `conda-lock -k explicit --file environment.yml -p linux-64` to update the `conda-linux-64.lock` file.
+2. Recreate the `d2d` environment.
 
-2. Re-build the Docker image locally to ensure it builds and runs properly.
+```bash
+conda deactivate
+conda remove --name d2d --all
+conda env create -f environment.yml
+conda activate d2d
+```
 
-3. Push the changes to GitHub. A new Docker
-   image will be built and pushed to Docker Hub automatically.
+3. Re-run all unit tests to ensure the pipeline runs properly.
 
-5. Send a pull request to merge the changes into the `main` branch. 
+```bash
+pytest tests
+```
+
+4. Push the changes to GitHub and create a pull request to merge the changes into the `main` branch. 
 
 ## Contributing
 Interested in contributing? Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute. Please note that this project is released with a [Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
@@ -296,4 +376,4 @@ Interested in contributing? Contributions are welcome! See [CONTRIBUTING.md](CON
 This project is licensed under the Apache License, Version 2.0 - see LICENSE for details.
 
 ## Project Status
-D2D is actively developed. We welcome feedback and feature requests via GitHub issues.
+D2D will be actively developed until June 25, 2025. 
