@@ -178,13 +178,9 @@ def find_reference_for_answers(match: dict, extracted_phrase: str = None, embedd
 
             # if still not found ...
             if len(line_reference) == 0:
-                # assume all matching lines were used
+                # No lines references
                 logger.info(f"Line Reference: No matches found using either method")
-                #pick the highest fuzzy score
-                max_fuzzy = max(fuzzy_scores, key=lambda s: s['score'])
-                line_reference.add(max_fuzzy['line'])
-                response_position.append({'line': max_fuzzy['line'], 'start': -1, 'end': -1})
-                match_type = "FUZZY"
+                match_type = None
             else:
                 logger.info(f"Line Reference: Semantic Match at {line_reference}")
                 match_type = "SEMANTIC"
