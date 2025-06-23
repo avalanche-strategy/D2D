@@ -49,22 +49,25 @@ You do not need to set up keys for both APIs. If you will only use one, set up t
 
 To ensure smooth operation, please organize your data as follows:
 
-**Note: Due to confidentiality of clients and interviewees, the data used in this repository, including the examples below, are synthetic.**
+**Note: To protect the confidentiality of clients and interviewees, the data used in this repository are synthetic.**
 
 - **Interview Data Structure (for processor)**:
 
   As input, the processor requires the guidelines CSV file and the name of a directory that contains the transcript TXT files.
   
-- **Transcript TXT Files (for processor)**:
-  There are no naming requirements for the naming either the transcript folder nor the transcript files within the folder. The only expectation is that the TXT files with tine interview transcript text must be placed directly inside the interview transcripts directory. For example:
-  - `data/private_data/interview_food/transcript1.txt`
-  - `data/private_data/interview_food/transcript2.txt`
-  - etc. 
-  You will then need to pass the name of the directory (`data/private_data/interview_food`) in the example above, to the processor. You may pass a relative path, as in the example, or an absolute path.
+  - **Transcript TXT Files**:
+    There are no requirements for the naming either the transcript folder nor the transcript files within the folder. The only expectation is that the TXT files containing individual interview transcript text must have the `*.txt` extension and be placed directly inside the interview transcripts directory (not nested in child sub-directories). For example:
+    - `data/private_data/interview_food/transcript1.txt`
+    - `data/private_data/interview_food/transcript2.txt`
+    - etc. 
+    You will then need to pass the name of the directory (`data/private_data/interview_food`) in the example above, to the processor. You may pass a relative path, as in the example, or an absolute path (e.g. `/home/user/data/private_data/interview_food`).
 
-- **Guidelines CSV File (for processor)**:
-  A CSV file containing the guideline questions. The CSV file must contain a column named `guide_text` with the guideline questions. There are no naming restrictions by the processor. However, for your own organization and keeping track of guidelines and transcript folder pairing (if you manage several interviews), it might be easy to align the naming. For example:
-  - `interview_food_guidelines.csv` contains the guideline questions for the interviews of food theme.
+  - **Guidelines CSV File**:
+    A CSV file containing the guideline questions. The CSV file must contain a column named `guide_text` with the guideline questions. There are no naming restrictions by the processor. However, for your own organization and keeping track of guidelines and transcript folder pairing (if you manage several interviews), it might be easy to align the naming. For example:
+    - `interview_food_guidelines.csv` contains the guideline questions for the interviews of food theme.
+
+  - **Output Folder**:
+    The folder (e.g. `/home/user/data/results/`) where the processor output files will be created. The folder must already exist, but the output files described below will be created. To allow multiple runs, the output filenames are generated based on the name of the interview and include the timestamp when they were generated (e.g. `D2D_survey_food_responses_2025-06-21_15-21.csv`).
 
 - **Reference Answer (for evaluation, optional)**: If you will plan to evaluate the output of the processor, you will need to prepare a CSV file named `response_xxx.csv`. This file will contain the reference answers for the guideline questions. The first column should be `respondent_id`, corresponding to the interview filename (e.g. `transcript1` for the responses you expect from `transcript1.txt`), and the remaining columns should be the reference answers to the corresponding guideline questions. For example:
   - `response_food.csv` contains the reference answers for the food theme.
@@ -139,21 +142,21 @@ In addition to the CSV output, the D2D pipeline produces structured JSON output 
   - An array of interview output objects, analogous to the rows in the CSV file. Each object corresponds to an `Interview File` and has the following attributes:
     - `interview`: An identifier of the source transcript file (e.g., `001`, `002`).
     - `transcript`: The full path of the filename referenced for the responses (e.g., `/home/user/data/private_data/interview_food/transcript1.txt`).
-    - `responses`: An array of response output objects, analogous to the columns in the CSV file. Each object corresponds to a `Guideline question` and will also contain elements that are extracted from the corresponding `Interview File` in response to the `Guideline question`. Each object has the following attributes:
-      - `guide_question`: An identifier of the source transcript file (e.g., `001`, `002`).
-      - `relevant_lines`: An array with tuples of line numbers from the transcript TXT file that semantically match the guideline question. These lines would have been identified by the algorithm (described in the documentation) to be close to the guideline question. For each line number tuple, the first pair is the "Interviewer" line number and the second pair is the "Interviewee" line number. For example, when `relevant_lines` has `[[4, 5], [10, 12]]`, there were two segments of the interview that matched the guideline question; First, line 4(Interviewer)+line 5(Interviewee) and then line 10(Interviewer)+line 12(Interviewee)
+    - `responses`: An array of response output objects, analogous to the columns in the CSV file. Each object corresponds to a `Guideline question` and will also contain elements that are extracted from the corresponding `Interview File` in response to that `Guideline question`. Each object has the following attributes:
+      - `guide_question`: The guideline question for which this response refers to.
+      - `relevant_lines`: An array with tuples of line numbers from the transcript TXT file that semantically match the guideline question. These lines would have been identified by the algorithm (described in the [documentation](docs/example.ipynb)) to be most semantically similar to the guideline question. For each line number tuple, the first pair is the "Interviewer" line number and the second pair is the "Interviewee" line number. For example, if `relevant_lines` contains the value `[[4, 5], [10, 12]]`, there were two segments of the interview that matched the guideline question. First, the dialogue on line 4(Interviewer)+line 5(Interviewee) and then line 10(Interviewer)+line 12(Interviewee).
       - `extracted_phrase`: A phrase extracted from the transcript that can directly answer the `guide_question` (or the text, `[No relevant response]`, if none is found).
-      - `response`: This is the final concise response, which is also output to the CSV file.
-      - `match_type`: Text indicating how you can find `extracted_phrase` in the transcript.
-        - "EXACT": The text can be found, as a whole, using a simple search or `str.contains`. For instance, if the phrase that was extracted were _"mom’s arroz con leche"_, you can search and find it just like that.
-        - "PARTIAL": To find the text, you need to search for specific overlapping segments of the phrase. For instance, if the extracted text were _"Scrambled eggs, dad taught me when I was seven"_ you can find the referenced text through two partial searches for _"Scrambled eggs"_ and _"dad taught me when I was seven"_.
-        - "SEMANTIC": No exact or partial text matches exist. However, the extracted phrase has the same meaning as a given line in the transcript. For instance, a response of _"The interviewee reported that work is going very well"_ when the transcript says _"Work is really fantastic at the moment!"_
+      - `response`: This is the final concise response from the `processor`. Note that this is the same value that is also output to the CSV file.
+      - `match_type`: Text enumeration indicating how you can find `extracted_phrase` in the transcript.
+        - "EXACT": The text can be found (as a whole and without modification), using a simple search e.g. using Python's `str.contains`. For instance, if the phrase that was extracted were _"mom’s arroz con leche"_, you can search the corresponding trascript text file and find this text.
+        - "PARTIAL": To find the text, you need to split the `extracted_phrase` and search for each sub-segments of the phrase. For instance, if the extracted text were _"Scrambled eggs that dad taught me when I was seven"_ you can find the referenced text through two partial searches for _"Scrambled eggs"_ and _"my dad taught me when I was seven"_. The word "that" was included by the LLM to join the two phrases but is not in the original text, and it is possible that the original text includes other non-relevant words between the two phrases (in his example "...eggs! _\[laughs\]_ My dad...")
+        - "SEMANTIC": No exact or partial text matches exist. However, the extracted phrase has the same meaning as a given line in the transcript. For instance, a response of _"The interviewee reported that work is going very well."_ when the transcript has the line _"Interviewee: Work is really fantastic at the moment!"_
         - "NONE": If no references were found
-      - `extracted_line_references`: An array of all the line numbers from which the `extracted_phrase` was obtained (e.g., just one line - `[7]` or two different lines `[9, 11]`). These will only be based on the Interviewee lines
+      - `extracted_line_references`: An array of all the line numbers from which the `extracted_phrase` was obtained (e.g., just one line - `[7]` or two different lines `[9, 11]`). These will only be based on the Interviewee responses
       - `extracted_character_index`: An array with a triple of character index references in the text. Each triple contains:
         - `line`: The line number (e.g., `17`, `33`)
-        - `start`: The position/character within the line text that marks the start of the match. If the match is "SEMANTIC" this will always be `-1`.
-        - `end`: The position/character within the line text that marks the end of the match. If the match is "SEMANTIC" this will always be `-1`.
+        - `start`: The position/character within the line text that marks the start of the match. For instance `34` means that the text matches from character number 34 on the specified `line` number. If the match is "SEMANTIC" this will always be `-1`.
+        - `end`: The position/character within the line text that marks the end of the match. For instance `61` means that the text matches from character number 34 (`start`) to 61 (`end`) on the specified `line` number. If the match is "SEMANTIC" this will always be `-1`.
         Note that if several portions/segments of the text are found on one line, the line number will be repeated in different `extracted_character_index` triples, but reported just once under `extracted_line_references`.
      
 _Line numbers and character indexes are numbered from 1. Character Index will be counted **after** the marker "Interviewee: "._
@@ -218,10 +221,10 @@ The processor follows these steps:
 To run the processor on the synthetic data, use the following command after setting up your environment and data:
 
 ```bash
-python examples/api_test/processor_test.py
+python examples/processor_examples.py
 ```
 
-**Note: To test different scenarios, navigate to `processor_test.py` and uncomment the relevant function you want to run in the main function. To ensure clarity, please run one function at a time. For more details, refer to the comments for each function in `processor_test.py`.**
+**Note: To test different scenarios, navigate to `processor_examples.py` and uncomment the relevant function you want to run in the main function. To ensure clarity, please run one function at a time. For more details, refer to the comments for each function in `processor_examples.py`.**
 
 
 ## Output Storage
@@ -331,6 +334,15 @@ After finishing the evaluation process, the evaluator generates 4 output `csv`s.
 
 - **`retrieved_contexts.csv`**
   - **Description**: A file that logs the retrieved chunks or evidence segments for each (`respondent_id`, `question`) pair. These context chunks are used to support the model's generation and are referenced during evaluations for metrics like faithfulness, precision, and recall.
+
+## Running Unit Tests
+Unit tests have been created for core functions of the `processor`. All the unit tests are in the folder [tests](tests). You can run the unit tests using `pytest`, specifying the directory containing the unit tests:
+
+```bash
+pytest tests/
+```
+
+You can modify the unit tests to include additional scenarios by adding new test functions in the existing `*.py` files or adding new tests under the folder [tests](tests).
 
 ## Detailed Documentation
 For more detailed Documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb)
