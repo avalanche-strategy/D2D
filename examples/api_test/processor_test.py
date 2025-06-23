@@ -198,6 +198,10 @@ def test_thematic_alignment_mismatch_transcript():
 
 
 if __name__ == "__main__":
+    # import requests
+
+    # print(requests.get('https://www.google.com', timeout=5).content)
+
     start_time = time.time()
 
     # test_top_p()
