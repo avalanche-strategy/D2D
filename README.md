@@ -1,16 +1,29 @@
 # Dialogue2Data (D2D)
 
 ## About
-Dialogue2Data (D2D) is an open-source Python package that transforms unstructured interview transcripts into structured data for analysis. It consists of two major components: the **Processor**, which leverages natural language processing (NLP), large language models (LLMs), and sentence embeddings to automate topic matching, response extraction, and summarization based on discussion guides, generating structured outputs (e.g., CSV, JSON); and the **Evaluator**, which assesses output quality using metrics like faithfulness, correctness, precision, recall, and relevance. D2D is ideal for researchers and analysts processing qualitative interview data.
+Dialogue2Data (D2D) is an open-source Python package that transforms unstructured interview transcripts into structured data for analysis. It consists of two major components: 
+
+- The **Processor**, which leverages natural language processing (NLP), large language models (LLMs), and sentence embeddings to automate topic matching, response extraction, and summarization based on discussion guides. The Processor generates structured outputs (e.g., CSV, JSON) that can then be analyzed using any data analysis tools, like `pandas`.
+- The **Evaluator**, which assesses output quality using metrics like faithfulness, correctness, precision, recall, and relevance.
+
+D2D is ideal for researchers and analysts processing qualitative interview data.
 
 
 ## Installation
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/avalanche-strategy/D2D.git
+```
+
+2. Navigate to the top-level directory of the new repository:
+
+```bash
 cd D2D
 ```
-2. Create and activate the Conda environment:
+
+3. Create and activate the Conda environment needed to run the solution:
+
 ```bash
 conda env create -f environment.yml
 conda activate d2d
@@ -27,8 +40,7 @@ OPENAI_API_KEY=sk-abc123XYZ789pqr456STU012vwx789YZ
 ANTHROPIC_API_KEY=sk-ant-987ZYX654WVU321TSR098qwe456PLM
 ```
 
-**Note: These are fictional keys. To ensure smooth operation, please use your own API keys**
-
+**Note: These are fictional keys. To ensure smooth operation, please use your own API keys. You only need to set the key for the API you will use.**
 
 
 ### Data Placement
