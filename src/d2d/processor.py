@@ -191,7 +191,7 @@ class D2DProcessor:
                     return True
             except AuthenticationError as e:
                 print(
-                    f"API Key Error (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Please check your API key for {provider.upper()} in .env.")
+                    f"API Key Error with {current_model}): {str(e)}. Please check your API key for {provider.upper()} in .env.")
                 return False
             except APIError as e:
                 if hasattr(e, 'status_code'):
@@ -202,7 +202,7 @@ class D2DProcessor:
                         time.sleep(delay)
                     else:
                         print(
-                            f"API Error (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Check configuration.")
+                            f"API Error (attempt with {current_model}): {str(e)}. Check configuration.")
                         return False
             except Timeout as e:
                 delay = base_delay * (2 ** attempt)
@@ -211,7 +211,7 @@ class D2DProcessor:
                 time.sleep(delay)
             except Exception as e:
                 print(
-                    f"Unexpected error during LLM test (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}.")
+                    f"Unexpected error during LLM test with {current_model}: {str(e)}.")
                 return False
 
         # Switch to fallback provider if initial model fails after retries
@@ -284,7 +284,7 @@ class D2DProcessor:
         if not self._test_llm_connection():
             print(get_divider())
             print(
-                "Error during LLM connection test. Please check the precheck_log.txt file for details and restart the process.")
+                "Error during LLM connection test.")
             print(get_divider())
             raise RuntimeError("LLM connection test failed. See logs for details.")
 
