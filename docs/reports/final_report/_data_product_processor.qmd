@@ -1,0 +1,155 @@
+
+::: {.cell}
+![RAG Workflow for D2D Processor Pipeline](img/rag_pipeline.png)
+:::
+
+### Processor Pipeline Description
+
+The processor pipeline comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**. These components work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
+
+
+### Pre-processor: LLM Summarization
+
+The Pre-processor prepares the raw transcript for analysis by segmenting and summarizing its content.
+
+- **Inputs**:
+  - A raw interview transcript containing interviewer questions and interviewee responses.
+  - A guideline providing standard questions or topics to guide the analysis.
+- **Segmentation**:
+  - The transcript is divided into question-and-answer (QA) pairs.
+- **Summarization**:
+  - The questions from each transcript QA pair and the guideline questions are summarized using a Large Language Model (LLM). This distills key points and reduces complexity, ensuring concise representations for matching.
+- **Output**:
+  - A list of summarized guideline questions.
+  - A dictionary where each entry contains an original transcript QA pair and its summarized question.
+
+### Retriever: Embedding and Matching
+
+The Retriever identifies the most relevant transcript QA pairs for each guideline question.
+
+- **Inputs**:
+  - The output for the pre-processor
+- **Embedding**:
+  - The summarized questions from both the transcript QA pairs and the guideline are converted into semantic embeddings using `SentenceTransformer` (e.g., `multi-qa-mpnet-base-dot-v1`).
+- **Similarity Calculation**:
+  - Cosine similarity is computed between the embeddings of each summarized guideline question and the summarized questions from the transcript QA pairs to determine semantic relevance.
+- **Selection**:
+  - For each guideline question, the top-k or top-p (Top-k selects the k most similar items; top-p selects items until their cumulative similarity reaches a threshold) most similar transcript QA pairs are selected based on their summarized questions.
+- **Output**:
+  - A set of relevant transcript QA pairs matched to each guideline question.
+
+
+### Generator: LLM Output Generation
+
+The Generator produces concise, structured answers for each guideline question based on the matched QA pairs.
+
+- **Inputs**:
+  - The output of the retriever
+- **LLM Processing**:
+  - For each question in the guideline, an LLM (e.g., `gpt-4o-mini`) extracts key information from the relevant QA pairs selected from the retriever and synthesizes it into a coherent response.
+- **Output Generation**:
+  - Structured answers are generated in CSV format for each guideline question, with references to the original transcript provided in JSON format for traceability.
+
+
+### Integration and Data Flow
+
+The pipeline operates sequentially:
+
+1. The Pre-processor segments the transcript and summarizes the questions from both the transcript QA pairs and the guideline.
+2. The Retriever embeds these summarized questions and matches the transcript QA pairs to the guideline questions using cosine similarity.
+3. The Generator creates structured answers from the top-matching QA pairs using an LLM.
+
+This streamlined process transforms unstructured interview data into structured insights with high efficiency and accuracy, leveraging state-of-the-art NLP tools like `SentenceTransformer` and LLMs to meet the needs of the D2D project.
+
+### Pros, Cons, and Justifications
+
+\subsubsection*{\large Retrieval-Augmented Generation (RAG)}
+- **Pros**:
+  - Enhances content processing by combining LLM strengths with retrieval, improving relevance.
+  - Supports scalable analysis of large transcript datasets.
+- **Cons**:
+  - Relies heavily on LLM performance, which may introduce inconsistencies.
+  - Adds computational complexity due to multiple processing steps.
+- **Justification**:
+  - Outperforms standalone LLM or retrieval-only methods by integrating both capabilities.
+  - Preferred over manual methods due to scalability needs.
+
+\subsubsection*{\large Embeddings}
+- **Pros**:
+  - Captures semantic accuracy, enabling nuanced text comparisons.
+  - Facilitates efficient processing of diverse text data.
+- **Cons**:
+  - High computational cost for vector generation.
+  - Dependent on the quality of the pre-trained model.
+- **Justification**:
+  - Superior to keyword-based methods (e.g., TF-IDF) for semantic understanding.
+  - Chosen over custom training due to resource constraints and availability of `SentenceTransformer`.
+
+\subsubsection*{\large Cosine Similarity}
+- **Pros**:
+  - Provides a normalized metric for semantic alignment, enhancing match reliability.
+  - Efficient for high-dimensional vector comparisons.
+- **Cons**:
+  - Sensitivity to threshold settings can affect precision.
+  - Requires careful tuning for optimal performance.
+- **Justification**:
+  - Outperforms Euclidean distance due to normalization, suitable for embeddings.
+  - Preferred over manual alignment for automation and scale.
+
+\subsubsection*{\large Referencing Process}
+- **Pros**:
+  - Ensures traceability with flexible fuzzy matching.
+  - Improves output interpretability by linking to source text.
+- **Cons**:
+  - Risk of false positives with lenient matching.
+  - Requires threshold adjustment for accuracy.
+- **Justification**:
+  - More robust than exact matching for variable transcript wording.
+  - `rapidfuzz` selected for its speed and integration compared to alternatives like `fuzzywuzzy`.
+
+### Potential Improvements and Challenges
+
+- **Adaptive Thresholding**: Implementing dynamic thresholds for cosine similarity could optimize matching across datasets.
+  - **Challenges**: Requires extensive testing and diverse data.
+  - **Why Not Implemented**: Fixed thresholds sufficed for the current scope.
+- **Fine-Tuned Embeddings**: Using domain-specific models could enhance embedding quality.
+  - **Challenges**: Needs labeled data and computational resources.
+  - **Why Not Implemented**: Pre-trained models met project needs within constraints.
+
+### Using the D2D Processor
+
+The D2D processor is accessible via the `D2DProcessor` Python class, imported from the `d2d` module. Partners can use it to convert interview transcripts into structured data by initializing the processor and calling its `process_transcripts` method with paths to transcripts, guideline questions, and an output directory.
+
+\subsubsection*{\large Key Parameters}
+- **`llm_model`**: Chooses the Large Language Model (e.g., 'gpt-4o-mini' default, or other OpenAI/Anthropic models).
+- **`embedding_model`**: Selects the embedding model (e.g., 'multi-qa-mpnet-base-dot-v1').
+- **`sampling_method`**: Determines the sampling approach (`TOP_K` for top k matches or `TOP_P` for nucleus sampling).
+- **`custom_extract_prompt`** and **`custom_summarize_prompt`**: Optional custom prompts for tailored extraction and summarization.
+
+\subsubsection*{\large Usage Example}
+```python
+from d2d import D2DProcessor
+
+processor = D2DProcessor(
+    llm_model="gpt-4o-mini",
+    embedding_model="multi-qa-mpnet-base-dot-v1",
+    sampling_method=D2DProcessor.SamplingMethod.TOP_K,
+    top_k=5,
+)
+processor.process_transcripts(
+    transcripts_dir="path/to/transcripts",
+    guidelines_path="path/to/guidelines.csv",
+    interview_name="interview",
+    output_dir="path/to/output"
+)
+```
+
+\subsubsection*{\large Installation}
+The package can be installed via `pip install .` or as an installable package from the repository.
+
+\subsubsection*{\large Additional Notes}
+- The processor requires an internet connection to download the embedding model and access the LLM API.
+- It includes a thematic alignment check, prompting users if transcript similarity falls below the threshold.
+- The API calls to the LLM in the preprocessor and generator are asynchronous to increase the speed. For example, handling 100 transcripts can be reduced from approximately 1 hour to less than 10 minutes.
+
+For more detailed technical information, see the [D2D repository](https://github.com/avalanche-strategy/D2D).

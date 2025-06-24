@@ -331,6 +331,9 @@ async def generate_output_from_summarized_matches_async(transcript_files: list, 
 
             interview_refs.append(response_details)
 
+        # Add LLM model name to row
+        row["LLM Model"] = llm_model
+
         logger.info(f"File {file_name} processing complete.")
         output_divider(logger, True)
         output_data.append(row)

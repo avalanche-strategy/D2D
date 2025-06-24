@@ -14,6 +14,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/avalanche-strategy/D2D",  # Replace with your repo URL
     package_dir={"": "src"},
+    package_data={'d2d': ['config/llm_defaults.json']},
     packages=find_packages(where="src"),
     include_package_data=True,
     install_requires=[
@@ -34,4 +35,5 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.9",
+
 )

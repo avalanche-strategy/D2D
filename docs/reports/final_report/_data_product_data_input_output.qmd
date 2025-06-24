@@ -1,0 +1,72 @@
+
+### Data Input
+The D2D pipeline (processor part) processes two types of input files to extract and structure responses from unstructured interview transcripts based on provided guidelines.
+
+\subsubsection*{\large Guidelines}
+
+- **Description**: A structured file listing the questions or prompts that the interviewer was supposed to cover to guide the interview and extraction process.
+- **Format**: Comma-separated values (`.csv`)
+- **Structure**:
+  - Single column named `guide_text` with each row containing a question or prompt.
+  - Questions align with those asked in transcripts for matching purposes.
+- **Example**:
+  - **File**: Extract from [interview_food_sample_guidelines.csv](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food_guidelines.csv)
+
+    > **`guide_text`**
+
+    > What’s a dish that reminds you of your childhood?
+
+    > Can you describe a meal that has a special meaning for you?
+
+    > ...
+
+\subsubsection*{\large Transcripts}
+
+- **Description**: Raw text files containing conversational interview data, with alternating lines or labeled segments for interviewers and interviewees.
+- **Format**: Plain text (`.txt`)
+- **Structure**:
+  - Each file represents one interview.
+  - Content includes dialogue, with questions from interviewers and responses from interviewees.
+
+- **Example**:
+  - **File**: Extract from [001.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/001.txt)
+
+    > **Interviewer**: Let’s talk food. What’s a dish that reminds you of your childhood?
+
+    > **Interviewee**: Definitely my grandma’s chicken and rice. She used to make it every Sunday, and the smell would just take over the whole house. It was simple—nothing fancy—but it was filled with love.
+
+    > **Interviewer**: Can you describe a meal that has a special meaning for you?
+
+    > **Interviewee**: Yeah, actually. My 18th birthday dinner. My parents surprised me by cooking all my favorite dishes—pad thai, roasted veggies, and this chocolate lava cake I was obsessed with. I remember feeling really seen, you know?
+
+    > ...
+
+  - **File**: Extract from [002.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/002.txt)
+
+    > **Interviewer**: Alright, diving into food and memories—what dish instantly brings your childhood back?
+
+    > **Interviewee**: Oh man, my mom’s arroz con leche. She’d make it every time I was sick, or honestly, just when I needed cheering up. The cinnamon smell still makes me emotional sometimes.
+
+    > **Interviewer**: Can you describe a meal that holds special meaning for you?
+
+    > **Interviewee**: Our Christmas Eve dinner. It’s this big spread—tamales, roasted pork, rice, beans. It’s loud and chaotic and full of stories. It’s more than food—it’s our whole culture on a table.
+
+    > ...
+
+### Sample Data Output
+The D2D pipeline produces structured output by matching interviewee responses to guideline questions, consolidating results for analysis.
+
+- **Format**: Comma-separated values (`.csv`)
+- **Structure**:
+  - Columns:
+    - `Interview File`: Identifier of the source transcript file (e.g., `001`, `002`).
+    - Additional columns named after guideline questions (e.g., "What’s a dish that reminds you of your childhood?").
+  - Each row corresponds to one interview, with cells containing the extracted response text.
+  - Responses are concise, summarizing key points from the transcript.
+- **Example**:
+
+| **Interview File** | **What’s a dish that reminds you of your childhood?** | **Can you describe a meal that has a special meaning for you?**                          | ... |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ | --- |
+| 001            | Grandma’s chicken and rice                       | 18th birthday dinner with favorite dishes cooked by parents.                        |...|
+| 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, roasted pork, rice, beans; loud, chaotic, full of stories. |...|
+|...|...|...|...|

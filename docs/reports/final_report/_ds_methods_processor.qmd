@@ -3,78 +3,18 @@
 ![RAG Workflow for D2D Processor Pipeline](img/rag_pipeline.png)
 :::
 
-### Pre-processor: LLM Summarization
+### Retrieval-Augmented Generation (RAG)
 
-**Description**: The pre-processor starts with inputs of "Transcript (Questions)" and "Guideline" data. It segments the transcript into question and answer pairs, then uses an LLM to summarize the questions only—both those from the transcript and the questions in the guidelines—extracting main points via the "LLM Summarize (extract main pts Questions only)" step. This summarized output of questions serves as the basis for further processing.
+RAG integrates large language model (LLM) capabilities with retrieval mechanisms to enhance the processing of interview transcripts. It leverages LLMs (e.g., ChatGPT-4o-mini[@openai2024gpt4omini] or Claude-3.5[@anthropic2024claude35sonnet]) to summarize and refine content, combined with a retrieval step to align this content with relevant guideline questions, forming the foundation for structured output generation.
 
-**Pros**:
+### Embeddings
 
-- **Focused Extraction**: Summarizing questions only reduces noise, improving downstream matching accuracy.
-- **Efficiency**: LLM-based summarization quickly processes raw transcripts.
-- **Adaptability**: Works with varied transcript formats.
+Embeddings convert textual data into numerical vectors using pre-trained models such as `SentenceTransformer` with `multi-qa-mpnet-base-dot-v1`[@reimers2019sentencebert]. This process captures semantic relationships within the text, enabling meaningful comparisons and matches.
 
-**Cons**:
+### Cosine Similarity
 
-- **Dependency on LLM**: Accuracy relies on the LLM’s (e.g., `gpt-4o-mini`) performance, which may miss nuances.
+Cosine similarity measures the cosine of the angle between two vector embeddings, providing a metric to assess the semantic similarity between summarized transcript content and guideline questions. This mathematical approach ensures effective alignment of related text.
 
+### Referencing Process
 
-**Justification Over Alternatives**:
-
-- Manual extraction was impractical for scalability, unlike LLM summarization.
-- Rule-based summarization (e.g., keyword extraction) lacks the contextual understanding of an LLM.
-- `gpt-4o-mini` was chosen over larger models for cost-effectiveness and sufficient performance.
-
-
-### Retriever: Embedding and Matching
-
-**Description**: The retriever processes "Summarized Question and QA Pairs" by generating embeddings and finding matches. The "Embeddings" step converts data into vectors using a pretrained model like `SentenceTransformer` (`multi-qa-mpnet-base-dot-v1`). The "Find top-k/p matches using cosine similarity" step employs cosine similarity to align summarized content with guideline questions.
-
-**Pros**:
-
-- **Semantic Accuracy**: Embeddings capture contextual relationships, improving match quality.
-- **Scalability**: Mathematical matching (cosine similarity) handles large datasets efficiently.
-- **Flexibility**: Supports various guideline question sets.
-
-**Cons**:
-
-- **Computational Cost**: Embedding generation and similarity calculations are resource-heavy.
-- **Threshold Sensitivity**: Matching precision depends on tuning the similarity threshold.
-- **Model Limitation**: Embedding quality relies on the pre-trained model’s generalizability.
-
-**Justification Over Alternatives**:
-
-- Keyword-based matching (e.g., TF-IDF) was less effective for semantic similarity, unlike embeddings.
-- Manual matching was infeasible for scale, making automated mathematical methods preferable.
-- Cosine similarity outperformed Euclidean distance due to its normalization for high-dimensional data.
-
-**Potential Improvements and Challenges**:
-
-- Implement adaptive thresholding for dynamic matching.
-  - **Challenges**: Needs extensive testing across datasets.
-  - **Why Not Implemented**: Fixed thresholds worked for current scope.
-
-### LLM Prompting for Output Generation
-
-**Description**: The final step, "LLM Prompting," extracts main points and summarizes answers (steps 1 and 2) to produce the "Output." This leverages the LLM to refine matched content into structured, concise results.
-
-**Pros**:
-
-- **Clarity**: Summarization ensures outputs are concise and relevant.
-- **Consistency**: LLM maintains a uniform output format.
-- **Versatility**: Adapts to different question types.
-
-**Cons**:
-
-- **Hallucination Risk**: LLM may generate unsupported content.
-- **Processing Overhead**: Additional LLM calls increase computation time.
-- **Prompt Dependency**: Output quality depends on prompt design.
-
-**Justification Over Alternatives**:
-
-- Rule-based templating lacks the flexibility of LLM summarization for varied answers.
-- Manual summarization was impractical, making LLM prompting more efficient.
-- Simpler extraction methods (e.g., keyword lists) lack the contextual synthesis of an LLM.
-
-### Conclusion
-
-The RAG pipeline’s pre-processor, retriever, and LLM prompting enable D2D to efficiently transform transcripts into structured outputs. These methods were selected for their semantic accuracy, scalability, and alignment with Fathom’s needs, outperforming alternatives like keyword matching or manual processes. Potential enhancements, such as fine-tuned models or adaptive thresholds, could improve performance but were constrained by time, data, and resources. This processor forms a robust foundation for D2D’s data processing capabilities.
+The referencing process employs fuzzy matching with `rapidfuzz`[@bachmann2020rapidfuzz] to trace summarized answers back to their original transcript lines. This method accounts for variations in wording, ensuring outputs are linked to source data for validation and interpretability.

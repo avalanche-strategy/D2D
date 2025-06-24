@@ -10,11 +10,15 @@ title: |
   Transforming Interviews into Structured Data \ 
   Final Project Report
 author: "Sienko Ikhabi, Dominic Lam, Wangkai Zhu, Yun Zhou"
+bibliography: _references.bib
+reference-section-title: "References"
 format:
     pdf:
         toc: true
         toc-depth: 3
         number-sections: true
+    html:
+        link-citations: true
 execute:
   echo: false
   warning: false
@@ -52,9 +56,13 @@ execute:
 
 # Data Product and Results
 
-## Description of Data Product
+## Data input adn output
 
-{{< include _data_product_description.qmd >}}
+{{< include _data_product_data_input_output.qmd >}}
+
+## Processor Pipeline
+
+{{< include _data_product_processor.qmd >}}
 
 ## Key Results
 
@@ -71,8 +79,3 @@ execute:
 {{< include _conclusion.qmd >}}
 
 \newpage
-
-# References
-
-- [1] S. Es, J. James, L. Espinosa-Anke, and S. Schockaert, “RAGAS: Automated Evaluation of Retrieval Augmented Generation,” arXiv preprint arXiv:2309.15217, Sep. 2023. [Online]. Available: https://doi.org/10.48550/arXiv.2309.15217    
-- [2] DS-Daedalus Team, "DS-Daedalus v4: Increments and Updates," Internal Presentation Report, Mar. 2025
