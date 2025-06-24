@@ -29,7 +29,7 @@ The D2D pipeline (processor part) processes two types of input files to extract 
   - Content includes dialogue, with questions from interviewers and responses from interviewees.
 
 - **Example**:
-  - **File**: Extract from [001.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/001.txt)
+  - **File**: Extract from [001.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/transcripts_food/001.txt)
 
     > **Interviewer**: Let’s talk food. What’s a dish that reminds you of your childhood?
 
@@ -41,7 +41,7 @@ The D2D pipeline (processor part) processes two types of input files to extract 
 
     > ...
 
-  - **File**: Extract from [002.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/002.txt)
+  - **File**: Extract from [002.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/transcripts_food/002.txt)
 
     > **Interviewer**: Alright, diving into food and memories—what dish instantly brings your childhood back?
 
