@@ -20,7 +20,7 @@ def build_extract_prompt(context: str, query: str, custom_extract_prompt: str = 
         # Use the custom prompt template, replacing placeholders
         return custom_extract_prompt.format(context=context, query=query)
 
-    # Balanced: Concise but understandable
+    # Balanced: Concise but understandable (default)
     return f"""Given the following dialogue as context: {context}
                          When referring to a person, use their name explicitly and avoid pronouns 
                                    like "he" or "her". Identify a concise phrase from the interviewee's 
@@ -47,7 +47,7 @@ def build_summarize_prompt(extracted_phrase: str, query: str, custom_summarize_p
         # Use the custom prompt template, replacing placeholders
         return custom_summarize_prompt.format(extracted_phrase=extracted_phrase, query=query)
 
-    # Balanced: Concise but understandable
+    # Balanced: Concise but understandable (default)
     return f"""Given the following extracted response: {extracted_phrase}, 
                         for the query "{query}" When referring to a third party, use their name 
                         explicitly and avoid pronouns like "he/she", "him/her" or "it/they". Summarize the response 
