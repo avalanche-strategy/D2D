@@ -3,7 +3,8 @@ import os
 import time
 
 # Add the root directory (D2D/) to sys.path
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+data_dir = os.path.join(root_dir, "data", "synthetic_data")
 sys.path.append(root_dir)
 
 from src.d2d import D2DProcessor
@@ -32,9 +33,6 @@ def test_top_k():
     )
 
     # Step 2: Define paths relative to the root directory
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_dir = os.path.join(root_dir, "data", "synthetic_data")
-
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
 
@@ -70,9 +68,6 @@ def test_top_p():
     )
 
     # Step 2: Define paths relative to the root directory
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_dir = os.path.join(root_dir, "data", "synthetic_data")
-
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
 
@@ -110,9 +105,6 @@ def test_custom_prompt():
     )
 
     # Step 2: Define paths relative to the root directory
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_dir = os.path.join(root_dir, "data", "synthetic_data")
-
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
 
@@ -142,9 +134,6 @@ def test_minimal_init():
     processor = D2DProcessor()
 
     # Step 2: Define paths relative to the root directory
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_dir = os.path.join(root_dir, "data", "synthetic_data")
-
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
 
@@ -176,9 +165,6 @@ def test_thematic_alignment_mismatch_transcript():
     processor = D2DProcessor()
 
     # Step 2: Define paths relative to the root directory
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-    data_dir = os.path.join(root_dir, "data", "synthetic_data")
-
     transcript_dir = os.path.join(data_dir, "transcripts_foodMismatch")
     guidelines_path = os.path.join(data_dir, "interview_foodMismatch_guidelines.csv")
 
