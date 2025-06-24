@@ -166,6 +166,22 @@ def score_ragas(row: pd.Series) -> pd.Series:
 
 
 def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output_path: str, max_concurrent_calls: int = 5):
+    """
+    Evaluate RAG-generated answers using GPT-based metrics and save results.
+
+    Loads RAG, reference, and context CSVs, applies relevance, faithfulness,
+    precision, recall, and correctness metrics in parallel, and writes output to CSV.
+
+    Parameters:
+    - rag_path (str): Path to RAG answers CSV.
+    - ref_path (str): Path to reference answers CSV.
+    - context_path (str): Path to context CSV.
+    - output_path (str): Output CSV path.
+    - max_concurrent_calls (int): Max concurrent GPT calls.
+
+    Returns:
+    - None
+    """
     rag_df = pd.read_csv(os.path.expanduser(rag_path))
     ref_df = pd.read_csv(os.path.expanduser(ref_path))
     context_df = pd.read_csv(os.path.expanduser(context_path))

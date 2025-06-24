@@ -5,8 +5,15 @@ METRICS = ["faithfulness", "correctness", "precision", "recall", "relevance"]
 
 def highlight_low_scores(df: pd.DataFrame, lesseq: float, output_path: str):
     """
-    Extract rows where any metric score <= lesseq and tag them as 'low-<score>'.
-    Save to a new CSV.
+    Highlight rows where any metric score is less than or equal to a threshold.
+
+    For each matched score, replaces the value with a 'low-<score>' tag.
+    Saves the filtered rows to a CSV file.
+
+    Parameters:
+    - df (pd.DataFrame): Input evaluation DataFrame.
+    - lesseq (float): Threshold for flagging low scores.
+    - output_path (str): Path to save the highlighted CSV.
     """
     highlight_rows = []
 
@@ -29,8 +36,15 @@ def highlight_low_scores(df: pd.DataFrame, lesseq: float, output_path: str):
 
 def compute_joint_metric(df: pd.DataFrame, weights: dict, output_path: str):
     """
-    Compute per-ID average scores and joint score using user-defined weights (sum must be 1).
-    Save summary to a new CSV.
+    Compute joint metric scores per respondent using weighted averages.
+
+    Groups scores by 'respondent_id', averages the individual metrics,
+    computes a joint score using user-defined weights, and saves the result.
+
+    Parameters:
+    - df (pd.DataFrame): Input evaluation DataFrame.
+    - weights (dict): Dictionary mapping metric names to weights. Sum must be 1.0.
+    - output_path (str): Path to save the summary CSV.
     """
     for metric in METRICS:
         df[metric + "_score"] = pd.to_numeric(df[metric + "_score"], errors="coerce")

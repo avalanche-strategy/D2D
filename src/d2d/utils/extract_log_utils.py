@@ -5,6 +5,11 @@ from .log_utils import extract_retrieved_contexts
 
 
 def main():
+    """
+    Command-line entry point for extracting retrieved contexts from a .log file.
+
+    Parses arguments, calls `extract_retrieved_contexts`, and saves the result as a CSV.
+    """
     parser = argparse.ArgumentParser(description="Extract retrieved contexts from a log file.")
     parser.add_argument(
         "--log_input_path",

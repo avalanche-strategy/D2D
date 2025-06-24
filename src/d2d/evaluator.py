@@ -7,19 +7,17 @@ from .utils.eval_config_utils import client, ACTIVE_METRICS
 
 class D2DEvaluator:
     """
-    D2DEvaluator is a pipeline orchestrator for evaluating outputs from a 
-    Retrieval-Augmented Generation (RAG) system against reference answers 
-    using GPT-based scoring.
+    D2DEvaluator orchestrates the evaluation of Retrieval-Augmented Generation (RAG) outputs
+    against reference answers using GPT-based metrics.
 
-    It provides two main functions:
-    1. `evaluate`: Extracts context, runs RAGAS evaluation, and saves results.
-    2. `post_process_results`: Highlights low scores and computes a joint 
-       performance metric across multiple evaluation dimensions.
+    Core methods:
+    1. `evaluate`: Extracts context from logs and performs GPT-based scoring.
+    2. `post_process_results`: Highlights low scores and computes a weighted joint metric.
 
     Attributes:
-        METRICS (List[str]): List of metric names used in evaluation scoring.
-        model (str): Name of the LLM model used for evaluation scoring (default "gpt-4o-mini").
-        temperature (float): Temperature setting for GPT-based evaluation prompts.
+        METRICS (List[str]): Supported evaluation metric names.
+        model (str): LLM model used for scoring (default: "gpt-4o-mini").
+        temperature (float): Decoding temperature for model responses.
     """
     METRICS = ["faithfulness", "correctness", "precision", "recall", "relevance"]
 
