@@ -1,6 +1,8 @@
 import sys
 import os
 import time
+from unittest.mock import patch, Mock
+from litellm.exceptions import AuthenticationError, Timeout, APIError
 
 # Add the root directory (D2D/) to sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -11,35 +13,22 @@ from src.d2d import D2DProcessor
 
 """
 For more information about the D2DProcessor parameters, refer to D2D/docs/example.ipynb. 
-This file includes several common scenarios. The scenarios are explained in detail below.
+This file includes several common scenarios and error demos.
 """
 
-# Example 1 - Customizing Top-k sampling method.
+# --- General Usage Examples ---
+
 def test_top_k():
-    """
-    Tests the D2DProcessor with the TOP_K sampling method.
-    This scenario initializes the processor with a specific language model, embedding model,
-    and the TOP_K sampling strategy to process interview transcripts. It verifies that the
-    processor can handle transcript processing with deterministic top-k sampling, which selects
-    the top k most likely tokens during text generation. The test uses synthetic interview data
-    and saves results to the output directory.
-    """
-    # Step 1: Initialize the processor
     processor = D2DProcessor(
         llm_model="gpt-4o-mini",
         embedding_model="multi-qa-mpnet-base-dot-v1",
         max_concurrent_calls=10,
         sampling_method=D2DProcessor.SamplingMethod.TOP_K,
     )
-
-    # Step 2: Define paths relative to the root directory
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
-
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
-
-    # Step 3: Start transcripts processing
     processor.process_transcripts(
         transcripts_dir=transcript_dir,
         guidelines_path=guidelines_path,
@@ -47,18 +36,8 @@ def test_top_k():
         output_dir=output_dir,
         disable_logging_to_console=True
     )
-    # Process completed
 
-# Example 2 - Customizing Top-p sampling method.
 def test_top_p():
-    """
-    Tests the D2DProcessor with the TOP_P (nucleus) sampling method.
-    This scenario configures the processor with TOP_P sampling, which selects tokens based on
-    a cumulative probability threshold (top_p=0.5). It tests the processor's ability to process
-    interview transcripts with a probabilistic sampling approach, allowing for more diverse outputs
-    compared to TOP_K. The test uses synthetic interview data and saves results to the output directory.
-    """
-    # Step 1: Initialize the processor
     processor = D2DProcessor(
         llm_model="gpt-4o-mini",
         embedding_model="multi-qa-mpnet-base-dot-v1",
@@ -66,15 +45,10 @@ def test_top_p():
         sampling_method=D2DProcessor.SamplingMethod.TOP_P,
         top_p=0.5,
     )
-
-    # Step 2: Define paths relative to the root directory
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
-
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
-
-    # Step 3: Start transcripts processing
     processor.process_transcripts(
         transcripts_dir=transcript_dir,
         guidelines_path=guidelines_path,
@@ -82,19 +56,8 @@ def test_top_p():
         output_dir=output_dir,
         disable_logging_to_console=True
     )
-    # Process completed
 
-# Example 3 - Customizing the extraction and summarization prompts with custom settings.
 def test_custom_prompt():
-    """
-    Tests the D2DProcessor with custom extraction and summarization prompts.
-    This scenario demonstrates how to use optional custom prompts to tailor the processor's
-    extraction and summarization behavior. The custom prompts are designed to extract a short
-    phrase from the interviewee and summarize it based on a query. The test uses TOP_K sampling
-    and synthetic interview data. Note that the provided prompts are for demonstration only and
-    may produce suboptimal results; they should be adjusted for specific use cases.
-    """
-    # Step 1: Initialize the processor
     processor = D2DProcessor(
         llm_model="gpt-4o-mini",
         embedding_model="multi-qa-mpnet-base-dot-v1",
@@ -103,15 +66,10 @@ def test_custom_prompt():
         custom_extract_prompt="""Using the dialogue: {context}, find a short phrase from the interviewee that answers '{query}'. Avoid pronouns and use explicit names. If no answer is found, return '[No answer found]'.""",
         custom_summarize_prompt="""From the phrase: {extracted_phrase}, for the query '{query}', create a brief summary using only the original words, focusing on the main point."""
     )
-
-    # Step 2: Define paths relative to the root directory
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
-
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
-
-    # Step 3: Start transcripts processing
     processor.process_transcripts(
         transcripts_dir=transcript_dir,
         guidelines_path=guidelines_path,
@@ -119,28 +77,13 @@ def test_custom_prompt():
         output_dir=output_dir,
         disable_logging_to_console=True
     )
-    # Process completed
 
-# Example 4 - Minimal processor initialization with default parameters.
 def test_minimal_init():
-    """
-    Tests the D2DProcessor with a minimal configuration.
-    This scenario initializes the processor with default parameters, omitting custom settings
-    such as sampling method, custom prompts, or specific models. It verifies that the processor
-    can function correctly with minimal setup, relying on default values for processing interview
-    transcripts. The test uses synthetic interview data and saves results to the output directory.
-    """
-    # Step 1: Initialize the processor with no custom parameter
     processor = D2DProcessor()
-
-    # Step 2: Define paths relative to the root directory
     transcript_dir = os.path.join(data_dir, "transcripts_food")
     guidelines_path = os.path.join(data_dir, "interview_food_guidelines.csv")
-
     interview_name = "interview_food"
     output_dir = os.path.join(root_dir, "results")
-
-    # Step 3: Start transcripts processing
     processor.process_transcripts(
         transcripts_dir=transcript_dir,
         guidelines_path=guidelines_path,
@@ -148,55 +91,147 @@ def test_minimal_init():
         output_dir=output_dir,
         disable_logging_to_console=True
     )
-    # Process completed
 
-# Example 5 - Thematic alignment mismatch scenario.
 def test_thematic_alignment_mismatch_transcript():
-    """
-    Tests the D2DProcessor's thematic alignment check with a mismatched transcript.
-    This scenario processes a transcript ('movie_001.txt') in the directory, D2D/data/interview_foodMismatch,
-    that significantly deviates from the guideline questions. It verifies that the processor
-    detects low similarity between the transcript and guideline questions, triggers a user prompt
-    to confirm continuation, and skips processing if the user enters 'n'. The test
-    uses a minimal processor configuration and synthetic data to simulate the mismatch scenario.
-    Note: The time taken for this test is significantly longer than other examples because it requires user input.
-    """
-    # Step 1: Initialize the processor with no custom parameter
     processor = D2DProcessor()
-
-    # Step 2: Define paths relative to the root directory
     transcript_dir = os.path.join(data_dir, "transcripts_foodMismatch")
     guidelines_path = os.path.join(data_dir, "interview_foodMismatch_guidelines.csv")
-
     interview_name = "interview_foodMismatch"
     output_dir = os.path.join(root_dir, "results")
-
-    # Step 3: Start transcripts processing
     processor.process_transcripts(
-        transcripts_dir = transcript_dir,
-        guidelines_path = guidelines_path,
+        transcripts_dir=transcript_dir,
+        guidelines_path=guidelines_path,
         interview_name=interview_name,
         output_dir=output_dir,
         disable_logging_to_console=True
     )
-    # Process completed
 
+# --- LLM Connection Error Demonstrations ---
 
+def demo_llm_authentication_error():
+    """Simulate API authentication failure during LLM connection test."""
+    print("Running demo_llm_authentication_error()... This may take some time to complete.")
+
+    def mock_completion(*args, **kwargs):
+        raise AuthenticationError("Mocked API key error.", llm_provider="openai", model="gpt-4o-mini")
+
+    with patch("src.d2d.processor.completion", mock_completion):
+        processor = D2DProcessor(llm_model="gpt-4o-mini")
+        print("Testing authentication error...")
+        try:
+            processor._test_llm_connection()
+        except Exception as e:
+            print(f"Caught exception as expected: {e}")
+
+def demo_llm_timeout_error():
+    """Simulate LLM API timeout."""
+    print("Running demo_llm_timeout_error()... This may take some time to complete.")
+
+    def mock_completion(*args, **kwargs):
+        raise Timeout("Mocked timeout.", llm_provider="openai", model="gpt-4o-mini")
+
+    with patch("src.d2d.processor.completion", mock_completion):
+        processor = D2DProcessor(llm_model="gpt-4o-mini")
+        print("Testing timeout error...")
+        try:
+            processor._test_llm_connection()
+        except Exception as e:
+            print(f"Caught exception as expected: {e}")
+
+def demo_llm_service_unavailable():
+    """Simulate LLM service unavailable (503 error)."""
+    print("Running demo_llm_service_unavailable()... This may take some time to complete.")
+
+    def mock_completion(*args, **kwargs):
+        raise APIError(message="Mocked service unavailable error.", status_code=503, llm_provider="openai", model="gpt-4o-mini")
+
+    with patch("src.d2d.processor.completion", mock_completion):
+        processor = D2DProcessor(llm_model="gpt-4o-mini")
+        print("Testing service unavailable error (503)...")
+        try:
+            processor._test_llm_connection()
+        except Exception as e:
+            print(f"Caught exception as expected: {e}")
+
+def demo_llm_rate_limit():
+    """Simulate LLM API rate limiting (429 error)."""
+    print("Running demo_llm_rate_limit()... This may take some time to complete.")
+
+    def mock_completion(*args, **kwargs):
+        error = APIError(message="Mocked rate limit error.", status_code=429, llm_provider="openai", model="gpt-4o-mini")
+        raise error
+
+    with patch("src.d2d.processor.completion", mock_completion):
+        processor = D2DProcessor(llm_model="gpt-4o-mini")
+        print("Testing rate limit error (429)...")
+        try:
+            processor._test_llm_connection()
+        except Exception as e:
+            print(f"Caught exception as expected: {e}")
+
+def demo_llm_unexpected_error():
+    """Simulate unexpected exception during LLM connection test."""
+    print("Running demo_llm_unexpected_error()... This may take some time to complete.")
+
+    def mock_completion(*args, **kwargs):
+        raise Exception("Mocked unexpected error.")
+
+    with patch("src.d2d.processor.completion", mock_completion):
+        processor = D2DProcessor(llm_model="gpt-4o-mini")
+        print("Testing unexpected error...")
+        try:
+            processor._test_llm_connection()
+        except Exception as e:
+            print(f"Caught exception as expected: {e}")
+
+def demo_llm_model_switch():
+    """
+    Demonstrate model switching: first three attempts fail (simulate 503), fallback model then succeeds.
+    """
+    print("Running demo_llm_model_switch()... This may take some time to complete.")
+
+    call_count = {'count': 0}
+
+    def mock_completion(*args, **kwargs):
+        if call_count['count'] < 3:
+            call_count['count'] += 1
+            raise APIError(message="Mocked service unavailable.", status_code=503, llm_provider="openai", model="gpt-4o-mini")
+        else:
+            # Return a mock completion object as OpenAI would
+            return Mock(choices=[Mock(message=Mock(content="Success from fallback"))])
+
+    with patch("src.d2d.processor.completion", mock_completion):
+        processor = D2DProcessor(llm_model="gpt-4o-mini")
+        print("Testing model switch with fallback...")
+        result = processor._test_llm_connection()
+        print(f"Model switch result: {result}")
+        print(f"Final model in processor: {processor.llm_model}")
+
+# --- Main ---
 
 if __name__ == "__main__":
-    # import requests
-
-    # print(requests.get('https://www.google.com', timeout=5).content)
-
     start_time = time.time()
 
+    """
+    Uncomment any test/demo you want to run
+    Please run each test/demo individually to avoid interference with other tests/demos
+    """
+
+    # --- General Usage Examples ---
+    # test_top_k()
     # test_top_p()
     # test_custom_prompt()
-    # test_top_k()
     test_minimal_init()
     # test_thematic_alignment_mismatch_transcript()
 
+    # --- LLM Connection error demos ---
+    # demo_llm_authentication_error()
+    # demo_llm_timeout_error()
+    # demo_llm_service_unavailable()
+    # demo_llm_rate_limit()
+    # demo_llm_unexpected_error()
+    # demo_llm_model_switch()
+
     end_time = time.time()
     elapsed_time = end_time - start_time
-
     print(f"Process completed in {elapsed_time:.4f} seconds")
