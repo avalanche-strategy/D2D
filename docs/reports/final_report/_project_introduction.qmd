@@ -1,8 +1,15 @@
 ## Problem Statement
 
-Organizations often rely on surveys and interviews to understand their users, assess needs, and guide decision-making. While traditional surveys provide structured data that is relatively easy to analyze, open-ended formats—especially in interviews—offer deeper, more nuanced insights. However, the richness of these responses comes at a cost: they are difficult to process at scale due to their unstructured and free-flowing nature.
+Organizations often rely on surveys and interviews to understand their users, assess needs, and guide decision-making. 
+While traditional question-and-answer surveys provide structured data that is relatively easy to analyze, open-ended formats such as interviews offer deeper, 
+more nuanced insights, yet they are difficult to process at scale due to their unstructured and free-flowing nature.
 
-Our capstone partner, Fathom, specializes in analyzing open-text data from surveys and interviews. Their platform already supports structured survey responses, but scaling up analysis of interview transcripts has proven to be a key challenge. Interview responses are less uniform and harder to map directly to the original guideline questions. As a result, Fathom’s team must rely heavily on large language models and manual transcript review to extract relevant content—an approach that is time-consuming, error-prone, and difficult to scale across large volumes of data.
+Our capstone partner, Fathom, specializes in analyzing open-ended text data from surveys and interviews. Their platform already supports the analysis 
+of structured survey responses, but scaling the analysis of interview transcripts has proven to be a key challenge. The interviews are conducted with 
+a predetermined set of guideline questions in mind; however, the interviewer has the flexibility in when or whether to ask these questions. 
+As a result, interview responses are less uniform and harder to map directly to the original guideline questions. Currently, Fathom’s team relies solely 
+on large language models (LLMs) and manual transcript review to extract relevant content. 
+This process is labor-intensive, error-prone, and difficult to scale across large volumes of data.
 
 ## Data Formats
 
@@ -14,7 +21,7 @@ The output of the pipeline is a structured `.csv` file in which each row corresp
 To address this challenge, we refined the problem into the following tangible data science objectives:
 
 1. **Automate the mapping of interview transcript content to original guiding questions**, reducing human effort and improving consistency.
-   Currently, Fathom relies heavily on large language models (LLMs) for response extraction, followed by manual review to ensure quality. This approach is time-intensive and difficult to scale. Automating the mapping process allows for faster, more consistent analysis and reduces dependence on manual labor.
+   Currently, Fathom relies heavily on LLMs for response extraction, followed by manual review to ensure quality. This approach is time-intensive and difficult to scale. Automating the mapping process allows for faster, more consistent analysis and reduces dependence on manual labor.
 
 2. **Ensure high response quality** by integrating an evaluation module that scores generated outputs and flags uncertain responses for manual review.
    Manual validation of LLM outputs is costly and error-prone. A built-in evaluator provides a systematic way to assess the quality of generated responses across key metrics, surfacing only ambiguous or low-confidence cases for human review—saving time while preserving accuracy.
@@ -24,6 +31,6 @@ To address this challenge, we refined the problem into the following tangible da
 
 ## Solution Overview
 
-Our solution is built using a **Retrieval-Augmented Generation (RAG)** architecture, leveraging NLP techniques including **embedding-based retrieval** and **large language models** for answer generation. The pipeline also includes an evaluator that assesses output across five quality dimensions: **correctness**, **faithfulness**, **precision**, **recall**, and **relevance**.
+Our solution is built using a **Retrieval-Augmented Generation (RAG)** architecture, leveraging NLP techniques including **embedding-based retrieval** and **LLMs** for answer generation. The pipeline also includes an evaluator that assesses output across five quality dimensions: **correctness**, **faithfulness**, **precision**, **recall**, and **relevance**.
 
 By framing the problem around semantic matching and response generation, we developed a scalable and effective data science pipeline that meets Fathom’s analytical needs. This system empowers them to analyze open-ended interview transcripts more efficiently and deliver richer, faster, and more actionable insights to their clients.
