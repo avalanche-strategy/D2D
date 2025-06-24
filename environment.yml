@@ -11,8 +11,6 @@ dependencies:
   - jupyter
   - pytorch
   - sentence-transformers
-#  - openai # To be deleted
-#  - anthropic # To be deleted
   - litellm
   - pytest  # Development only
   - pytest-subtests # Development only
