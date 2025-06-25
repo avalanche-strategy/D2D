@@ -4,8 +4,7 @@ The D2D processor processes two types of input files to extract and structure re
 
 \subsubsection*{\large Guidelines}
 
-- **Description**: A structured file listing the questions or prompts that the interviewer was supposed to cover to guide the interview and extraction process.
-- **Format**: Comma-separated values (`.csv`)
+- A structured file in `.csv` format listing the questions or prompts that the interviewer was supposed to cover to guide the interview and extraction process.
 - **Structure**:
   - Single column named `guide_text` with each row containing a question or prompt.
 - **Example**:
@@ -16,8 +15,7 @@ The D2D processor processes two types of input files to extract and structure re
 
 \subsubsection*{\large Transcripts}
 
-- **Description**: Raw text files containing conversational interview data, with labeled segments for interviewers and interviewees.
-- **Format**: Plain text (`.txt`)
+- Raw text files in `.txt` format containing conversational interview data, with labeled segments for interviewers and interviewees.
 
 - **Example**:
 
@@ -25,9 +23,8 @@ The D2D processor processes two types of input files to extract and structure re
 
 
 ### Sample Data Output
-Structured output by matching interviewee responses to guideline questions, consolidating results for analysis.
+Structured output in `.csv` format by matching interviewee responses to guideline questions.
 
-- **Format**: Comma-separated values (`.csv`)
 - **Structure**:
   - Columns:
     - `Interview File`: Identifier of the source transcript file (e.g., `001`, `002`).

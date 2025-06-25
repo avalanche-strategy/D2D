@@ -1,5 +1,5 @@
 
-The processor pipeline, as shown in @fig-rag-pipeline, comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**. These components work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
+The processor pipeline, as shown in @fig-rag-pipeline, comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**, work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
 
 
 ### Pre-processor: LLM Summarization
@@ -12,7 +12,7 @@ The Pre-processor prepares the raw transcript for analysis by segmenting and sum
 - **Segmentation**:
   - The transcript is divided into question-and-answer (QA) pairs.
 - **Summarization**:
-  - The questions from each transcript QA pair and the guideline questions are summarized using a Large Language Model (LLM). This distills key points and reduces complexity, ensuring concise representations for matching.
+  - The questions from each transcript QA pair and the guideline questions are summarized using a Large Language Model (LLM). This distills key points, ensuring concise representations for matching.
 - **Output**:
   - A list of summarized guideline questions.
   - A dictionary where each entry contains an original transcript QA pair and its summarized question.
@@ -94,7 +94,6 @@ The D2D processor is accessible via the `D2DProcessor` Python class, imported fr
 - **`llm_model`**: Chooses the Large Language Model (e.g., 'gpt-4o-mini' default, or other OpenAI/Anthropic models).
 - **`embedding_model`**: Selects the embedding model (e.g., 'multi-qa-mpnet-base-dot-v1').
 - **`sampling_method`**: Determines the sampling approach (`TOP_K` for top k matches or `TOP_P` for nucleus sampling).
-- **`custom_extract_prompt`** and **`custom_summarize_prompt`**: Optional custom prompts for tailored extraction and summarization.
 
 \subsubsection*{\large Usage Example}
 {{< include _data_product_usage_example.qmd >}}
@@ -107,4 +106,5 @@ The package can be installed via `pip install .` or as an installable package fr
 - It includes a thematic alignment check, prompting users if transcript similarity falls below the threshold.
 - The API calls to the LLM in the preprocessor and generator are asynchronous to increase the speed. For example, handling 100 transcripts can be reduced from approximately 1 hour to less than 10 minutes.
 
-For more detailed technical information, see the [D2D repository](https://github.com/avalanche-strategy/D2D).
+.
+0For more detailed technical information, see the [D2D repository](https://github.com/avalanche-strategy/D2D).
