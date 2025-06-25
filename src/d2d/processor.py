@@ -141,7 +141,6 @@ class D2DProcessor:
         it attempts the default model for the other provider (OpenAI or Anthropic). Uses defaults
         from llm_defaults.json.
 
-
         Returns
         -------
         bool
@@ -150,11 +149,15 @@ class D2DProcessor:
         Notes
         -----
         - Uses a minimal prompt ("Test") to check responsiveness.
-        - Implements up to 3 retries per model with exponential backoff (5, 10, 20 seconds).
+        - Implements up to 3 retries per model with exponential backoff (5, 10 seconds).
+        - Skips waiting on the last attempt.
         - Switches between OpenAI and Anthropic if the initial provider fails.
         - Logs specific error messages for API key issues or LLM unresponsiveness.
         """
-        # Load default models from config file
+        import os, json, time
+        from litellm import completion
+        from litellm.exceptions import Timeout, APIError, AuthenticationError
+
         config_path = os.path.join(os.path.dirname(__file__), 'config', 'llm_defaults.json')
         default_models = {}
         try:
@@ -167,14 +170,13 @@ class D2DProcessor:
             print(f"Invalid JSON in {config_path}. Using defaults.")
             default_models = {"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}
 
-        # Determine initial provider and model
         initial_model = self.llm_model
         provider = "openai" if "gpt" in initial_model.lower() else "anthropic" if "claude" in initial_model.lower() else "openai"
         fallback_provider = "anthropic" if provider == "openai" else "openai"
         fallback_model = default_models[fallback_provider]
 
         max_retries = 3
-        base_delay = 5
+        base_delay = 5  # seconds
         current_model = initial_model
 
         for attempt in range(max_retries):
@@ -191,24 +193,32 @@ class D2DProcessor:
                     return True
             except AuthenticationError as e:
                 print(
-                    f"API Key Error with {current_model}): {str(e)}. Please check your API key for {provider.upper()} in .env.")
+                    f"API Key Error with {current_model}: {str(e)}. Please check your API key for {provider.upper()} in .env.")
                 return False
             except APIError as e:
                 if hasattr(e, 'status_code'):
                     if e.status_code in [503, 429]:  # Service unavailable or rate limit
-                        delay = base_delay * (2 ** attempt)
-                        print(
-                            f"LLM Unresponsive (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
-                        time.sleep(delay)
+                        if attempt < max_retries - 1:
+                            delay = base_delay * (2 ** attempt)
+                            print(
+                                f"LLM Unresponsive (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
+                            time.sleep(delay)
+                        else:
+                            print(
+                                f"LLM Unresponsive (final attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. No more retries.")
                     else:
                         print(
                             f"API Error (attempt with {current_model}): {str(e)}. Check configuration.")
                         return False
             except Timeout as e:
-                delay = base_delay * (2 ** attempt)
-                print(
-                    f"LLM Timeout (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
-                time.sleep(delay)
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(
+                        f"LLM Timeout (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
+                    time.sleep(delay)
+                else:
+                    print(
+                        f"LLM Timeout (final attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. No more retries.")
             except Exception as e:
                 print(
                     f"Unexpected error during LLM test with {current_model}: {str(e)}.")
@@ -236,19 +246,27 @@ class D2DProcessor:
             except APIError as e:
                 if hasattr(e, 'status_code'):
                     if e.status_code in [503, 429]:
-                        delay = base_delay * (2 ** attempt)
-                        print(
-                            f"LLM Unresponsive (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
-                        time.sleep(delay)
+                        if attempt < max_retries - 1:
+                            delay = base_delay * (2 ** attempt)
+                            print(
+                                f"LLM Unresponsive (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
+                            time.sleep(delay)
+                        else:
+                            print(
+                                f"LLM Unresponsive (final attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. No more retries.")
                     else:
                         print(
                             f"API Error (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Check configuration.")
                         return False
             except Timeout as e:
-                delay = base_delay * (2 ** attempt)
-                print(
-                    f"LLM Timeout (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
-                time.sleep(delay)
+                if attempt < max_retries - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(
+                        f"LLM Timeout (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. Retrying in {delay} seconds...")
+                    time.sleep(delay)
+                else:
+                    print(
+                        f"LLM Timeout (final attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}. No more retries.")
             except Exception as e:
                 print(
                     f"Unexpected error during LLM test (attempt {attempt + 1}/{max_retries} with {current_model}): {str(e)}.")
@@ -257,7 +275,7 @@ class D2DProcessor:
         print(
             f"LLM connection test failed for both {initial_model} and {fallback_model}. Check API keys or service status.")
         return False
-
+    
     def process_transcripts(self, transcripts_dir: str, guidelines_path: str, interview_name: str, output_dir: str,
                             disable_logging_to_console: bool = True) -> None:
         """

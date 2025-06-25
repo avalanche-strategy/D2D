@@ -1,0 +1,4 @@
+pytest
+pytest-subtests
+pytest-asyncio
+pytest-mock
