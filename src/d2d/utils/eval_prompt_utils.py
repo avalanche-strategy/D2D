@@ -3,6 +3,8 @@ from sentence_transformers import SentenceTransformer, util
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+SIMILARITY_THRESHOLD = 0.78  # Default threshold for detecting confused/empty answers
+
 # Load embedding model globally
 _model_name = 'sentence-transformers/multi-qa-mpnet-base-dot-v1'
 _model = SentenceTransformer(_model_name)
@@ -14,7 +16,7 @@ _confused_templates = [
 _confused_embeddings = _model.encode(_confused_templates, convert_to_tensor=True, normalize_embeddings=True)
 
 
-def is_answer_empty_or_confused(text: Union[str, None], threshold: float = 0.78) -> bool:
+def is_answer_empty_or_confused(text: Union[str, None], threshold: float = SIMILARITY_THRESHOLD) -> bool:
     """
     Determine if the answer is empty, ambiguous, or evasive using embedding similarity.
 
