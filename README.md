@@ -452,6 +452,14 @@ pytest tests
 
 4. Push the changes to GitHub and create a pull request to merge the changes into the `main` branch. 
 
+## Warning Suppression
+
+This project integrates with libraries (such as LiteLLM and Pydantic v2+) that may emit noisy `Pydantic serializer warnings` regarding unexpected serialization fields when handling LLM responses.
+
+To keep logs clean and focus on actionable errors, we programmatically suppress these specific warnings at package import time (see `d2d/__init__.py`). This does not affect core processing or outputs.
+
+If you modify LLM integration code, serialization logic, or upgrade Pydantic/LiteLLM, please review this suppression logic and consider removing or updating it if no longer needed.
+
 ## Contributing
 Interested in contributing? Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute. Please note that this project is released with a [Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
 
