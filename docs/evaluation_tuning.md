@@ -5,7 +5,7 @@ In the evaluation pipeline, if both the generated answer and the reference answe
 This behavior is implemented in the function `is_answer_empty_or_confused()`.
 
 ### Function Location  
-This function is defined in `d2d/utils/eval_prompt_utils.py`, and used in `d2d/evaluation/ragas_eval.py` inside the `score_ragas()` function.
+This function is defined in `d2d/utils/eval_config_utils.py`, used in `d2d/evaluation/eval_prompt_utils.py`, and called in `d2d/evaluation/ragas_eval.py` inside the `score_ragas()` function.
 
 ### Working Mechanism  
 This function uses **embedding similarity** to compare a given answer against a list of pre-defined vague/confused templates such as:
@@ -16,7 +16,7 @@ This function uses **embedding similarity** to compare a given answer against a 
 - "N/A"
 
 ### Set the Similarity Threshold
-In `d2d/utils/eval_prompt_utils.py`, the similarity threshold for detecting vague or ambiguous answers is defined as:
+In `d2d/utils/eval_config_utils.py`, the similarity threshold for detecting vague or ambiguous answers is defined as:
 ```python
 SIMILARITY_THRESHOLD = 0.78
 ```
