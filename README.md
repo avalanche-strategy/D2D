@@ -345,7 +345,10 @@ pytest tests/
 You can modify the unit tests to include additional scenarios by adding new test functions in the existing `*.py` files or adding new tests under the folder [tests](tests).
 
 ## Detailed Documentation
-For more detailed Documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb)
+- For more detailed processor and evaluator documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb).  
+- For more packaging guide, please navigate to here [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/packaging_guide.ipynb).  
+- For more detailed evaluation framework explanation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/Evaluation_WhitePaper.ipynb).  
+- For more detailed tuning instructions in evaluation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_tuning.ipynb).
 
 ## Dependencies
 
