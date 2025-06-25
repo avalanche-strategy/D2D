@@ -43,6 +43,8 @@ python --version
 
 Make sure the output is **Python 3.10.x** or higher.
 
+**Note**: We use Python 3.10 here to test compatibility, but you can use any Python version 3.10 or higher.  
+
 ---
 
 ### **4. Install the package**
@@ -406,6 +408,8 @@ pytest tests/
 
 **Note:**
 
+- LLM responses can vary, so it’s normal for some tests to occasionally fail—if you see a failed test, simply try running it again.  
+- Running all tests may take some time, especially those involving LLM calls.
 - Make sure you are in the project’s root directory and your virtual environment is activated (if you’re using one). 
 - You can modify the unit tests to include additional scenarios by adding new test functions in the existing `*.py` files or adding new tests under the folder [tests](tests).
 
