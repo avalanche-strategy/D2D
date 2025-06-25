@@ -67,4 +67,4 @@ def suppress_pydantic_serializer_warnings():
         category=UserWarning,
         module="pydantic.main"
     )
-suppress_pydantic_serializer_warnings()
+# suppress_pydantic_serializer_warnings()
