@@ -5,15 +5,15 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  - pandas
-  - numpy
+  - numpy=1.24.4
+  - pandas=1.5.3
   - python-dotenv
   - jupyter
   - pytorch
   - sentence-transformers
   - litellm
   - pytest  # Development only
-  - pytest-subtests # Development only
+  - pytest-subtests  # Development only
   - pytest-asyncio  # Development only
   - pytest-mock  # Development only
   - rapidfuzz
