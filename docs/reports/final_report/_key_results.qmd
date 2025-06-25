@@ -3,28 +3,28 @@ To validate metric correctness, we have built a small but diverse golden sample 
 
 As part of performance evaluation for the D2D processor, we conducted experiments using these golden samples. We compared developed models against the client’s baseline (vanilla LLM method), analyzed average scores and distributions across all metrics, and tuned retrieval parameters (top_k and top_p) to recommend optimal settings.
 
-According to Figure 1, all of our developed models achieved much higher correctness scores compared to the client’s baseline method. The baseline model scored only 2.20, while all developed models scored above 3.90, and the best-performing model top-k with gpt4-1, reached 4.22. This clear improvement demonstrates the strength of our RAG approach.
+According to @fig-correctness, all of our developed models achieved much higher correctness scores compared to the client’s baseline method. The baseline model scored only 2.20, while all developed models scored above 3.90, and the best-performing model top-k with gpt4-1, reached 4.22. This clear improvement demonstrates the strength of our RAG approach.
 
 ::: {.cell}
-![Correctness Comparison to Baseline](img/correctness_comparison.png)
+![Correctness Comparison to Baseline](img/correctness_comparison.png){#fig-correctness}
 :::
 
-Then, we compared multiple model variants across all six evaluation metrics under the setting of k = 5 and p = 0.5, as shown in Figure 2. Overall, top-k configurations performed slightly better than their top-p counterparts. Among models using the same retriever, GPT-4.1 and GPT-4.1-mini showed slightly better performance than Claude 3.5 and GPT-4o-mini. The differences across models were relatively small, and the variance across 10 runs was minimal, indicating stable and repeatable results.
+Then, we compared multiple model variants across all six evaluation metrics under the setting of k = 5 and p = 0.5, as shown in @fig-metric-dist. Overall, top-k configurations performed slightly better than their top-p counterparts. Among models using the same retriever, GPT-4.1 and GPT-4.1-mini showed slightly better performance than Claude 3.5 and GPT-4o-mini. The differences across models were relatively small, and the variance across 10 runs was minimal, indicating stable and repeatable results.
 
 While precision scores were generally lower than other metrics, this is not a concern in our setup. Since the goal of retrieval is to capture all relevant context for generation, some irrelevant chunks can be tolerated as long as key information is included. Hence, recall plays a more critical role in ensuring response quality.
 
 Taking both performance and cost into account, we recommend using GPT-4o-mini with top-k = 5 as the default configuration.
 
 ::: {.cell}
-![Metric Comparison with Distribution](img/metric_dist.png)
+![Metric Comparison with Distribution](img/metric_dist.png){#fig-metric-dist}
 ::: 
 
-Finally, we tuned the retriever parameters using our golden sample set. As shown in Figure 3, for top-k retrieval, k = 5 yielded the best correctness and joint scores, making it the recommended setting. Similarly, Figure 4 shows the performance of models using top-p retrievers across different p values. The optimal performance was observed in the 0.52–0.56 range, suggesting that future p tuning efforts should focus within this interval.
+Finally, we tuned the retriever parameters using our golden sample set. As shown in @fig-results-topk, for top-k retrieval, k = 5 yielded the best correctness and joint scores, making it the recommended setting. Similarly, @fig-results-topp shows the performance of models using top-p retrievers across different p values. The optimal performance was observed in the 0.52–0.56 range, suggesting that future p tuning efforts should focus within this interval.
 
 ::: {.cell}
-![Model Performance Across Top-k Values (k = 3 - 6)](img/top_k.png)
+![Model Performance Across Top-k Values (k = 3 - 6)](img/top_k.png){#fig-results-topk}
 ::: 
 
 ::: {.cell}
-![Model Performance Across Top-p Values (p = 0.46 - 0.58)](img/top_p.png)
+![Model Performance Across Top-p Values (p = 0.46 - 0.58)](img/top_p.png){#fig-results-topp}
 ::: 

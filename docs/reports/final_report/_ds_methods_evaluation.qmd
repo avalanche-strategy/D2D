@@ -1,5 +1,5 @@
 
-To assess the quality of D2D’s output, we have designed the evaluator to ensure that the answers are not only accurate in meaning, but also generated through a reliable and precise process. To support this, the evaluation framework provides five core metrics:
+To assess the quality of D2D’s output, we designed an evaluator to ensure that the answers are not only accurate in meaning, but also generated through a reliable and precise process. To support this, the evaluation framework provides five core metrics:
 
 - **Correctness**: Measures how well the answer is consistent with the reference (ground truth).
 - **Faithfulness**: Evaluates whether the answer is fully supported by the retrieved context and avoids hallucinations.
