@@ -33,31 +33,21 @@ cd D2D
 
 ### **3. Set up your environment**
 
-1. **Check your Python version:**
+**Create a new Conda environment with Python 3.10:**
 
-   ```bash
-   python3 --version
-   # or
-   python --version
-   ```
+```bash
+conda create -n d2d-310 python=3.10
+conda activate d2d-310
+python --version 
+```
 
-   Make sure the output is **Python 3.9.x** or higher.
-
-2. **If your Python version is too low (e.g., < 3.9):**
-
-   Download the official installer of Python with a version higher or equal to 3.9 from [python.org](https://www.python.org/downloads/).
-
-3. **Create and activate a virtual environment**
-    ```bash
-    python3 -m venv d2d-test
-    source d2d-test/bin/activate  # On Windows use d2d-test\Scripts\activate
-    ```
+Make sure the output is **Python 3.10.x** or higher.
 
 ---
 
 ### **4. Install the package**
 
-After you have Python 3.9 or above set up, from the project root directory (where `setup.py` is located), run:
+After you have Python 3.10 or above set up, from the project root directory (where `setup.py` is located), run:
 
 ```bash
 pip install .
@@ -71,7 +61,7 @@ pip uninstall d2d
 ```
 2. Deactivate the virtual environment:
 ```bash
-deactivate
+conda deactivate
 ```
 
 
@@ -427,7 +417,7 @@ pytest tests/
 
 ## Dependencies
 
-- Python **3.9 or higher**
+- Python **3.10 or higher**
 - All core package dependencies are installed with:
   ```bash
   pip install .
