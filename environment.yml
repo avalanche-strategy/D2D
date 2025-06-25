@@ -1,3 +1,7 @@
+# Although this package is currently focused on Python virtual environments (py env),
+# the following dependency is included for potential future development needs.
+# Remove if confirmed unnecessary in the future.
+
 name: d2d
 channels:
   - pytorch

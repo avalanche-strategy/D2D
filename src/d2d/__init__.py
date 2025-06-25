@@ -32,6 +32,19 @@ from .evaluator import D2DEvaluator
 
 __all__ = ["D2DProcessor", "D2DEvaluator"]
 
+
+# ------------------------------------------------------------------------------
+# WARNING SUPPRESSION FOR PYDANTIC
+#
+# Pydantic v2+ can emit noisy "serializer warnings" when serializing objects
+# that do not strictly match Pydantic models (e.g., external LLM responses).
+# We suppress these warnings here to keep the log output clean for users,
+# since these do not affect core pipeline functionality.
+#
+# If you modify serialization logic or upgrade Pydantic/LiteLLM, review
+# whether this suppression is still required.
+# ------------------------------------------------------------------------------
+
 def suppress_pydantic_serializer_warnings():
     """
     Suppress specific Pydantic serializer warnings related to unexpected values during serialization.
@@ -47,4 +60,6 @@ def suppress_pydantic_serializer_warnings():
         category=UserWarning,
         module="pydantic.main"
     )
+
+# Suppress noisy Pydantic serializer warnings due to LiteLLM/Pydantic v2 integration.
 suppress_pydantic_serializer_warnings()
