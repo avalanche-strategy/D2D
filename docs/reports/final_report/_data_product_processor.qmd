@@ -1,5 +1,5 @@
 
-The processor pipeline, ss shown in @fig-rag-pipeline, comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**. These components work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
+The processor pipeline, as shown in @fig-rag-pipeline, comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**. These components work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
 
 
 ### Pre-processor: LLM Summarization

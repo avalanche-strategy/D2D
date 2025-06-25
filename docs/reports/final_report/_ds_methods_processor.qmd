@@ -17,4 +17,4 @@ Cosine similarity measures the cosine of the angle between two vector embeddings
 
 ### Referencing Process
 
-The referencing process employs fuzzy matching with `rapidfuzz`[@bachmann2020rapidfuzz] to trace summarized answers back to their original transcript lines. This method accounts for variations in wording, ensuring outputs are linked to source data for validation and interpretability.
+The referencing process employs fuzzy matching with `rapidfuzz`[@bachmann2020rapidfuzz] to trace summarized answers back to their original transcript lines. This method accounts for minor variations in wording, ensuring outputs are linked to source data for validation and interpretability.
