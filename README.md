@@ -1,9 +1,9 @@
 # Dialogue2Data (D2D)
 
-## About
+## ℹ️ About
 Dialogue2Data (D2D) is an open-source Python package that transforms unstructured interview transcripts into structured data for analysis. It consists of two major components: 
 
-- The **Processor**, which leverages natural language processing (NLP), large language models (LLMs), and sentence embeddings to automate topic matching, response extraction, and summarization based on discussion guides. The Processor generates structured outputs (e.g., CSV, JSON) that can then be analyzed using any data analysis tools, like `pandas`.
+- The **Processor**, which leverages natural language processing (NLP), large language models (LLMs), and sentence embeddings to automate topic matching, response extraction, and summarization based on discussion guides (guideline questions). The Processor generates structured outputs (e.g., CSV, JSON) that can then be analyzed using any data analysis tools, like `pandas`.
 - The **Evaluator**, which assesses output quality using metrics like faithfulness, correctness, precision, recall, and relevance.
 
 D2D is ideal for researchers and analysts processing qualitative interview data.
@@ -20,6 +20,7 @@ To install this package locally with `pip`, follow these steps:
 ```bash
 git clone https://github.com/avalanche-strategy/D2D.git
 ```
+
 ---
 
 
@@ -28,6 +29,8 @@ git clone https://github.com/avalanche-strategy/D2D.git
 ```bash
 cd D2D
 ```
+
+---
 
 ### **3. Set up your environment**
 
@@ -51,6 +54,8 @@ cd D2D
     source d2d-test/bin/activate  # On Windows use d2d-test\Scripts\activate
     ```
 
+---
+
 ### **4. Install the package**
 
 After you have Python 3.9 or above set up, from the project root directory (where `setup.py` is located), run:
@@ -60,7 +65,7 @@ pip install .
 ```
 
 ### 🧹 Clean Up / Uninstall
-After you have finished testing or using the package you may want to: 
+After you have finished testing or using the package, you may want to: 
 1. Uninstall `d2d`:
 ```bash
 pip uninstall d2d
@@ -71,7 +76,7 @@ deactivate
 ```
 
 
-## Environment Configuration
+## 🛠️ Environment Configuration
 To use the OpenAI and Anthropic APIs, you need to set up an environment variable for your API key. Create a `.env` file in the root directory of the project with the following content:
 
 - **Example:**  
@@ -89,7 +94,7 @@ You do not need to set up keys for both APIs. If you will only use one, set up t
 
 To ensure smooth operation, please organize your data as follows:
 
-**Note: To protect the confidentiality of clients and interviewees, the data used in this repository are synthetic.**
+**Note: All sample data in this repository is synthetic and safe to use for demos and tests.**
 
 - **Interview Data Structure (for processor)**:
 
@@ -114,7 +119,7 @@ To ensure smooth operation, please organize your data as follows:
 
 
 
-## Data Format and Sample Data Output for D2D Pipeline
+## 🧾 Data Format and Sample Data Output for D2D Pipeline
 
 ### Data Input
 The D2D pipeline (processor part) processes two types of input files to extract and structure responses from unstructured interview transcripts based on provided guidelines.
@@ -184,7 +189,7 @@ In addition to the CSV output, the D2D pipeline produces structured JSON output 
     - `transcript`: The full path of the filename referenced for the responses (e.g., `/home/user/data/private_data/interview_food/transcript1.txt`).
     - `responses`: An array of response output objects, analogous to the columns in the CSV file. Each object corresponds to a `Guideline question` and will also contain elements that are extracted from the corresponding `Interview File` in response to that `Guideline question`. Each object has the following attributes:
       - `guide_question`: The guideline question for which this response refers to.
-      - `relevant_lines`: An array with tuples of line numbers from the transcript TXT file that semantically match the guideline question. These lines would have been identified by the algorithm (described in the [documentation](docs/example.ipynb)) to be most semantically similar to the guideline question. For each line number tuple, the first pair is the "Interviewer" line number and the second pair is the "Interviewee" line number. For example, if `relevant_lines` contains the value `[[4, 5], [10, 12]]`, there were two segments of the interview that matched the guideline question. First, the dialogue on line 4(Interviewer)+line 5(Interviewee) and then line 10(Interviewer)+line 12(Interviewee).
+      - `relevant_lines`: An array with tuples of line numbers from the transcript TXT file that semantically match the guideline question. These lines would have been identified by the algorithm to be most semantically similar to the guideline question. For each line number tuple, the first pair is the "Interviewer" line number and the second pair is the "Interviewee" line number. For example, if `relevant_lines` contains the value `[[4, 5], [10, 12]]`, there were two segments of the interview that matched the guideline question. First, the dialogue on line 4(Interviewer)+line 5(Interviewee) and then line 10(Interviewer)+line 12(Interviewee).
       - `extracted_phrase`: A phrase extracted from the transcript that can directly answer the `guide_question` (or the text, `[No relevant response]`, if none is found).
       - `response`: This is the final concise response from the `processor`. Note that this is the same value that is also output to the CSV file.
       - `match_type`: Text enumeration indicating how you can find `extracted_phrase` in the transcript.
@@ -244,7 +249,7 @@ _Line numbers and character indexes are numbered from 1. Character Index will be
 ]
 ```
 
-## How It Works (Processor part)
+## 🔄 How It Works (Processor part)
 
 The processor follows these steps:
 1. **Segmentation**: Divides the transcript into question-response pairs.
@@ -256,7 +261,7 @@ The processor follows these steps:
 
 
 
-## Usage
+## ▶️ Usage
 
 To run the processor on the synthetic data, use the following command after setting up your environment and data:
 
@@ -267,11 +272,11 @@ python examples/processor_example.py
 **Note: To test different scenarios, navigate to `processor_examples.py` and uncomment the relevant function you want to run in the main function. To ensure clarity, please run one function at a time. For more details, refer to the comments for each function in `processor_examples.py`.**
 
 
-## Output Storage
+## 📂 Output Storage
 The output CSV file will be generated and stored in the `results/` directory. Due to confidentiality, this file should not be pushed to the repository. The `.gitignore` file is already configured to exclude the `results/` directory, so you don’t need to worry about accidentally committing sensitive output files.
 
 
-## Evaluator
+## 🧮 Evaluator
 
 ## Data Format and Sample Data Output
 
@@ -341,7 +346,7 @@ The evaluator takes 2 outputs of the processor and a reference answer as inputs.
 | 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, pork, beans, family stories. |...|
 |...|...|...|...|
 
-## How It Works (Evaluator part)
+## 🔄 How It Works (Evaluator part)
 
 The evaluator works with these steps:
 1. **Merging**: Convert all files to long format (1 row per Q&A) merge on `respondent_id` and `question`.
@@ -351,15 +356,15 @@ The evaluator works with these steps:
 5. **Post-Processing**: Highlights any rows with any score less than a specified threshold, and computes a weighted joint score.
 6. **End Output**: 4 csv files of retrieved contexts, scores and feedback, highlighted low scores, and joint metric scores. 
 
-## Usage
+## ▶️ Usage
 
-To run the evaluator on the synthetic data, use the following command after running the processor and obtained output from processor:
+To run the evaluator on the synthetic data, use the following command after running the processor and obtained the output from processor:
 
 ```bash
 python examples/evaluator_example.py
 ```
 
-## Data Output
+## 📂 Data Output
 
 After finishing the evaluation process, the evaluator generates 4 output `csv`s. In the example, the `csv`s are stored under the `eval_results/` directory. For the synthetic interview dataset `interview_food`, these following files are outputted:
 
@@ -400,28 +405,27 @@ pytest tests/
 - You can modify the unit tests to include additional scenarios by adding new test functions in the existing `*.py` files or adding new tests under the folder [tests](tests).
 
 ## Detailed Documentation
-- For more detailed processor and evaluator documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb).  
-- For more packaging guide, please navigate to here [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/packaging_guide.ipynb).  
-- For more detailed evaluation framework explanation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/Evaluation_WhitePaper.ipynb).  
-- For more detailed tuning instructions in evaluation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_tuning.ipynb).
+- For more detailed processor and evaluator documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/user_guide.md).  
+- For more detailed evaluation framework explanation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_white-paper.md).  
+- For more detailed tuning instructions in evaluation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_tuning.md).
 
-## Dependencies
+## 📦 Dependencies
 
-- `conda` (version 23.9.0 or higher)
-- Python and packages listed in [`environment.yml`](environment.yml)
-- (Optional) `jupyterlab` (version 4.0.0 or higher) to run the interactive [examples](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb)
+- Python **3.9 or higher**
+- All core package dependencies are installed with:
+  ```bash
+  pip install .
+  ```
+- Development and testing dependencies are listed in [requirements-dev.txt](requirements-dev.txt)
 
 ### Adding a new dependency
 
-1. Add the dependency to the `environment.yml` file on a new branch.
+1.	Add the new package to requirements-dev.txt on a new branch.
 
-2. Recreate the `d2d` environment.
+Install dev dependencies in your (activated) virtual environment:
 
 ```bash
-conda deactivate
-conda remove --name d2d --all
-conda env create -f environment.yml
-conda activate d2d
+pip install -r requirements-dev.txt
 ```
 
 3. Re-run all unit tests to ensure the pipeline runs properly.
@@ -445,5 +449,3 @@ Interested in contributing? Contributions are welcome! See [CONTRIBUTING.md](CON
 ## License
 This project is licensed under the Apache License, Version 2.0 - see LICENSE for details.
 
-## Project Status
-D2D will be actively developed until June 25, 2025. 
