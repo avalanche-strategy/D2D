@@ -1,6 +1,5 @@
 # Dialogue2Data (D2D)
 
-## ℹ️ About
 Dialogue2Data (D2D) is an open-source Python package that transforms unstructured interview transcripts into structured data for analysis. It consists of two major components: 
 
 - The **Processor**, which leverages natural language processing (NLP), large language models (LLMs), and sentence embeddings to automate topic matching, response extraction, and summarization based on discussion guides (guideline questions). The Processor generates structured outputs (e.g., CSV, JSON) that can then be analyzed using any data analysis tools, like `pandas`.
@@ -269,8 +268,24 @@ To run the processor on the synthetic data, use the following command after sett
 python examples/processor_example.py
 ```
 
-**Note: To test different scenarios, navigate to `processor_examples.py` and uncomment the relevant function you want to run in the main function. To ensure clarity, please run one function at a time. For more details, refer to the comments for each function in `processor_examples.py`.**
+**Note: To test different scenarios, navigate to [`processor_examples.py`](https://github.com/avalanche-strategy/D2D/blob/dom/final_report_cut_words/src/d2d/processor.py) and uncomment the relevant function you want to run in the main function. To ensure clarity, please run one function at a time. For more details, refer to the comments for each function in `processor_examples.py`.**
 
+**Or, run directly from Python**
+
+You can also use the processor in your own Python scripts as follows
+
+
+```python
+from d2d import D2DProcessor
+
+processor = D2DProcessor()
+processor.process_transcripts(
+    transcripts_dir="path/to/transcripts",
+    guidelines_path="path/to/guidelines.csv",
+    interview_name="interview",
+    output_dir="path/to/output"
+)
+```
 
 ## 📂 Output Storage
 The output CSV file will be generated and stored in the `results/` directory. Due to confidentiality, this file should not be pushed to the repository. The `.gitignore` file is already configured to exclude the `results/` directory, so you don’t need to worry about accidentally committing sensitive output files.
