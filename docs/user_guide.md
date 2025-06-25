@@ -116,7 +116,7 @@ This guide provides detailed information about the package’s classes, paramete
 - **Automatic Device Selection:** Embedding models are loaded to the optimal device (MPS, CUDA, or CPU) based on your system.
 - **Interactive Workflow:** If a transcript is **not thematically aligned with** guidelines, you will be prompted to continue or skip processing for that file.
 - **Async Processing:** The pipeline leverages asynchronous processing for faster throughput with large datasets.
-- **Robust LLM Handling:** LLM connectivity is tested and will fall back to alternative providers/models as needed.
+- **Robust LLM Handling:** LLM connectivity is tested and will fall back to alternative providers as needed. 
 - **Logging:** Detailed logs are created by default for debugging and review; console logging can be disabled if desired.
 - **File Formats:** Input transcripts must be `.txt` and guidelines `.csv`; all output is saved in the specified output directory.
 - **User Input:** Some processing steps require interactive confirmation; for automated workflows, review the code or set the similarity threshold accordingly.
