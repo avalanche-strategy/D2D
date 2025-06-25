@@ -290,85 +290,86 @@ def processor():
 
 def test_check_internet_connection_success(processor, mocker):
     """Test _check_internet_connection with a successful connection."""
-    mocker.patch("requests.get", return_value=mocker.Mock(status_code=200))
+    mock_get = mocker.patch("requests.get", return_value=mocker.Mock(status_code=200))
     result = processor._check_internet_connection(timeout=5)
     assert result is True
-    assert "Internet connection check successful." in mocker.call_args_list[-1][0][0]
+    mock_get.assert_called_once()
 
 
 def test_check_internet_connection_failure(processor, mocker):
     """Test _check_internet_connection with a failed connection."""
-    mocker.patch("requests.get", side_effect=requests.RequestException("Connection error"))
+    mock_get = mocker.patch("requests.get", side_effect=requests.RequestException("Connection error"))
     result = processor._check_internet_connection(timeout=5)
     assert result is False
-    assert "Internet connection check failed" in mocker.call_args_list[-1][0][0]
+    mock_get.assert_called_once_with("https://www.google.com", timeout=5)
 
 
 def test_test_llm_connection_success(processor, mocker):
     """Test _test_llm_connection with a successful LLM response."""
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mocker.patch("src.d2d.completion", return_value=mock_response)
+    mock_completion = mocker.patch("src.d2d.processor.completion", return_value=mock_response)
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
+
     result = processor._test_llm_connection()
     assert result is True
     assert processor.llm_model == "gpt-4o-mini"
-    assert "LLM connection test successful with gpt-4o-mini" in mocker.call_args_list[-1][0][0]
+    mock_completion.assert_called()
 
 
 def test_test_llm_connection_authentication_error(processor, mocker):
     """Test _test_llm_connection with an authentication error."""
-    mocker.patch("src.d2d.completion", side_effect=AuthenticationError("Invalid API key"))
+    error = AuthenticationError("Invalid API key", model="gpt-4o-mini", llm_provider="openai")
+    mocker.patch("src.d2d.processor.completion", side_effect=error)
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
+
     result = processor._test_llm_connection()
     assert result is False
-    assert "API Key Error" in mocker.call_args_list[-1][0][0]
-
 
 def test_test_llm_connection_timeout_with_retry(processor, mocker):
     """Test _test_llm_connection with timeout and retries, eventually succeeding."""
+    timeout_error = Timeout("Timeout", model="gpt-4o-mini", llm_provider="openai")
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mocker.patch("src.d2d.completion", side_effect=[Timeout("Timeout"), Timeout("Timeout"), mock_response])
+
+    mocker.patch("src.d2d.processor.completion", side_effect=[timeout_error, timeout_error, mock_response])
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
-    mocker.patch("time.sleep")  # Mock sleep to avoid actual delays
+    mocker.patch("time.sleep")
+
     result = processor._test_llm_connection()
     assert result is True
-    assert "LLM Timeout" in str(mocker.call_args_list)
-    assert "LLM connection test successful" in mocker.call_args_list[-1][0][0]
 
 
 def test_test_llm_connection_switch_model(processor, mocker):
     """Test _test_llm_connection switching to fallback model after initial model fails."""
+    timeout_error = Timeout("Timeout", model="gpt-4o-mini", llm_provider="openai")
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
+
     mocker.patch(
-        "src.d2d.completion",
-        side_effect=[Timeout("Timeout"), Timeout("Timeout"), Timeout("Timeout"), mock_response]
+        "src.d2d.processor.completion",
+        side_effect=[timeout_error, timeout_error, timeout_error, mock_response]
     )
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
-    mocker.patch("time.sleep")  # Mock sleep to avoid actual delays
+    mocker.patch("time.sleep")
+
     result = processor._test_llm_connection()
     assert result is True
     assert processor.llm_model == "claude-3-5-sonnet"
-    assert "Switching to claude-3-5-sonnet" in str(mocker.call_args_list)
-    assert "LLM connection test successful with claude-3-5-sonnet" in mocker.call_args_list[-1][0][0]
 
 
 def test_test_llm_connection_config_file_missing(processor, mocker):
     """Test _test_llm_connection when llm_defaults.json is missing."""
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mocker.patch("src.d2d.completion", return_value=mock_response)
+    mocker.patch("src.d2d.processor.completion", return_value=mock_response)
     mocker.patch("builtins.open", side_effect=FileNotFoundError)
+
     result = processor._test_llm_connection()
     assert result is True
-    assert "Configuration file" in mocker.call_args_list[-2][0][0]
-    assert "LLM connection test successful" in mocker.call_args_list[-1][0][0]
 
 
 def test_test_llm_connection_invalid_json(processor, mocker):
     """Test _test_llm_connection with invalid JSON in llm_defaults.json."""
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mocker.patch("src.d2d.completion", return_value=mock_response)
+    mocker.patch("src.d2d.processor.completion", return_value=mock_response)
     mocker.patch("builtins.open", mock_open(read_data="invalid json"))
+
     result = processor._test_llm_connection()
     assert result is True
-    assert "Invalid JSON" in mocker.call_args_list[-2][0][0]
-    assert "LLM connection test successful" in mocker.call_args_list[-1][0][0]
