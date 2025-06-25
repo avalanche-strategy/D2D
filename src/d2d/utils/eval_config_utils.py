@@ -16,3 +16,6 @@ ACTIVE_METRICS = {
     "relevance": True,
     "correctness": True
 }
+
+# Default threshold for detecting confused/empty answers
+SIMILARITY_THRESHOLD = 0.78  

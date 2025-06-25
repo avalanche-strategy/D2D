@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer, util
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-SIMILARITY_THRESHOLD = 0.78  # Default threshold for detecting confused/empty answers
+from .eval_config_utils import SIMILARITY_THRESHOLD
 
 # Load embedding model globally
 _model_name = 'sentence-transformers/multi-qa-mpnet-base-dot-v1'
