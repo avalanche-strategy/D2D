@@ -1,11 +1,5 @@
 
-::: {.cell}
-![RAG Workflow for D2D Processor Pipeline](img/rag_pipeline.png)
-:::
-
-### Processor Pipeline Description
-
-The processor pipeline comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**. These components work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
+The processor pipeline, ss shown in @fig-rag-pipeline, comprises three core components: the **Pre-processor**, the **Retriever**, and the **Generator**. These components work together to efficiently transform raw input data into meaningful, structured outputs aligned with the Dialogue2Data (D2D) project’s objectives.
 
 
 ### Pre-processor: LLM Summarization
@@ -50,71 +44,47 @@ The Generator produces concise, structured answers for each guideline question b
 - **Output Generation**:
   - Structured answers are generated in CSV format for each guideline question, with references to the original transcript provided in JSON format for traceability.
 
-
-### Integration and Data Flow
-
-The pipeline operates sequentially:
-
-1. The Pre-processor segments the transcript and summarizes the questions from both the transcript QA pairs and the guideline.
-2. The Retriever embeds these summarized questions and matches the transcript QA pairs to the guideline questions using cosine similarity.
-3. The Generator creates structured answers from the top-matching QA pairs using an LLM.
-
-This streamlined process transforms unstructured interview data into structured insights with high efficiency and accuracy, leveraging state-of-the-art NLP tools like `SentenceTransformer` and LLMs to meet the needs of the D2D project.
-
 ### Pros, Cons, and Justifications
 
-\subsubsection*{\large Retrieval-Augmented Generation (RAG)}
-- **Pros**:
-  - Enhances content processing by combining LLM strengths with retrieval, improving relevance.
-  - Supports scalable analysis of large transcript datasets.
-- **Cons**:
-  - Relies heavily on LLM performance, which may introduce inconsistencies.
-  - Adds computational complexity due to multiple processing steps.
-- **Justification**:
-  - Outperforms standalone LLM or retrieval-only methods by integrating both capabilities.
-  - Preferred over manual methods due to scalability needs.
+::: {=latex}
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{3.2cm} p{4.2cm} p{4.2cm} p{5cm}}
+\textbf{Component} & \textbf{Pros} & \textbf{Cons} & \textbf{Justification} \\
+\hline
+RAG & Combines LLM and retrieval for relevance; scales to large data & LLM-dependent; computationally complex & Outperforms standalone LLM or retrieval; scalable vs. manual methods \\
+\hline
+Embeddings & Captures semantic meaning; handles diverse text efficiently & Computationally expensive; model-dependent & Chosen over TF-IDF; avoids custom training using \texttt{SentenceTransformer} \\
+\hline
+Cosine Similarity & Normalized metric; efficient for high dimensions & Threshold tuning needed; precision-sensitive & Better than Euclidean distance; enables automated alignment \\
+\hline
+Referencing & Enables traceability; improves interpretability & Risk of loose matches; threshold tuning needed & More flexible than exact match; \texttt{rapidfuzz} selected for speed and integration \\
+\hline
+\end{tabular}
+\caption{Summary of Pros, Cons, and Justifications for Core Techniques}
+\end{table}
+:::
 
-\subsubsection*{\large Embeddings}
-- **Pros**:
-  - Captures semantic accuracy, enabling nuanced text comparisons.
-  - Facilitates efficient processing of diverse text data.
-- **Cons**:
-  - High computational cost for vector generation.
-  - Dependent on the quality of the pre-trained model.
-- **Justification**:
-  - Superior to keyword-based methods (e.g., TF-IDF) for semantic understanding.
-  - Chosen over custom training due to resource constraints and availability of `SentenceTransformer`.
-
-\subsubsection*{\large Cosine Similarity}
-- **Pros**:
-  - Provides a normalized metric for semantic alignment, enhancing match reliability.
-  - Efficient for high-dimensional vector comparisons.
-- **Cons**:
-  - Sensitivity to threshold settings can affect precision.
-  - Requires careful tuning for optimal performance.
-- **Justification**:
-  - Outperforms Euclidean distance due to normalization, suitable for embeddings.
-  - Preferred over manual alignment for automation and scale.
-
-\subsubsection*{\large Referencing Process}
-- **Pros**:
-  - Ensures traceability with flexible fuzzy matching.
-  - Improves output interpretability by linking to source text.
-- **Cons**:
-  - Risk of false positives with lenient matching.
-  - Requires threshold adjustment for accuracy.
-- **Justification**:
-  - More robust than exact matching for variable transcript wording.
-  - `rapidfuzz` selected for its speed and integration compared to alternatives like `fuzzywuzzy`.
 
 ### Potential Improvements and Challenges
 
-- **Adaptive Thresholding**: Implementing dynamic thresholds for cosine similarity could optimize matching across datasets.
-  - **Challenges**: Requires extensive testing and diverse data.
-  - **Why Not Implemented**: Fixed thresholds sufficed for the current scope.
-- **Fine-Tuned Embeddings**: Using domain-specific models could enhance embedding quality.
-  - **Challenges**: Needs labeled data and computational resources.
-  - **Why Not Implemented**: Pre-trained models met project needs within constraints.
+::: {=latex}
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|p{4cm}|p{5cm}|p{5cm}|}
+\hline
+\textbf{Improvement} & \textbf{Challenges} & \textbf{Why Not Implemented} \\
+\hline
+Adaptive Thresholding & Requires extensive testing across diverse data & Fixed thresholds sufficed for current scope \\
+\hline
+Fine-Tuned Embeddings & Needs labeled data and high computational power & Pre-trained models met project needs within constraints \\
+\hline
+\end{tabular}
+\caption{Unimplemented Improvements and Justifications}
+\end{table}
+:::
 
 ### Using the D2D Processor
 
@@ -127,22 +97,7 @@ The D2D processor is accessible via the `D2DProcessor` Python class, imported fr
 - **`custom_extract_prompt`** and **`custom_summarize_prompt`**: Optional custom prompts for tailored extraction and summarization.
 
 \subsubsection*{\large Usage Example}
-```python
-from d2d import D2DProcessor
-
-processor = D2DProcessor(
-    llm_model="gpt-4o-mini",
-    embedding_model="multi-qa-mpnet-base-dot-v1",
-    sampling_method=D2DProcessor.SamplingMethod.TOP_K,
-    top_k=5,
-)
-processor.process_transcripts(
-    transcripts_dir="path/to/transcripts",
-    guidelines_path="path/to/guidelines.csv",
-    interview_name="interview",
-    output_dir="path/to/output"
-)
-```
+{{< include _data_product_usage_example.qmd >}}
 
 \subsubsection*{\large Installation}
 The package can be installed via `pip install .` or as an installable package from the repository.

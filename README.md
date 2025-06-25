@@ -99,13 +99,13 @@ The D2D pipeline (processor part) processes two types of input files to extract 
   - Each file represents one two-person interview (Interviewer and Interviewee).
   - Content includes dialogue, with questions from interviewers and responses from interviewees.
 - **Example**:
-  - **File**: Extract from [001.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/001.txt)
+  - **File**: Extract from [001.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/transcripts_food/001.txt)
     > Interviewer: Let’s talk food. What’s a dish that reminds you of your childhood?  
     > Interviewee: Definitely my grandma’s chicken and rice. She used to make it every Sunday, and the smell would just take over the whole house. It was simple—nothing fancy—but it was filled with love.  
     > Interviewer: Can you describe a meal that has a special meaning for you?  
     > Interviewee: Yeah, actually. My 18th birthday dinner. My parents surprised me by cooking all my favorite dishes—pad thai, roasted veggies, and this chocolate lava cake I was obsessed with. I remember feeling really seen, you know?
     > ...
-  - **File**: Extract from [002.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/interview_food/002.txt)
+  - **File**: Extract from [002.txt](https://github.com/avalanche-strategy/D2D/blob/main/data/synthetic_data/transcripts_food/002.txt)
     > Interviewer: Alright, diving into food and memories—what dish instantly brings your childhood back?  
     > Interviewee: Oh man, my mom’s arroz con leche. She’d make it every time I was sick, or honestly, just when I needed cheering up. The cinnamon smell still makes me emotional sometimes.  
     > Interviewer: Can you describe a meal that holds special meaning for you?  

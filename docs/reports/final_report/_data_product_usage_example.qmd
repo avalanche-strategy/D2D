@@ -1,0 +1,17 @@
+
+```python
+from d2d import D2DProcessor
+
+processor = D2DProcessor(
+    llm_model="gpt-4o-mini",
+    embedding_model="multi-qa-mpnet-base-dot-v1",
+    sampling_method=D2DProcessor.SamplingMethod.TOP_K,
+    top_k=5,
+)
+processor.process_transcripts(
+    transcripts_dir="path/to/transcripts",
+    guidelines_path="path/to/guidelines.csv",
+    interview_name="interview",
+    output_dir="path/to/output"
+)
+```

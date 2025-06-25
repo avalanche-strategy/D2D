@@ -1,6 +1,6 @@
 
 ::: {.cell}
-![RAG Workflow for D2D Processor Pipeline](img/rag_pipeline.png)
+![RAG Workflow for D2D Processor Pipeline](img/rag_pipeline.png){#fig-rag-pipeline}
 :::
 
 ### Retrieval-Augmented Generation (RAG)
