@@ -43,6 +43,8 @@ python --version
 
 Make sure the output is **Python 3.10.x** or higher.
 
+**Note**: We use Python 3.10 here to ensure compatibility, but you can use any Python version 3.10 or higher.  
+
 ---
 
 ### **4. Install the package**
