@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="d2d",
-    version="0.2.8",
+    version="2.0.0",
     author="Sienko Ikhabi, Dominic Lam, Yun Zhou, Wangkai Zhu",
     author_email="your.email@example.com",
     description="Dialogue2Data: Transform interview transcripts into structured data",
