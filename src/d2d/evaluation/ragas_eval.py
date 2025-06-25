@@ -216,8 +216,22 @@ def run_ragas_evaluation(rag_path: str, ref_path: str, context_path: str, output
     scores_df = pd.DataFrame([r[1] for r in sorted(results, key=lambda x: x[0])])
     result_df = pd.concat([merged_df.reset_index(drop=True), scores_df], axis=1)
 
+    # Detect and filter suspicious rows
+    invalid_rows = result_df[
+        result_df.isnull().all(axis=1) |                  
+        result_df.apply(lambda row: row.astype(str).str.contains("LLM Model", case=False).any(), axis=1)  
+    ]
+    if not invalid_rows.empty:
+        print(f"Warning: {len(invalid_rows)} invalid rows detected (e.g., 'LLM Model' or all-NaN). Dropping them.")
+        result_df = result_df.drop(invalid_rows.index)
+
+    # Drop trailing fully-empty rows just in case
+    result_df = result_df.dropna(how="all")
+
+    # Save clean results
     result_df.to_csv(os.path.expanduser(output_path), index=False)
     print(f"\nEvaluation completed. Saved to: {output_path}")
+
 
 
 if __name__ == "__main__":
