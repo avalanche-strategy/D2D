@@ -8,7 +8,7 @@ Dialogue2Data (D2D) is an open-source Python package that transforms unstructure
 D2D is ideal for researchers and analysts processing qualitative interview data.
 
 
-## 📦 Installation
+## Installation
 
 **Note:** These instructions assume you have `git` installed on your system. If not, please install it from [https://git-scm.com/](https://git-scm.com/).
 
@@ -63,7 +63,7 @@ After you have Python 3.9 or above set up, from the project root directory (wher
 pip install .
 ```
 
-### 🧹 Clean Up / Uninstall
+### Clean Up / Uninstall
 After you have finished testing or using the package, you may want to: 
 1. Uninstall `d2d`:
 ```bash
@@ -75,7 +75,7 @@ deactivate
 ```
 
 
-## 🛠️ Environment Configuration
+## Environment Configuration
 To use the OpenAI and Anthropic APIs, you need to set up an environment variable for your API key. Create a `.env` file in the root directory of the project with the following content:
 
 - **Example:**  
@@ -118,7 +118,7 @@ To ensure smooth operation, please organize your data as follows:
 
 
 
-## 🧾 Data Format and Sample Data Output for D2D Pipeline
+## Data Format and Sample Data Output for D2D Pipeline
 
 ### Data Input
 The D2D pipeline (processor part) processes two types of input files to extract and structure responses from unstructured interview transcripts based on provided guidelines.
@@ -248,7 +248,7 @@ _Line numbers and character indexes are numbered from 1. Character Index will be
 ]
 ```
 
-## 🔄 How It Works (Processor part)
+## How It Works (Processor part)
 
 The processor follows these steps:
 1. **Segmentation**: Divides the transcript into question-response pairs.
@@ -260,7 +260,7 @@ The processor follows these steps:
 
 
 
-## ▶️ Usage
+## Usage
 
 To run the processor on the synthetic data, use the following command after setting up your environment and data:
 
@@ -287,11 +287,11 @@ processor.process_transcripts(
 )
 ```
 
-## 📂 Output Storage
+## Output Storage
 The output CSV file will be generated and stored in the `results/` directory. Due to confidentiality, this file should not be pushed to the repository. The `.gitignore` file is already configured to exclude the `results/` directory, so you don’t need to worry about accidentally committing sensitive output files.
 
 
-## 🧮 Evaluator
+## Evaluator
 
 ## Data Format and Sample Data Output
 
@@ -361,7 +361,7 @@ The evaluator takes 2 outputs of the processor and a reference answer as inputs.
 | 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, pork, beans, family stories. |...|
 |...|...|...|...|
 
-## 🔄 How It Works (Evaluator part)
+## How It Works (Evaluator part)
 
 The evaluator works with these steps:
 1. **Merging**: Convert all files to long format (1 row per Q&A) merge on `respondent_id` and `question`.
@@ -371,7 +371,7 @@ The evaluator works with these steps:
 5. **Post-Processing**: Highlights any rows with any score less than a specified threshold, and computes a weighted joint score.
 6. **End Output**: 4 csv files of retrieved contexts, scores and feedback, highlighted low scores, and joint metric scores. 
 
-## ▶️ Usage
+## Usage
 
 To run the evaluator on the synthetic data, use the following command after running the processor and obtained the output from processor:
 
@@ -379,7 +379,7 @@ To run the evaluator on the synthetic data, use the following command after runn
 python examples/evaluator_example.py
 ```
 
-## 📂 Data Output
+## Data Output
 
 After finishing the evaluation process, the evaluator generates 4 output `csv`s. In the example, the `csv`s are stored under the `eval_results/` directory. For the synthetic interview dataset `interview_food`, these following files are outputted:
 
@@ -395,7 +395,7 @@ After finishing the evaluation process, the evaluator generates 4 output `csv`s.
 - **`retrieved_contexts.csv`**
   - **Description**: A file that logs the retrieved chunks or evidence segments for each (`respondent_id`, `question`) pair. These context chunks are used to support the model's generation and are referenced during evaluations for metrics like faithfulness, precision, and recall.
 
-## 🧪Running Unit Tests
+## Running Unit Tests
 Unit tests have been created for core functions of the `processor`. All the unit tests are in the folder [tests](tests). You can run the unit tests using `pytest`, specifying the directory containing the unit tests:
 
 ### 1. Install test dependencies
@@ -425,7 +425,7 @@ pytest tests/
 - For more detailed evaluation framework explanation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_white-paper.md).  
 - For more detailed tuning instructions in evaluation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_tuning.md).
 
-## 📦 Dependencies
+## Dependencies
 
 - Python **3.9 or higher**
 - All core package dependencies are installed with:
