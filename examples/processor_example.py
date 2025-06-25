@@ -9,7 +9,7 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 data_dir = os.path.join(root_dir, "data", "synthetic_data")
 sys.path.append(root_dir)
 
-from src.d2d import D2DProcessor
+from d2d import D2DProcessor
 
 """
 For more information about the D2DProcessor parameters, refer to D2D/docs/example.ipynb. 
@@ -106,106 +106,6 @@ def test_thematic_alignment_mismatch_transcript():
         disable_logging_to_console=True
     )
 
-# --- LLM Connection Error Demonstrations ---
-
-def demo_llm_authentication_error():
-    """Simulate API authentication failure during LLM connection test."""
-    print("Running demo_llm_authentication_error()... This may take some time to complete.")
-
-    def mock_completion(*args, **kwargs):
-        raise AuthenticationError("Mocked API key error.", llm_provider="openai", model="gpt-4o-mini")
-
-    with patch("src.d2d.processor.completion", mock_completion):
-        processor = D2DProcessor(llm_model="gpt-4o-mini")
-        print("Testing authentication error...")
-        try:
-            processor._test_llm_connection()
-        except Exception as e:
-            print(f"Caught exception as expected: {e}")
-
-def demo_llm_timeout_error():
-    """Simulate LLM API timeout."""
-    print("Running demo_llm_timeout_error()... This may take some time to complete.")
-
-    def mock_completion(*args, **kwargs):
-        raise Timeout("Mocked timeout.", llm_provider="openai", model="gpt-4o-mini")
-
-    with patch("src.d2d.processor.completion", mock_completion):
-        processor = D2DProcessor(llm_model="gpt-4o-mini")
-        print("Testing timeout error...")
-        try:
-            processor._test_llm_connection()
-        except Exception as e:
-            print(f"Caught exception as expected: {e}")
-
-def demo_llm_service_unavailable():
-    """Simulate LLM service unavailable (503 error)."""
-    print("Running demo_llm_service_unavailable()... This may take some time to complete.")
-
-    def mock_completion(*args, **kwargs):
-        raise APIError(message="Mocked service unavailable error.", status_code=503, llm_provider="openai", model="gpt-4o-mini")
-
-    with patch("src.d2d.processor.completion", mock_completion):
-        processor = D2DProcessor(llm_model="gpt-4o-mini")
-        print("Testing service unavailable error (503)...")
-        try:
-            processor._test_llm_connection()
-        except Exception as e:
-            print(f"Caught exception as expected: {e}")
-
-def demo_llm_rate_limit():
-    """Simulate LLM API rate limiting (429 error)."""
-    print("Running demo_llm_rate_limit()... This may take some time to complete.")
-
-    def mock_completion(*args, **kwargs):
-        error = APIError(message="Mocked rate limit error.", status_code=429, llm_provider="openai", model="gpt-4o-mini")
-        raise error
-
-    with patch("src.d2d.processor.completion", mock_completion):
-        processor = D2DProcessor(llm_model="gpt-4o-mini")
-        print("Testing rate limit error (429)...")
-        try:
-            processor._test_llm_connection()
-        except Exception as e:
-            print(f"Caught exception as expected: {e}")
-
-def demo_llm_unexpected_error():
-    """Simulate unexpected exception during LLM connection test."""
-    print("Running demo_llm_unexpected_error()... This may take some time to complete.")
-
-    def mock_completion(*args, **kwargs):
-        raise Exception("Mocked unexpected error.")
-
-    with patch("src.d2d.processor.completion", mock_completion):
-        processor = D2DProcessor(llm_model="gpt-4o-mini")
-        print("Testing unexpected error...")
-        try:
-            processor._test_llm_connection()
-        except Exception as e:
-            print(f"Caught exception as expected: {e}")
-
-def demo_llm_model_switch():
-    """
-    Demonstrate model switching: first three attempts fail (simulate 503), fallback model then succeeds.
-    """
-    print("Running demo_llm_model_switch()... This may take some time to complete.")
-
-    call_count = {'count': 0}
-
-    def mock_completion(*args, **kwargs):
-        if call_count['count'] < 3:
-            call_count['count'] += 1
-            raise APIError(message="Mocked service unavailable.", status_code=503, llm_provider="openai", model="gpt-4o-mini")
-        else:
-            # Return a mock completion object as OpenAI would
-            return Mock(choices=[Mock(message=Mock(content="Success from fallback"))])
-
-    with patch("src.d2d.processor.completion", mock_completion):
-        processor = D2DProcessor(llm_model="gpt-4o-mini")
-        print("Testing model switch with fallback...")
-        result = processor._test_llm_connection()
-        print(f"Model switch result: {result}")
-        print(f"Final model in processor: {processor.llm_model}")
 
 # --- Main ---
 
@@ -224,13 +124,6 @@ if __name__ == "__main__":
     test_minimal_init()
     # test_thematic_alignment_mismatch_transcript()
 
-    # --- LLM Connection error demos ---
-    # demo_llm_authentication_error()
-    # demo_llm_timeout_error()
-    # demo_llm_service_unavailable()
-    # demo_llm_rate_limit()
-    # demo_llm_unexpected_error()
-    # demo_llm_model_switch()
 
     end_time = time.time()
     elapsed_time = end_time - start_time
