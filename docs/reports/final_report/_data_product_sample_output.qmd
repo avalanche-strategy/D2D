@@ -1,0 +1,6 @@
+
+| **Interview File** | **What’s a dish that reminds you of your childhood?** | **Can you describe a meal that has a special meaning for you?**                          | ... |
+| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ | --- |
+| 001            | Grandma’s chicken and rice                       | 18th birthday dinner with favorite dishes cooked by parents.                        |...|
+| 002            | Mom’s arroz con leche                            | Christmas Eve dinner with tamales, roasted pork, rice, beans; loud, chaotic, full of stories. |...|
+|...|...|...|...|
