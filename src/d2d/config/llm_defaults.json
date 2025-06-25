@@ -1,0 +1,4 @@
+{
+  "openai": "gpt-4o-mini",
+  "anthropic": "claude-3-5-sonnet"
+}
