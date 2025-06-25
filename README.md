@@ -221,7 +221,7 @@ The processor follows these steps:
 To run the processor on the synthetic data, use the following command after setting up your environment and data:
 
 ```bash
-python examples/processor_examples.py
+python examples/processor_example.py
 ```
 
 **Note: To test different scenarios, navigate to `processor_examples.py` and uncomment the relevant function you want to run in the main function. To ensure clarity, please run one function at a time. For more details, refer to the comments for each function in `processor_examples.py`.**
@@ -316,7 +316,7 @@ The evaluator works with these steps:
 To run the evaluator on the synthetic data, use the following command after running the processor and obtained output from processor:
 
 ```bash
-python examples/api_test/evaluator_test.py
+python examples/evaluator_example.py
 ```
 
 ## Data Output

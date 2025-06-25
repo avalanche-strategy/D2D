@@ -1,61 +1,38 @@
-import re
 from typing import Union
+from sentence_transformers import SentenceTransformer, util
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-def is_answer_empty_or_confused(text: str) -> bool:
+# Load embedding model globally
+_model_name = 'sentence-transformers/multi-qa-mpnet-base-dot-v1'
+_model = SentenceTransformer(_model_name)
+_confused_templates = [
+    "I don't know", "Not sure", "No idea", "Cannot say",
+    "I'm confused", "This is unclear", "There is no information",
+    "N/A", "None", "No relevant response found"
+]
+_confused_embeddings = _model.encode(_confused_templates, convert_to_tensor=True, normalize_embeddings=True)
+
+
+def is_answer_empty_or_confused(text: Union[str, None], threshold: float = 0.78) -> bool:
     """
-    Determine if the answer is empty, ambiguous, or doctoring (non-informative).
+    Determine if the answer is empty, ambiguous, or evasive using embedding similarity.
 
     Parameters:
     - text (str): The answer text.
+    - threshold (float): Cosine similarity threshold. Default = 0.78 for multi-qa-mpnet.
 
     Returns:
-    - bool: True if the text is effectively non-informative or evasive.
+    - bool: True if the text is semantically similar to a confused/non-informative template.
     """
     if not isinstance(text, str) or not text.strip():
         return True
 
-    text_lower = text.lower()
-    
-    # Remove brackets and other punctuation, then clean up spaces
-    text_clean = re.sub(r'[^\w\s]', ' ', text_lower)
-    text_clean = re.sub(r'\s+', ' ', text_clean).strip()
+    # Normalize and embed input
+    embedding = _model.encode(text, convert_to_tensor=True, normalize_embeddings=True)
+    cosine_score = util.cos_sim(embedding, _confused_embeddings).max().item()
+    return cosine_score > threshold
 
-    # Keywords indicating confusion or lack of knowledge
-    confusion_keywords = [
-        "i don't know", "i do not know", "not sure", "no idea", "unclear", 
-        "can't say", "cannot say", "i'm confused", "i am confused",
-        "none", "nothing", "n/a", "ambiguous", "unsure", "uncertain",
-        "no relevant response found"
-    ]
-
-    # Phrases indicating doctoring - vague or generic statements without content
-    doctoring_patterns = [
-        r"that's a great question", 
-        r"it's hard to say", 
-        r"it depends on many factors", 
-        r"there are many perspectives", 
-        r"this is a complex issue", 
-        r"it varies from case to case", 
-        r"many people believe", 
-        r"some might argue", 
-        r"we must consider all sides", 
-        r"it's subjective", 
-        r"one could interpret this in different ways"
-    ]
-
-    # Direct keyword match (check both original and cleaned text)
-    if any(kw in text_lower for kw in confusion_keywords):
-        return True
-    
-    if any(kw in text_clean for kw in confusion_keywords):
-        return True
-
-    # Regex pattern match for doctoring
-    for pattern in doctoring_patterns:
-        if re.search(pattern, text_lower):
-            return True
-
-    return False
 
 def build_prompt(metric: str, row: dict, chunk_list: list[str] = None) -> str:
     """
@@ -63,16 +40,12 @@ def build_prompt(metric: str, row: dict, chunk_list: list[str] = None) -> str:
 
     Parameters:
     - metric (str): Metric type ('relevance', 'faithfulness', 'precision', 'recall', 'correctness').
-    - row (dict): Dictionary or Series with at least 'question', 'answer_rag', and optionally 'retrieved_context' or 'answer_ref'.
-    - chunk_list (list[str], optional): List of dialogue chunks (for precision and recall).
+    - row (dict): Dictionary or Series with 'question', 'answer_rag', 'answer_ref', etc.
+    - chunk_list (list[str], optional): List of dialogue chunks (for some metrics).
 
     Returns:
-    - str: A formatted prompt string to be passed to GPT.
-
-    Raises:
-    - ValueError: If an unknown metric is passed.
+    - str: A formatted prompt string to be passed to LLM.
     """
-
     question = row["question"]
     answer = row["answer_rag"]
     answer_ref = row["answer_ref"]
@@ -167,11 +140,8 @@ Score:
 Feedback: The model failed to reflect key information available in the reference.
 """
 
-
     elif metric == "precision":
         chunks = "\n\n".join(chunk_list or [])
-
-        # Check if both RAG and reference answers are empty/confused
         rag_confused = is_answer_empty_or_confused(answer)
         ref_confused = is_answer_empty_or_confused(answer_ref)
 
@@ -226,7 +196,6 @@ Explanation: <brief justification>
 Score: 
 Feedback: """
 
-
     elif metric == "recall":
         chunks = "\n\n".join(chunk_list or [])
         rag_confused = is_answer_empty_or_confused(answer)
@@ -277,7 +246,6 @@ Instructions:
 Score: 
 Feedback: """
 
-    
     elif metric == "correctness":
         if is_answer_empty_or_confused(answer) and is_answer_empty_or_confused(reference):
             return f"""Both the generated answer and the reference answer indicate that no relevant response was possible.
@@ -291,7 +259,6 @@ In this case, treat the generated answer as semantically equivalent to the refer
 Score: 5.0  
 Feedback: The generated answer correctly matches the reference in indicating no relevant information was found.
 """
-            
         return f"""Compare the generated answer with the reference.
 Question: {question}
 Answer: {answer}

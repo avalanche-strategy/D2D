@@ -3,11 +3,11 @@ import os
 import time
 import glob
 
-# Add the root directory (D2D/) to sys.path
-root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.append(root_dir)
+# Add src/ to sys.path so d2d can be imported
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../src"))
+sys.path.append(src_path)
 
-from src.d2d import D2DEvaluator
+from d2d import D2DEvaluator
 
 def main_eval(
     log_input_path: str,

@@ -69,13 +69,13 @@ execute:
 
 {{< include _key_results.qmd >}}
 
-## Future Improvements
+# Recomendations and Future Improvements
 
 {{< include _data_product_future_work.qmd >}}
 
 \newpage
 
-# Conclusion and Recommendations
+# Conclusion
 
 {{< include _conclusion.qmd >}}
 
