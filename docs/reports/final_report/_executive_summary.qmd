@@ -1,11 +1,11 @@
-Open-ended text data holds immense potential for discovering user insights, but extracting those insights efficiently remains a major challenge—particularly in unstructured formats. Our capstone partner, Fathom, specializes in surfacing insights from raw survey data and interview transcripts to support client decision-making. While structured survey responses follow a question-and-answer format, interview transcripts are conversational and free-flowing, making them more difficult and time-consuming to analyze reliably.
+Open-ended text data holds immense potential for discovering user insights, but extracting those insights efficiently remains a major challenge—particularly in unstructured data formats. Our capstone partner, Fathom, specializes in surfacing insights from raw survey data and interview transcripts to support client decision-making. While structured survey responses follow a question-and-answer format, interview transcripts are conversational and free-flowing, making them more difficult and time-consuming to analyze reliably.
 
 To address this challenge, we designed and implemented a data product that automates the extraction of relevant responses from unstructured interview transcripts. Our solution leverages a Retrieval-Augmented Generation (RAG)[@lewis2020retrieval] framework, which consists of:
 
 - A **retriever** that selects the most relevant passages from the transcript based on a guideline question,
-- A **generator** that formulates concise answers using the retrieved text and prompt,
+- A **generator** that formulates concise answers using the retrieved text and the prompt,
 - And an **evaluator** that scores each generated response on five key quality metrics and flags uncertain cases for human review.
 
-This system significantly reduces the need for manual transcript annotation while improving accuracy and consistency. In testing, it increased correct response identification by 87% compared to the previous baseline, and streamlined the review process by automatically surfacing low-confidence matches.
+This system significantly reduces the need for manual transcript annotation while improving accuracy and consistency. In testing, it achieved a correct response identification score of 4.13, up from the previous baseline of 2.2, and streamlined the review process by automatically highlighting low-confidence matches.
 
 The final pipeline is fully functional and ready for integration into Fathom’s existing analytics workflow. By enabling structured analysis of unstructured interviews, our tool enhances Fathom’s ability to deliver richer insights to clients and scale their operations to handle more complex, conversational data. Ultimately, this project extends the capabilities of conversational survey analytics, allowing organizations to extract meaningful information with greater speed, precision, and depth.
