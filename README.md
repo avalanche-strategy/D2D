@@ -9,26 +9,66 @@ Dialogue2Data (D2D) is an open-source Python package that transforms unstructure
 D2D is ideal for researchers and analysts processing qualitative interview data.
 
 
-## Installation
-1. Clone the repository:
+## 📦 Installation
+
+**Note:** These instructions assume you have `git` installed on your system. If not, please install it from [https://git-scm.com/](https://git-scm.com/).
+
+To install this package locally with `pip`, follow these steps:
+
+### **1. Clone the repository:**
 
 ```bash
 git clone https://github.com/avalanche-strategy/D2D.git
 ```
+---
 
-2. Navigate to the top-level directory of the new repository:
+
+### **2. Navigate to the top-level directory of the new repository:**
 
 ```bash
 cd D2D
 ```
 
-3. Create and activate the Conda environment needed to run the solution:
+### **3. Set up your environment**
+
+1. **Check your Python version:**
+
+   ```bash
+   python3 --version
+   # or
+   python --version
+   ```
+
+   Make sure the output is **Python 3.9.x** or higher.
+
+2. **If your Python version is too low (e.g., < 3.9):**
+
+   Download the official installer of Python with a version higher or equal to 3.9 from [python.org](https://www.python.org/downloads/).
+
+3. **Create and activate a virtual environment**
+    ```bash
+    python3 -m venv d2d-test
+    source d2d-test/bin/activate  # On Windows use d2d-test\Scripts\activate
+    ```
+
+### **4. Install the package**
+
+After you have Python 3.9 or above set up, from the project root directory (where `setup.py` is located), run:
 
 ```bash
-conda env create -f environment.yml
-conda activate d2d
+pip install .
 ```
 
+### 🧹 Clean Up / Uninstall
+After you have finished testing or using the package you may want to: 
+1. Uninstall `d2d`:
+```bash
+pip uninstall d2d
+```
+2. Deactivate the virtual environment:
+```bash
+deactivate
+```
 
 
 ## Environment Configuration
@@ -335,17 +375,35 @@ After finishing the evaluation process, the evaluator generates 4 output `csv`s.
 - **`retrieved_contexts.csv`**
   - **Description**: A file that logs the retrieved chunks or evidence segments for each (`respondent_id`, `question`) pair. These context chunks are used to support the model's generation and are referenced during evaluations for metrics like faithfulness, precision, and recall.
 
-## Running Unit Tests
+## 🧪Running Unit Tests
 Unit tests have been created for core functions of the `processor`. All the unit tests are in the folder [tests](tests). You can run the unit tests using `pytest`, specifying the directory containing the unit tests:
+
+### 1. Install test dependencies
+
+Before running the tests, make sure you have the required testing packages installed:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+### 2. Run the test suite
+
+You can run all unit tests using pytest:
 
 ```bash
 pytest tests/
 ```
 
-You can modify the unit tests to include additional scenarios by adding new test functions in the existing `*.py` files or adding new tests under the folder [tests](tests).
+**Note:**
+
+- Make sure you are in the project’s root directory and your virtual environment is activated (if you’re using one). 
+- You can modify the unit tests to include additional scenarios by adding new test functions in the existing `*.py` files or adding new tests under the folder [tests](tests).
 
 ## Detailed Documentation
-For more detailed Documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb)
+- For more detailed processor and evaluator documentation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/example.ipynb).  
+- For more packaging guide, please navigate to here [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/packaging_guide.ipynb).  
+- For more detailed evaluation framework explanation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/Evaluation_WhitePaper.ipynb).  
+- For more detailed tuning instructions in evaluation, please navigate to [here](https://github.com/avalanche-strategy/D2D/blob/main/docs/evaluation_tuning.ipynb).
 
 ## Dependencies
 
