@@ -307,7 +307,7 @@ def test_check_internet_connection_failure(processor, mocker):
 def test_test_llm_connection_success(processor, mocker):
     """Test _test_llm_connection with a successful LLM response."""
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mock_completion = mocker.patch("d2d.processor.completion", return_value=mock_response)
+    mock_completion = mocker.patch("litellm.completion", return_value=mock_response)
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
 
     result = processor._test_llm_connection()
@@ -319,7 +319,7 @@ def test_test_llm_connection_success(processor, mocker):
 def test_test_llm_connection_authentication_error(processor, mocker):
     """Test _test_llm_connection with an authentication error."""
     error = AuthenticationError("Invalid API key", model="gpt-4o-mini", llm_provider="openai")
-    mocker.patch("d2d.processor.completion", side_effect=error)
+    mocker.patch("litellm.completion", side_effect=error)
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
 
     result = processor._test_llm_connection()
@@ -330,7 +330,7 @@ def test_test_llm_connection_timeout_with_retry(processor, mocker):
     timeout_error = Timeout("Timeout", model="gpt-4o-mini", llm_provider="openai")
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
 
-    mocker.patch("d2d.processor.completion", side_effect=[timeout_error, timeout_error, mock_response])
+    mocker.patch("litellm.completion", side_effect=[timeout_error, timeout_error, mock_response])
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
     mocker.patch("time.sleep")
 
@@ -344,7 +344,7 @@ def test_test_llm_connection_switch_model(processor, mocker):
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
 
     mocker.patch(
-        "d2d.processor.completion",
+        "litellm.completion",
         side_effect=[timeout_error, timeout_error, timeout_error, mock_response]
     )
     mocker.patch("builtins.open", mock_open(read_data='{"openai": "gpt-4o-mini", "anthropic": "claude-3-5-sonnet"}'))
@@ -358,7 +358,7 @@ def test_test_llm_connection_switch_model(processor, mocker):
 def test_test_llm_connection_config_file_missing(processor, mocker):
     """Test _test_llm_connection when llm_defaults.json is missing."""
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mocker.patch("d2d.processor.completion", return_value=mock_response)
+    mocker.patch("litellm.completion", return_value=mock_response)
     mocker.patch("builtins.open", side_effect=FileNotFoundError)
 
     result = processor._test_llm_connection()
@@ -368,7 +368,7 @@ def test_test_llm_connection_config_file_missing(processor, mocker):
 def test_test_llm_connection_invalid_json(processor, mocker):
     """Test _test_llm_connection with invalid JSON in llm_defaults.json."""
     mock_response = mocker.Mock(choices=[mocker.Mock(message=mocker.Mock(content="Success"))])
-    mocker.patch("d2d.processor.completion", return_value=mock_response)
+    mocker.patch("litellm.completion", return_value=mock_response)
     mocker.patch("builtins.open", mock_open(read_data="invalid json"))
 
     result = processor._test_llm_connection()
